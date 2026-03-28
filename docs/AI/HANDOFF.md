@@ -446,3 +446,134 @@
 - docs/AI/WORKFLOW.md
 - docs/AI/HANDOFF.md
 
+## 2026-03-28（美食推荐：算法正确性校验与前端距离对接）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 推荐算法健壮性增强：权重参数负值会被归零；若三项权重总和非正，自动回退默认权重 `0.3/0.5/0.2`。
+- 新增美食推荐算法单测：覆盖评分排序、分页、距离过滤、异常权重回退等核心路径。
+- 前端“距离排序”接入浏览器定位：可用时传 `lat/lng` 给后端；不可用时提示并回退景区中心点估算。
+
+### 验证结果
+- 后端单测通过：`FoodServiceImplRecommendationTest`（`passed=4, failed=0`）。
+- 前端构建通过：`npm.cmd run build`。
+
+### 变更文件
+- src/main/java/com/travel/service/impl/FoodServiceImpl.java
+- src/test/java/com/travel/service/impl/FoodServiceImplRecommendationTest.java
+- frontend/src/views/food/FoodView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-03-28（景点推荐验证 + 兴趣可视化升级）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 扩充景点测试数据：新增多类型景点（nature/history/photo/science/art/culture/food/hiking/night）及对应标签权重关系。
+- 景点推荐算法正确性验证：新增 `RecommendationServiceImplTest`，覆盖个性化匹配排序、标签关键字过滤、热度排序。
+- 修复推荐稳定性问题：推荐服务对候选集合使用可变副本排序，避免不可变列表触发异常。
+- 用户兴趣体验升级：个人中心改为“兴趣行编辑（标签+权重）+ 饼图可视化”，支持常用标签快速添加与实时图表反馈。
+
+### 验证结果
+- 后端推荐相关测试通过：`passed=8, failed=0`（含 `RecommendationServiceImplTest` 与 `FoodServiceImplRecommendationTest`）。
+- 前端构建通过：`npm.cmd run build`。
+
+### 变更文件
+- src/main/resources/dev-seed/scenic_areas.json
+- src/main/resources/dev-seed/tags.json
+- src/main/resources/dev-seed/scenic_area_tags.json
+- src/main/resources/dev-seed/user_interests.json
+- src/main/java/com/travel/service/impl/RecommendationServiceImpl.java
+- src/test/java/com/travel/service/impl/RecommendationServiceImplTest.java
+- frontend/src/views/profile/ProfileView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-03-28（行为学习偏好 V1：点赞/收藏驱动兴趣更新）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 新增行为采集接口：`POST /api/behavior/engage`，支持 `SCENIC/FOOD + LIKE/FAVORITE/VIEW`。
+- 新增行为数据结构：`UserBehavior`（内存落地）与 `EngagementRequest`。
+- 兴趣学习逻辑落地：行为会按目标标签权重转化为兴趣增量，并与现有兴趣合并（上限 5.0）。
+- 前端对接：景点详情与美食详情新增“点赞/收藏”按钮，点击后触发行为上报并提示“已学习偏好”。
+
+### 验证结果
+- 后端服务测试通过：`UserServiceImplTest`、`RecommendationServiceImplTest`、`FoodServiceImplRecommendationTest`（总计 `passed=13, failed=0`）。
+- 前端构建通过：`npm.cmd run build`。
+
+### 变更文件
+- src/main/java/com/travel/model/entity/UserBehavior.java
+- src/main/java/com/travel/model/dto/behavior/EngagementRequest.java
+- src/main/java/com/travel/controller/BehaviorController.java
+- src/main/java/com/travel/storage/InMemoryStore.java
+- src/main/java/com/travel/service/UserService.java
+- src/main/java/com/travel/service/impl/UserServiceImpl.java
+- src/test/java/com/travel/service/impl/UserServiceImplTest.java
+- frontend/src/lib/api.ts
+- frontend/src/views/scenic/ScenicDetailView.vue
+- frontend/src/views/food/FoodDetailView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-03-28（问题修复：点赞与兴趣保存 500）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 原因与修复
+- 根因：`UserServiceImpl` 的用户侧内存写操作（注册/兴趣更新/行为采集）使用了事务注解，在无数据库连接的 dev-seed 场景下会触发事务取连接并抛 500。
+- 修复：移除上述内存操作方法的事务依赖，保留纯内存更新路径。
+
+### 验证结果
+- `PUT /api/auth/interest` 返回 `200`。
+- `POST /api/behavior/engage` 返回 `200`。
+- `GET /api/auth/interest` 返回 `200` 且可读回更新后的兴趣权重。
+- 编译/测试通过：`BACKEND_COMPILE_OK`，`UserServiceImplTest passed=5 failed=0`。
+
+### 变更文件
+- src/main/java/com/travel/service/impl/UserServiceImpl.java
+- docs/AI/HANDOFF.md
+
+## 2026-03-28（兴趣体验修复：中文回显 + 两位小数 + 多标签学习完整增强）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 兴趣标签中文回显：前端新增兴趣标签映射工具，个人中心与推荐页标签统一显示中文名称。
+- 兴趣权重精度统一：手动配置改为两位小数（`step=0.01`），后端保存与行为学习增量统一按两位小数归一化。
+- 修复“点赞多标签只增强部分标签”：后端在兴趣更新与行为学习时统一做中英别名归一化（canonical key），并合并同义标签后再增权，确保景区多标签都参与学习。
+
+### 验证结果
+- 后端测试通过：`UserServiceImplTest`、`RecommendationServiceImplTest`（`passed=11, failed=0`）。
+- 前端构建通过：`npm.cmd run build`。
+
+### 变更文件
+- src/main/java/com/travel/service/impl/UserServiceImpl.java
+- src/main/java/com/travel/service/impl/RecommendationServiceImpl.java
+- src/test/java/com/travel/service/impl/UserServiceImplTest.java
+- frontend/src/lib/interestTags.ts
+- frontend/src/views/profile/ProfileView.vue
+- frontend/src/views/HomeView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-03-28（推荐景点改造：从列表输出到真实个性化推荐）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 修复“个性化推荐看起来像普通列表”的核心问题：增加兴趣/标签归一化与中英别名映射（如“自然”->`nature`、“夜景”->`night`），避免兴趣语言不一致导致匹配分失效。
+- 优化推荐打分：提升兴趣匹配在总分中的权重（`0.7*match + 0.2*heat + 0.1*rating`），使结果更体现用户偏好而非仅热门排序。
+- 增加推荐可解释性：个性化结果返回 `reason` 字段，展示“匹配了哪个兴趣标签及强度”或热门/高分兜底理由。
+- 前端推荐页升级：登录后默认进入“智能推荐”标签页，卡片展示推荐分与推荐理由，区分“热门列表”和“个性化推荐”。
+
+### 验证结果
+- 推荐服务测试通过：`RecommendationServiceImplTest passed=5 failed=0`（新增中文兴趣别名命中与推荐理由断言）。
+- 编辑器诊断通过：本次改动文件无编译/类型错误。
+
+### 变更文件
+- src/main/java/com/travel/service/impl/RecommendationServiceImpl.java
+- src/main/java/com/travel/model/vo/recommendation/ScenicAreaRecommendVO.java
+- src/test/java/com/travel/service/impl/RecommendationServiceImplTest.java
+- frontend/src/views/HomeView.vue
+- docs/AI/HANDOFF.md
+

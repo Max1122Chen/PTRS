@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { apiScenicDetail, type ScenicArea } from '../../lib/api'
+import { ElMessage } from 'element-plus'
+import { apiScenicDetail, apiTrackEngagement, type ScenicArea } from '../../lib/api'
 import ScenicNearbyDialog from '../../components/map/ScenicNearbyDialog.vue'
+import { useAuthStore } from '../../stores/auth'
 
 const route = useRoute()
+const auth = useAuthStore()
 const loading = ref(false)
 const scenic = ref<ScenicArea | null>(null)
 const nearbyVisible = ref(false)
@@ -26,6 +29,20 @@ onMounted(load)
 function openNearbyDialog() {
   if (!hasLocationDisplay.value) return
   nearbyVisible.value = true
+}
+
+async function engage(actionType: 'LIKE' | 'FAVORITE') {
+  if (!auth.isAuthed) {
+    ElMessage.warning('请先登录后再点赞或收藏')
+    return
+  }
+  if (!scenic.value?.id) return
+  await apiTrackEngagement({
+    targetType: 'SCENIC',
+    targetId: scenic.value.id,
+    actionType,
+  })
+  ElMessage.success(actionType === 'LIKE' ? '点赞成功，已学习你的偏好' : '收藏成功，已学习你的偏好')
 }
 </script>
 
@@ -70,6 +87,11 @@ function openNearbyDialog() {
           <div class="k">热度 / 评分</div>
           <div class="v">{{ scenic?.heat ?? 0 }} / {{ scenic?.rating ?? 0 }}</div>
         </div>
+      </div>
+
+      <div class="actionsBar">
+        <el-button @click="engage('LIKE')">点赞景点</el-button>
+        <el-button type="primary" plain @click="engage('FAVORITE')">收藏景点</el-button>
       </div>
 
       <div class="glass block" style="margin-top: 14px">
@@ -148,6 +170,14 @@ function openNearbyDialog() {
   margin-top: 6px;
   line-height: 1.6;
 }
+
+.actionsBar {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 820px) {
   .grid {
     grid-template-columns: 1fr;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   apiRecommendationList,
@@ -7,6 +7,7 @@ import {
   type ScenicArea,
   type ScenicAreaRecommendVO,
 } from '../lib/api'
+import { interestLabelZh, normalizeInterestKey } from '../lib/interestTags'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
@@ -29,16 +30,20 @@ const canPersonal = computed(() => auth.isAuthed)
 const presetTagOptions = ['山岳', '古镇', '美食', '历史', '自然', '文化', '亲子', '徒步', '摄影']
 
 const tagOptions = computed(() => {
-  const set = new Set<string>(presetTagOptions)
+  const set = new Set<string>(presetTagOptions.map((item) => normalizeInterestKey(item)))
   ;(auth.user?.interests ?? []).forEach((tag) => {
-    const v = (tag || '').trim()
+    const v = normalizeInterestKey(tag || '')
     if (v) set.add(v)
   })
   ;[...list.value, ...pList.value].forEach((item) => {
-    displayTags(item).forEach((tag) => {
-      const v = (tag || '').trim()
-      if (v && v !== '暂无标签') set.add(v)
+    ;(item.tags ?? []).forEach((tag) => {
+      const v = normalizeInterestKey(tag || '')
+      if (v) set.add(v)
     })
+    if ((!item.tags || item.tags.length === 0) && item.type) {
+      const t = normalizeInterestKey(item.type)
+      if (t) set.add(t)
+    }
   })
   return Array.from(set)
 })
@@ -46,10 +51,10 @@ const tagOptions = computed(() => {
 function displayTags(item: ScenicArea | ScenicAreaRecommendVO): string[] {
   const tags = item.tags ?? []
   if (tags.length > 0) {
-    return tags.slice(0, 2)
+    return tags.slice(0, 2).map((tag) => interestLabelZh(tag))
   }
   if (item.type) {
-    return [item.type]
+    return [interestLabelZh(item.type)]
   }
   return ['暂无标签']
 }
@@ -87,7 +92,27 @@ async function load() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  if (canPersonal.value) {
+    tab.value = 'personalized'
+  }
+  load()
+})
+
+watch(
+  () => auth.isAuthed,
+  (authed, prev) => {
+    if (authed && !prev && tab.value !== 'personalized') {
+      tab.value = 'personalized'
+      query.page = 1
+      load()
+    }
+  },
+)
+
+function formatScore(score?: number) {
+  return typeof score === 'number' ? score.toFixed(2) : '0.00'
+}
 </script>
 
 <template>
@@ -99,8 +124,8 @@ onMounted(load)
       </div>
       <div class="filters">
         <el-segmented v-model="tab" :options="[
-          { label: '推荐列表', value: 'recommend' },
-          { label: '个性化', value: 'personalized' },
+          { label: '热门列表', value: 'recommend' },
+          { label: '智能推荐', value: 'personalized' },
         ]" />
         <el-select
           v-if="tab === 'personalized'"
@@ -113,7 +138,7 @@ onMounted(load)
           <el-option
             v-for="tag in tagOptions"
             :key="tag"
-            :label="tag"
+            :label="interestLabelZh(tag)"
             :value="tag"
           />
         </el-select>
@@ -143,6 +168,8 @@ onMounted(load)
           <div class="card-title">{{ s.name }}</div>
           <div class="muted line">{{ s.location || '—' }}</div>
           <div class="muted line">{{ s.description || '暂无简介' }}</div>
+          <div class="recommend-badge">推荐分 {{ formatScore(s.score) }}</div>
+          <div class="recommend-reason">{{ s.reason || '根据你的兴趣和景点质量综合推荐' }}</div>
           <div class="spacer" />
           <div class="meta">
             <div class="tags">
@@ -211,6 +238,18 @@ onMounted(load)
 .line {
   font-size: 12px;
   margin-bottom: 6px;
+}
+.recommend-badge {
+  margin-top: 2px;
+  margin-bottom: 6px;
+  color: #0f7b6c;
+  font-size: 12px;
+  font-weight: 800;
+}
+.recommend-reason {
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.4;
 }
 .spacer {
   flex: 1;

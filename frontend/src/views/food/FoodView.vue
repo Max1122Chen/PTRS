@@ -20,6 +20,10 @@ const rec = reactive({
   size: 10,
 })
 const recList = ref<FoodRecommendVO[]>([])
+const recLocation = reactive({
+  lat: undefined as number | undefined,
+  lng: undefined as number | undefined,
+})
 
 const q = reactive({
   keyword: '',
@@ -74,6 +78,11 @@ async function loadRec() {
     ElMessage.warning('请先选择景区，再获取美食推荐')
     return
   }
+
+  if (rec.sort === 'distance' && (recLocation.lat == null || recLocation.lng == null)) {
+    await tryResolveLocation()
+  }
+
   loading.value = true
   try {
     const weights =
@@ -89,11 +98,37 @@ async function loadRec() {
       page: rec.page,
       size: rec.size,
     }
+    if (recLocation.lat != null && recLocation.lng != null) {
+      params.lat = recLocation.lat
+      params.lng = recLocation.lng
+    }
     Object.assign(params, weights)
     recList.value = await apiFoodRecommendation(params)
   } finally {
     loading.value = false
   }
+}
+
+async function tryResolveLocation(): Promise<void> {
+  if (!navigator.geolocation) {
+    ElMessage.info('当前浏览器不支持定位，已使用景区中心点进行距离估计')
+    return
+  }
+
+  await new Promise<void>((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        recLocation.lat = pos.coords.latitude
+        recLocation.lng = pos.coords.longitude
+        resolve()
+      },
+      () => {
+        ElMessage.info('定位不可用，已回退使用景区中心点进行距离估计')
+        resolve()
+      },
+      { enableHighAccuracy: true, timeout: 5000 },
+    )
+  })
 }
 
 async function loadSearch() {

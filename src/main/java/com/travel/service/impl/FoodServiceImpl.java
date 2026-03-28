@@ -80,9 +80,15 @@ public class FoodServiceImpl implements FoodService
         }
 
         int r = radiusMeters == null || radiusMeters <= 0 ? DEFAULT_RADIUS_METERS : radiusMeters;
-        double wHeat = weightHeat == null ? DEFAULT_WEIGHT_HEAT : weightHeat;
-        double wRating = weightRating == null ? DEFAULT_WEIGHT_RATING : weightRating;
-        double wDist = weightDist == null ? DEFAULT_WEIGHT_DISTANCE : weightDist;
+        double wHeat = sanitizeWeight(weightHeat, DEFAULT_WEIGHT_HEAT);
+        double wRating = sanitizeWeight(weightRating, DEFAULT_WEIGHT_RATING);
+        double wDist = sanitizeWeight(weightDist, DEFAULT_WEIGHT_DISTANCE);
+        if (wHeat + wRating + wDist <= 0)
+        {
+            wHeat = DEFAULT_WEIGHT_HEAT;
+            wRating = DEFAULT_WEIGHT_RATING;
+            wDist = DEFAULT_WEIGHT_DISTANCE;
+        }
 
         int p = page == null || page < 1 ? 1 : page;
         int s = size == null || size <= 0 ? 10 : Math.min(size, 50);
@@ -298,6 +304,15 @@ public class FoodServiceImpl implements FoodService
         double wd = wDist / sum;
 
         return wh * heatScore + wr * ratingScore + wd * distScore;
+    }
+
+    private double sanitizeWeight(Double candidate, double defaultValue)
+    {
+        if (candidate == null)
+        {
+            return defaultValue;
+        }
+        return Math.max(0.0, candidate);
     }
 }
 

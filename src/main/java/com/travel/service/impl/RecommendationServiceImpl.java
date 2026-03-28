@@ -9,8 +9,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 /**
  * 推荐服务实现。
@@ -29,6 +31,9 @@ import java.util.Map;
 public class RecommendationServiceImpl implements RecommendationService
 {
 
+    private static final Map<String, String> INTEREST_ALIASES = buildInterestAliases();
+    private static final Map<String, String> INTEREST_LABELS = buildInterestLabels();
+
     private final InMemoryStore store;
 
     public RecommendationServiceImpl(InMemoryStore store)
@@ -43,7 +48,9 @@ public class RecommendationServiceImpl implements RecommendationService
         int s = size == null || size <= 0 ? 10 : Math.min(size, 50);
         int offset = (p - 1) * s;
 
-        List<ScenicArea> all = StringUtils.isNotBlank(type) ? store.findScenicAreasByType(type) : store.findAllScenicAreas();
+        List<ScenicArea> all = new ArrayList<>(
+            StringUtils.isNotBlank(type) ? store.findScenicAreasByType(type) : store.findAllScenicAreas()
+        );
         for (ScenicArea scenic : all)
         {
             scenic.setTags(store.getScenicAreaTagNames(scenic.getId()));
@@ -102,10 +109,12 @@ public class RecommendationServiceImpl implements RecommendationService
         // 兼容旧前端：很多页面仍把输入框绑定到 type。
         // 若 type 未匹配到任何景点类型且 tagKeyword 为空，则把 type 视作关键词。
         String effectiveTagKeyword = tagKeyword;
-        List<ScenicArea> base = StringUtils.isNotBlank(type) ? store.findScenicAreasByType(type) : store.findAllScenicAreas();
+        List<ScenicArea> base = new ArrayList<>(
+            StringUtils.isNotBlank(type) ? store.findScenicAreasByType(type) : store.findAllScenicAreas()
+        );
         if (base.isEmpty() && StringUtils.isBlank(tagKeyword) && StringUtils.isNotBlank(type))
         {
-            base = store.findAllScenicAreas();
+            base = new ArrayList<>(store.findAllScenicAreas());
             effectiveTagKeyword = type;
         }
         if (base.isEmpty())
@@ -151,6 +160,7 @@ public class RecommendationServiceImpl implements RecommendationService
         }
 
         Map<String, Double> interestWeights = store.getUserInterests(userId);
+        Map<String, Double> normalizedInterestWeights = normalizeInterestWeights(interestWeights);
 
         int maxHeat = 1;
         for (ScenicArea sa : base)
@@ -166,26 +176,37 @@ public class RecommendationServiceImpl implements RecommendationService
         {
             scenic.setTags(store.getScenicAreaTagNames(scenic.getId()));
             double matchScore = 0.0;
+            String topMatchTag = null;
+            double topMatchScore = 0.0;
             Map<String, Double> tags = store.getScenicAreaTagWeights(scenic.getId());
             if (tags != null)
             {
                 for (Map.Entry<String, Double> e : tags.entrySet())
                 {
-                    Double uw = interestWeights == null ? null : interestWeights.get(e.getKey());
+                    String canonicalTag = canonicalizeTag(e.getKey());
+                    Double uw = normalizedInterestWeights.get(canonicalTag);
                     if (uw != null)
                     {
-                        matchScore += uw * (e.getValue() == null ? 1.0 : e.getValue());
+                        double tagWeight = e.getValue() == null ? 1.0 : e.getValue();
+                        double current = uw * tagWeight;
+                        matchScore += current;
+                        if (current > topMatchScore)
+                        {
+                            topMatchScore = current;
+                            topMatchTag = canonicalTag;
+                        }
                     }
                 }
             }
 
             double heatNorm = (scenic.getHeat() == null ? 0.0 : scenic.getHeat()) / (double) maxHeat;
             double ratingNorm = Math.min(Math.max((scenic.getRating() == null ? 0.0 : scenic.getRating()) / 5.0, 0.0), 1.0);
-            double score = matchScore + 0.2 * heatNorm + 0.2 * ratingNorm;
+            double score = 0.7 * matchScore + 0.2 * heatNorm + 0.1 * ratingNorm;
 
             ScenicAreaRecommendVO vo = new ScenicAreaRecommendVO();
             vo.setScenicArea(scenic);
             vo.setScore(score);
+            vo.setReason(buildReason(topMatchTag, topMatchScore, heatNorm, ratingNorm));
             scored.add(vo);
         }
 
@@ -233,7 +254,96 @@ public class RecommendationServiceImpl implements RecommendationService
         {
             return null;
         }
-        return s.trim().toLowerCase();
+        return s.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static Map<String, String> buildInterestAliases()
+    {
+        Map<String, String> map = new HashMap<>();
+        map.put("自然", "nature");
+        map.put("山岳", "nature");
+        map.put("湖泊", "lake");
+        map.put("湖", "lake");
+        map.put("历史", "history");
+        map.put("文化", "culture");
+        map.put("校园", "campus");
+        map.put("摄影", "photo");
+        map.put("拍照", "photo");
+        map.put("博物馆", "museum");
+        map.put("艺术", "art");
+        map.put("科学", "science");
+        map.put("建筑", "architecture");
+        map.put("夜景", "night");
+        map.put("夜游", "night");
+        map.put("徒步", "hiking");
+        map.put("漫步", "walk");
+        map.put("美食", "food");
+        return map;
+    }
+
+    private Map<String, Double> normalizeInterestWeights(Map<String, Double> raw)
+    {
+        Map<String, Double> out = new HashMap<>();
+        if (raw == null || raw.isEmpty())
+        {
+            return out;
+        }
+        for (Map.Entry<String, Double> entry : raw.entrySet())
+        {
+            String canonical = canonicalizeTag(entry.getKey());
+            if (canonical == null)
+            {
+                continue;
+            }
+            double weight = entry.getValue() == null ? 0.0 : entry.getValue();
+            out.merge(canonical, weight, Double::sum);
+        }
+        return out;
+    }
+
+    private String canonicalizeTag(String raw)
+    {
+        if (StringUtils.isBlank(raw))
+        {
+            return null;
+        }
+        String normalized = raw.trim().toLowerCase(Locale.ROOT);
+        String mapped = INTEREST_ALIASES.get(normalized);
+        return mapped == null ? normalized : mapped;
+    }
+
+    private String buildReason(String topMatchTag, double topMatchScore, double heatNorm, double ratingNorm)
+    {
+        if (topMatchTag != null && topMatchScore > 0.0)
+        {
+            String label = INTEREST_LABELS.getOrDefault(topMatchTag, topMatchTag);
+            return "匹配你的兴趣标签：" + label + "（匹配强度 " + String.format(Locale.ROOT, "%.2f", topMatchScore) + "）";
+        }
+        if (heatNorm >= ratingNorm)
+        {
+            return "当前热度较高，适合作为热门探索目的地";
+        }
+        return "评分表现较好，值得优先体验";
+    }
+
+    private static Map<String, String> buildInterestLabels()
+    {
+        Map<String, String> map = new HashMap<>();
+        map.put("nature", "自然");
+        map.put("lake", "湖泊");
+        map.put("history", "历史");
+        map.put("culture", "文化");
+        map.put("campus", "校园");
+        map.put("photo", "摄影");
+        map.put("museum", "博物馆");
+        map.put("art", "艺术");
+        map.put("science", "科学");
+        map.put("architecture", "建筑");
+        map.put("night", "夜景");
+        map.put("hiking", "徒步");
+        map.put("walk", "漫步");
+        map.put("food", "美食");
+        return map;
     }
 
     @Override

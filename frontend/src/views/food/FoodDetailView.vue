@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { apiFoodDetailView, apiFoodRate, type FoodDetailVO } from '../../lib/api'
+import { apiFoodDetailView, apiFoodRate, apiTrackEngagement, type FoodDetailVO } from '../../lib/api'
 import { useAuthStore } from '../../stores/auth'
 
 const route = useRoute()
@@ -30,6 +30,20 @@ async function submitRate() {
   await apiFoodRate({ foodId: food.value.id, rating: rate.rating, comment: rate.comment || undefined })
   ElMessage.success('评分成功')
   await load()
+}
+
+async function engage(actionType: 'LIKE' | 'FAVORITE') {
+  if (!auth.isAuthed) {
+    ElMessage.warning('请先登录后再点赞或收藏')
+    return
+  }
+  if (!food.value?.id) return
+  await apiTrackEngagement({
+    targetType: 'FOOD',
+    targetId: food.value.id,
+    actionType,
+  })
+  ElMessage.success(actionType === 'LIKE' ? '点赞成功，已学习你的偏好' : '收藏成功，已学习你的偏好')
 }
 
 onMounted(load)
@@ -67,6 +81,11 @@ onMounted(load)
       <div class="glass block" style="margin-top: 12px">
         <div class="k">描述</div>
         <div class="v2">{{ food?.description || '暂无描述' }}</div>
+      </div>
+
+      <div class="actionsBar">
+        <el-button @click="engage('LIKE')">点赞美食</el-button>
+        <el-button type="primary" plain @click="engage('FAVORITE')">收藏美食</el-button>
       </div>
 
       <el-divider />
@@ -119,6 +138,13 @@ onMounted(load)
   margin-top: 12px;
   display: grid;
   gap: 12px;
+}
+
+.actionsBar {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 </style>
 

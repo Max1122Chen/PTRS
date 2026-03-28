@@ -123,6 +123,15 @@ export async function apiGetInterest() {
   return res.data
 }
 
+export async function apiTrackEngagement(payload: {
+  targetType: 'SCENIC' | 'FOOD'
+  targetId: number
+  actionType: 'LIKE' | 'FAVORITE' | 'VIEW'
+}) {
+  const res = (await http.post('/api/behavior/engage', payload)) as ApiResponse<void>
+  return res.data
+}
+
 export async function apiRecommendationList(params: {
   page?: number
   size?: number

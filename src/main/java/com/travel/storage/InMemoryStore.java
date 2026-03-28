@@ -12,6 +12,7 @@ import com.travel.model.entity.ScenicArea;
 import com.travel.model.entity.ScenicAreaTag;
 import com.travel.model.entity.Tag;
 import com.travel.model.entity.User;
+import com.travel.model.entity.UserBehavior;
 import com.travel.model.entity.UserInterest;
 import org.springframework.stereotype.Component;
 import com.travel.storage.search.NGramInvertedIndex;
@@ -53,6 +54,12 @@ public class InMemoryStore
     private final Map<Long, UserInterest> userInterestsById = new HashMap<>();
 
     private long nextUserInterestId = 1;
+
+    private final Map<Long, UserBehavior> userBehaviorsById = new HashMap<>();
+
+    private final Map<Long, List<Long>> behaviorIdsByUserId = new HashMap<>();
+
+    private long nextUserBehaviorId = 1;
 
     // ------------------- ScenicAreas -------------------
 
@@ -235,6 +242,39 @@ public class InMemoryStore
     public Map<String, Double> getUserInterests(Long userId)
     {
         return userInterestsByUserId.get(userId);
+    }
+
+    public synchronized UserBehavior insertUserBehavior(UserBehavior behavior)
+    {
+        Long id = behavior.getId();
+        if (id == null)
+        {
+            id = nextUserBehaviorId++;
+            behavior.setId(id);
+        }
+        userBehaviorsById.put(id, behavior);
+        behaviorIdsByUserId.computeIfAbsent(behavior.getUserId(), k -> new ArrayList<>()).add(id);
+        nextUserBehaviorId = Math.max(nextUserBehaviorId, id + 1);
+        return behavior;
+    }
+
+    public List<UserBehavior> getUserBehaviors(Long userId)
+    {
+        List<Long> ids = behaviorIdsByUserId.get(userId);
+        if (ids == null)
+        {
+            return List.of();
+        }
+        List<UserBehavior> result = new ArrayList<>(ids.size());
+        for (Long id : ids)
+        {
+            UserBehavior behavior = userBehaviorsById.get(id);
+            if (behavior != null)
+            {
+                result.add(behavior);
+            }
+        }
+        return result;
     }
 
     public synchronized ScenicArea insertScenicArea(ScenicArea scenicArea)

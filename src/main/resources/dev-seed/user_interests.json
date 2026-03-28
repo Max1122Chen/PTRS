@@ -19,5 +19,8 @@
   {"id": 1014, "userId": 105, "interestType": "campus", "weight": 0.7, "createTime": "2026-03-28T12:00:00"},
   {"id": 1015, "userId": 105, "interestType": "food", "weight": 0.8, "createTime": "2026-03-28T12:00:00"},
 
-  {"id": 1016, "userId": 106, "interestType": "management", "weight": 1.0, "createTime": "2026-03-28T12:00:00"}
+  {"id": 1016, "userId": 106, "interestType": "management", "weight": 0.6, "createTime": "2026-03-28T12:00:00"},
+  {"id": 1017, "userId": 106, "interestType": "science", "weight": 1.0, "createTime": "2026-03-28T12:00:00"},
+  {"id": 1018, "userId": 106, "interestType": "art", "weight": 0.9, "createTime": "2026-03-28T12:00:00"},
+  {"id": 1019, "userId": 106, "interestType": "food", "weight": 0.8, "createTime": "2026-03-28T12:00:00"}
 ]

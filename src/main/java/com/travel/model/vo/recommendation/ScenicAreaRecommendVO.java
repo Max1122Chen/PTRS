@@ -12,6 +12,8 @@ public class ScenicAreaRecommendVO
 
     private Double score;
 
+    private String reason;
+
     public ScenicArea getScenicArea()
     {
         return scenicArea;
@@ -30,6 +32,16 @@ public class ScenicAreaRecommendVO
     public void setScore(Double score)
     {
         this.score = score;
+    }
+
+    public String getReason()
+    {
+        return reason;
+    }
+
+    public void setReason(String reason)
+    {
+        this.reason = reason;
     }
 
     // ---- backward-compatible flattened getters for frontend ----

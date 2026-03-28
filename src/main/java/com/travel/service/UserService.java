@@ -44,6 +44,11 @@ public interface UserService
     List<InterestItemVO> getInterests(Long userId);
 
     /**
+     * 记录用户行为并增量更新兴趣偏好。
+     */
+    void recordEngagement(Long userId, String targetType, Long targetId, String actionType);
+
+    /**
      * 根据用户名查询用户视图。
      *
      * @param username 用户名

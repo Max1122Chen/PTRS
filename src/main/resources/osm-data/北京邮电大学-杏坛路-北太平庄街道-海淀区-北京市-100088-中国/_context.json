@@ -1,0 +1,31 @@
+{
+  "place_id": 205858882,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "way",
+  "osm_id": 279303636,
+  "lat": "39.9602270",
+  "lon": "116.3519331",
+  "category": "amenity",
+  "type": "university",
+  "place_rank": 30,
+  "importance": 0.4434976767478008,
+  "addresstype": "amenity",
+  "name": "北京邮电大学",
+  "display_name": "北京邮电大学, 杏坛路, 北太平庄街道, 海淀区, 北京市, 100088, 中国",
+  "address": {
+    "amenity": "北京邮电大学",
+    "road": "杏坛路",
+    "suburb": "北太平庄街道",
+    "city": "海淀区",
+    "ISO3166-2-lvl4": "CN-BJ",
+    "postcode": "100088",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "39.9568086",
+    "39.9636959",
+    "116.3488670",
+    "116.3549669"
+  ]
+}

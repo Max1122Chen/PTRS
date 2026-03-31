@@ -1,0 +1,31 @@
+{
+  "place_id": 202194572,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "way",
+  "osm_id": 685054417,
+  "lat": "40.1561163",
+  "lon": "116.2835626",
+  "category": "amenity",
+  "type": "university",
+  "place_rank": 30,
+  "importance": 5.7444876783352675e-05,
+  "addresstype": "amenity",
+  "name": "北京邮电大学（沙河校区）",
+  "display_name": "北京邮电大学（沙河校区）, 南丰路, 沙河镇, 昌平区, 北京市, 102206, 中国",
+  "address": {
+    "amenity": "北京邮电大学（沙河校区）",
+    "road": "南丰路",
+    "suburb": "沙河镇",
+    "city": "昌平区",
+    "ISO3166-2-lvl4": "CN-BJ",
+    "postcode": "102206",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "40.1522518",
+    "40.1599040",
+    "116.2768518",
+    "116.2898134"
+  ]
+}

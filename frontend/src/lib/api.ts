@@ -95,6 +95,16 @@ export type DiaryDetailVO = Diary & {
 
 export type RoutePlanVO = { path: number[]; distance: number; time: number }
 
+export type RoutePoiCandidate = {
+  nodeId: number
+  name: string
+  type?: string
+  location?: string
+  longitude?: number
+  latitude?: number
+  areaId?: number
+}
+
 export async function apiRegister(payload: { username: string; password: string; email: string; nickname: string }) {
   const res = (await http.post('/api/auth/register', payload)) as ApiResponse<{
     user_id: number
@@ -195,6 +205,12 @@ export async function apiMapData(params: { areaId?: number }) {
       latitude?: number
       areaId?: number
     }[]
+    nodeGeo?: {
+      nodeId: number
+      type?: string
+      longitude?: number
+      latitude?: number
+    }[]
     edges: {
       startId: number
       endId: number
@@ -205,6 +221,11 @@ export async function apiMapData(params: { areaId?: number }) {
     }[]
   }>
   return res.data
+}
+
+export async function apiRoutePoiCandidates(params: { areaId?: number }) {
+  const res = (await http.get('/api/route/poi-candidates', { params })) as ApiResponse<RoutePoiCandidate[]>
+  return res.data ?? []
 }
 
 export async function apiPlanRoute(payload: {
@@ -398,6 +419,48 @@ export async function apiAdminAddRoad(payload: any) {
 
 export async function apiAdminAddFood(payload: any) {
   const res = (await http.post('/api/admin/food', payload)) as ApiResponse<any>
+  return res.data
+}
+
+export async function apiAdminImportPlace(payload: { placeName: string; force?: boolean }) {
+  const res = (await http.post('/api/admin/dev/import-place', payload)) as ApiResponse<{
+    placeName: string
+    exists: boolean
+    force: boolean
+    status: string
+    message: string
+    seedExitCode?: number
+    seedOutput?: string
+    buildExitCode?: number
+    buildOutput?: string
+  }>
+  return res.data
+}
+
+export async function apiAdminSearchLocalPlace(keyword: string) {
+  const res = (await http.get('/api/admin/dev/local-place-search', { params: { keyword } })) as ApiResponse<any[]>
+  return res.data ?? []
+}
+
+export async function apiAdminSearchOsm(keyword: string) {
+  const res = (await http.get('/api/admin/dev/osm-search', { params: { keyword } })) as ApiResponse<any[]>
+  return res.data ?? []
+}
+
+export async function apiAdminGenerateFromOsm(payload: {
+  placeName: string
+  query: string
+  selectedOsm?: {
+    placeId?: string | number
+    osmType?: string
+    osmId?: string | number
+    displayName?: string
+    name?: string
+  }
+  force?: boolean
+  buildFrontend?: boolean
+}) {
+  const res = (await http.post('/api/admin/dev/generate-from-osm', payload)) as ApiResponse<any>
   return res.data
 }
 

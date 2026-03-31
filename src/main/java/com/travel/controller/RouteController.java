@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,6 +56,15 @@ public class RouteController
     public ApiResponse<Map<String, Object>> mapData(@RequestParam(required = false) Long areaId)
     {
         return ApiResponse.success(routeService.getMapData(areaId), "获取成功");
+    }
+
+    /**
+     * 获取路线规划的起终点候选 POI（不包含虚拟道路节点）。
+     */
+    @GetMapping("/poi-candidates")
+    public ApiResponse<List<Map<String, Object>>> poiCandidates(@RequestParam(required = false) Long areaId)
+    {
+        return ApiResponse.success(routeService.listRoutePoiCandidates(areaId), "获取成功");
     }
 }
 

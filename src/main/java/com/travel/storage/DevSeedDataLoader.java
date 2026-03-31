@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -55,6 +56,9 @@ public class DevSeedDataLoader
 
     @Value("${app.dev-seed.path:classpath:dev-seed}")
     private String devSeedPath;
+
+    @Value("${app.dev-seed.map-import-config:}")
+    private String mapImportConfigPath;
 
     public DevSeedDataLoader(InMemoryStore store,
                              ObjectMapper objectMapper,
@@ -194,6 +198,57 @@ public class DevSeedDataLoader
             List<Facility> facilities = readList("facilities.json", new TypeReference<List<Facility>>()
             {
             });
+
+            MapImportConfig mapImportConfig = readMapImportConfig();
+            if (mapImportConfig != null)
+            {
+                List<ScenicArea> importedScenicAreas = readOptionalMultiList(
+                    mapImportConfig.scenicAreas(),
+                    new TypeReference<List<ScenicArea>>()
+                    {
+                    }
+                );
+                scenicAreas = mergeById(scenicAreas, importedScenicAreas, ScenicArea::getId);
+
+                List<Poi> importedPois = readOptionalMultiList(
+                    mapImportConfig.pois(),
+                    new TypeReference<List<Poi>>()
+                    {
+                    }
+                );
+                // 兼容旧命名 buildings。
+                importedPois.addAll(readOptionalMultiList(
+                    mapImportConfig.buildings(),
+                    new TypeReference<List<Poi>>()
+                    {
+                    }
+                ));
+                pois = mergeById(pois, importedPois, Poi::getId);
+
+                List<Road> importedRoads = readOptionalMultiList(
+                    mapImportConfig.roads(),
+                    new TypeReference<List<Road>>()
+                    {
+                    }
+                );
+                roads = mergeById(roads, importedRoads, Road::getId);
+
+                List<Facility> importedFacilities = readOptionalMultiList(
+                    mapImportConfig.facilities(),
+                    new TypeReference<List<Facility>>()
+                    {
+                    }
+                );
+                facilities = mergeById(facilities, importedFacilities, Facility::getId);
+
+                log.info("Dev seed map imports loaded via config {} (scenicAreas={}, pois={}, roads={}, facilities={})",
+                    mapImportConfigPath,
+                    importedScenicAreas.size(),
+                    importedPois.size(),
+                    importedRoads.size(),
+                    importedFacilities.size());
+            }
+
             List<Restaurant> restaurants = readList("restaurants.json", new TypeReference<List<Restaurant>>()
             {
             });
@@ -245,6 +300,93 @@ public class DevSeedDataLoader
         }
     }
 
+    private MapImportConfig readMapImportConfig() throws IOException
+    {
+        if (mapImportConfigPath == null || mapImportConfigPath.isBlank())
+        {
+            return null;
+        }
+
+        Resource resource = resourceLoader.getResource(resolveConfigResourcePath(mapImportConfigPath));
+        if (!resource.exists())
+        {
+            log.warn("Dev seed map import config not found, skip map imports: {}", mapImportConfigPath);
+            return null;
+        }
+
+        try (InputStream inputStream = resource.getInputStream())
+        {
+            return objectMapper.readValue(inputStream, MapImportConfig.class);
+        }
+    }
+
+    private String resolveConfigResourcePath(String path)
+    {
+        String trimmed = path.trim();
+        if (trimmed.startsWith("classpath:") || trimmed.startsWith("file:"))
+        {
+            return trimmed;
+        }
+        return "classpath:" + trimmed;
+    }
+
+    private <T> List<T> readOptionalMultiList(List<String> resourcePaths, TypeReference<List<T>> typeReference) throws IOException
+    {
+        if (resourcePaths == null || resourcePaths.isEmpty())
+        {
+            return new java.util.ArrayList<>();
+        }
+        List<T> out = new java.util.ArrayList<>();
+        for (String path : resourcePaths)
+        {
+            if (path == null || path.isBlank())
+            {
+                continue;
+            }
+            Resource resource = resourceLoader.getResource(resolveConfigResourcePath(path));
+            if (!resource.exists())
+            {
+                log.warn("Map import file not found, skip: {}", path);
+                continue;
+            }
+            try (InputStream inputStream = resource.getInputStream())
+            {
+                List<T> list = objectMapper.readValue(inputStream, typeReference);
+                if (list != null && !list.isEmpty())
+                {
+                    out.addAll(list);
+                }
+            }
+        }
+        return out;
+    }
+
+    private <T> List<T> mergeById(List<T> base, List<T> imports, java.util.function.Function<T, Long> idGetter)
+    {
+        if (imports == null || imports.isEmpty())
+        {
+            return base;
+        }
+        Map<Long, T> merged = new java.util.LinkedHashMap<>();
+        for (T row : base)
+        {
+            Long id = idGetter.apply(row);
+            if (id != null)
+            {
+                merged.put(id, row);
+            }
+        }
+        for (T row : imports)
+        {
+            Long id = idGetter.apply(row);
+            if (id != null)
+            {
+                merged.put(id, row);
+            }
+        }
+        return new java.util.ArrayList<>(merged.values());
+    }
+
     private String resolveResourcePath(String fileName)
     {
         if (devSeedPath.endsWith("/"))
@@ -289,5 +431,23 @@ public class DevSeedDataLoader
         List<Comment> comments
     )
     {
+    }
+
+    private record MapImportConfig(
+        List<String> scenicAreas,
+        List<String> pois,
+        List<String> buildings,
+        List<String> roads,
+        List<String> facilities
+    )
+    {
+        private MapImportConfig
+        {
+            scenicAreas = scenicAreas == null ? Collections.emptyList() : scenicAreas;
+            pois = pois == null ? Collections.emptyList() : pois;
+            buildings = buildings == null ? Collections.emptyList() : buildings;
+            roads = roads == null ? Collections.emptyList() : roads;
+            facilities = facilities == null ? Collections.emptyList() : facilities;
+        }
     }
 }

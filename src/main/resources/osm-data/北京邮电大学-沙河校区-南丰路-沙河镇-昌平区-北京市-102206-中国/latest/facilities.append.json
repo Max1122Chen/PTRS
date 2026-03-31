@@ -1,0 +1,14 @@
+[
+  {
+    "id": 710,
+    "name": "沙河校医院",
+    "type": "hospital",
+    "description": "OSM source=way:947735342, review required",
+    "location": "沙河校医院",
+    "longitude": 116.28355,
+    "latitude": 40.158722,
+    "areaId": 219,
+    "createTime": "2026-03-31T12:48:07",
+    "updateTime": "2026-03-31T12:48:07"
+  }
+]

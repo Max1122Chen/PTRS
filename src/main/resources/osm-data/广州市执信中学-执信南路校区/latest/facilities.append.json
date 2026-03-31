@@ -1,0 +1,14 @@
+[
+  {
+    "id": 709,
+    "name": "中山大学附属眼科医院",
+    "type": "hospital",
+    "description": "OSM source=way:699348650, review required",
+    "location": "先烈南路",
+    "longitude": 113.287534,
+    "latitude": 23.135765,
+    "areaId": 218,
+    "createTime": "2026-03-31T11:57:51",
+    "updateTime": "2026-03-31T11:57:51"
+  }
+]

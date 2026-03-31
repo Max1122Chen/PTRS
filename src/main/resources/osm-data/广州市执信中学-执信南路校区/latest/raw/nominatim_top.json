@@ -1,0 +1,34 @@
+{
+  "place_id": 220261595,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "way",
+  "osm_id": 408006153,
+  "lat": "23.1351521",
+  "lon": "113.2887087",
+  "category": "amenity",
+  "type": "school",
+  "place_rank": 30,
+  "importance": 0.2901765588551152,
+  "addresstype": "amenity",
+  "name": "广州市执信中学(执信路校区)",
+  "display_name": "广州市执信中学(执信路校区), 152, 执信南路, 竹丝岗, 农林街道, 越秀区, 广州市, 广东省, 510080, 中国",
+  "address": {
+    "amenity": "广州市执信中学(执信路校区)",
+    "house_number": "152",
+    "road": "执信南路",
+    "neighbourhood": "竹丝岗",
+    "suburb": "农林街道",
+    "city": "越秀区",
+    "state": "广东省",
+    "ISO3166-2-lvl4": "CN-GD",
+    "postcode": "510080",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "23.1338153",
+    "23.1365029",
+    "113.2863473",
+    "113.2900194"
+  ]
+}

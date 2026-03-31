@@ -47,8 +47,14 @@ app:
     enabled: false
     # 开发种子数据目录（支持 classpath: 或 file:）。
     path: classpath:dev-seed
+    # 地图增量导入配置（JSON），用于声明需要额外读取的景区/POI/设施/道路文件。
+    map-import-config: classpath:dev-seed/map-imports.json
   storage:
     preload:
+      enabled: true
+  admin:
+    dev-tools:
+      # 管理员开发工具（地名采集/构建）开关，生产环境建议关闭。
       enabled: true
   debug:
     # 调试开关：当数据库不可用时，跳过预加载并允许应用启动。

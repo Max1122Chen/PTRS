@@ -17,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -144,35 +145,27 @@ public class RouteServiceImpl implements RouteService
     {
         Graph graph = loadGraph(areaId);
         List<Map<String, Object>> edges = new ArrayList<>();
-        List<Map<String, Object>> nodeDetails = new ArrayList<>();
+        List<Map<String, Object>> nodeDetails = listRoutePoiCandidates(areaId);
+        List<Map<String, Object>> nodeGeo = new ArrayList<>();
 
         for (Long nodeId : graph.getNodes())
         {
-            Map<String, Object> node = new HashMap<>();
-            node.put("nodeId", nodeId);
             Poi poi = store.findPoiById(nodeId);
-            if (poi != null)
+            if (poi == null)
             {
-                node.put("name", poi.getName());
-                node.put("type", poi.getType());
-                node.put("location", poi.getLocation());
-                node.put("longitude", poi.getLongitude());
-                node.put("latitude", poi.getLatitude());
-                node.put("areaId", poi.getAreaId());
+                continue;
             }
-            else
+            if (poi.getLongitude() == null || poi.getLatitude() == null)
             {
-                node.put("name", "节点" + nodeId);
+                continue;
             }
-            nodeDetails.add(node);
+            Map<String, Object> geo = new HashMap<>();
+            geo.put("nodeId", nodeId);
+            geo.put("type", poi.getType());
+            geo.put("longitude", poi.getLongitude());
+            geo.put("latitude", poi.getLatitude());
+            nodeGeo.add(geo);
         }
-
-        nodeDetails.sort((a, b) ->
-        {
-            String na = String.valueOf(a.get("name"));
-            String nb = String.valueOf(b.get("name"));
-            return na.compareToIgnoreCase(nb);
-        });
 
         for (Long start : graph.getNodes())
         {
@@ -192,8 +185,40 @@ public class RouteServiceImpl implements RouteService
         Map<String, Object> result = new HashMap<>();
         result.put("nodes", new ArrayList<>(graph.getNodes()));
         result.put("nodeDetails", nodeDetails);
+        result.put("nodeGeo", nodeGeo);
         result.put("edges", edges);
         return result;
+    }
+
+    @Override
+    public List<Map<String, Object>> listRoutePoiCandidates(Long areaId)
+    {
+        List<Poi> pois = store.findPoisByAreaId(areaId);
+        List<Map<String, Object>> nodeDetails = new ArrayList<>();
+        for (Poi poi : pois)
+        {
+            if (poi == null)
+            {
+                continue;
+            }
+            String type = poi.getType();
+            if (type != null && "virtual_node".equalsIgnoreCase(type.trim()))
+            {
+                continue;
+            }
+
+            Map<String, Object> node = new HashMap<>();
+            node.put("nodeId", poi.getId());
+            node.put("name", poi.getName());
+            node.put("type", poi.getType());
+            node.put("location", poi.getLocation());
+            node.put("longitude", poi.getLongitude());
+            node.put("latitude", poi.getLatitude());
+            node.put("areaId", poi.getAreaId());
+            nodeDetails.add(node);
+        }
+        nodeDetails.sort(Comparator.comparing(o -> String.valueOf(o.get("name")), String.CASE_INSENSITIVE_ORDER));
+        return nodeDetails;
     }
 
     private Graph loadGraph(Long areaId)

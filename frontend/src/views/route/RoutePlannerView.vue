@@ -2,7 +2,15 @@
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import * as echarts from 'echarts'
-import { apiMapData, apiPlanRoute, apiPlanRouteMulti, apiScenicSearchByKeyword, type ScenicArea } from '../../lib/api'
+import {
+  apiMapData,
+  apiPlanRoute,
+  apiPlanRouteMulti,
+  apiRoutePoiCandidates,
+  apiScenicSearchByKeyword,
+  type RoutePoiCandidate,
+  type ScenicArea,
+} from '../../lib/api'
 
 type Edge = {
   startId: number
@@ -24,7 +32,15 @@ type RouteNodeDetail = {
   areaId?: number
 }
 
-const map = ref<{ nodes: number[]; nodeDetails?: RouteNodeDetail[]; edges: Edge[] } | null>(null)
+type RouteNodeGeo = {
+  nodeId: number
+  type?: string
+  longitude?: number
+  latitude?: number
+}
+
+const map = ref<{ nodes: number[]; nodeDetails?: RouteNodeDetail[]; nodeGeo?: RouteNodeGeo[]; edges: Edge[] } | null>(null)
+const poiCandidates = ref<RoutePoiCandidate[]>([])
 const chartEl = ref<HTMLDivElement | null>(null)
 let chart: echarts.ECharts | null = null
 
@@ -35,6 +51,7 @@ const form = reactive({
   vehicle: '' as string,
   strategy: '' as '' | 'distance' | 'time',
   multiPoints: '',
+  showRoadNodes: false,
 })
 
 const result = ref<{ path: number[]; distance: number; time: number } | null>(null)
@@ -44,6 +61,9 @@ const areaLoading = ref(false)
 let areaSeq = 0
 
 const nodeOptions = computed(() => {
+  if (poiCandidates.value.length > 0) {
+    return poiCandidates.value
+  }
   const details = map.value?.nodeDetails ?? []
   if (details.length > 0) {
     return details
@@ -63,6 +83,17 @@ const nodeDetailMap = computed(() => {
   const out: Record<number, RouteNodeDetail> = {}
   ;(map.value?.nodeDetails ?? []).forEach((node) => {
     out[node.nodeId] = node
+  })
+  return out
+})
+
+const nodeTypeMap = computed(() => {
+  const out: Record<number, string | undefined> = {}
+  ;(map.value?.nodeGeo ?? []).forEach((node) => {
+    out[node.nodeId] = node.type
+  })
+  ;(map.value?.nodeDetails ?? []).forEach((node) => {
+    if (node.type) out[node.nodeId] = node.type
   })
   return out
 })
@@ -95,7 +126,7 @@ function poiTypeLabel(type?: string) {
 }
 
 function buildNodePositionMap() {
-  const details = map.value?.nodeDetails ?? []
+  const details = map.value?.nodeGeo ?? map.value?.nodeDetails ?? []
   const positioned = details.filter(
     (n) => typeof n.longitude === 'number' && Number.isFinite(n.longitude) && typeof n.latitude === 'number' && Number.isFinite(n.latitude),
   )
@@ -144,6 +175,7 @@ function renderGraph(highlightPath?: number[]) {
 
   const labels = nodeLabelMap.value
   const details = nodeDetailMap.value
+  const types = nodeTypeMap.value
   const positionMap = buildNodePositionMap()
   const fallbackRadius = 280
   const fallbackCenterX = 500
@@ -157,9 +189,13 @@ function renderGraph(highlightPath?: number[]) {
       y: fallbackCenterY + Math.sin(fallbackAngle) * fallbackRadius,
     }
     const pos = positionMap[id] ?? fallback
+    const isVirtual = ((types[id] || details[id]?.type || '').trim().toLowerCase() === 'virtual_node')
+    const isPoi = Boolean(details[id])
+    const showRoadNode = form.showRoadNodes || !isVirtual
+    const isHighlighted = Boolean(highlightPath?.includes(id))
     return {
       id: String(id),
-      name: labels[id] || String(id),
+      name: isVirtual && !showRoadNode ? '' : isPoi ? labels[id] || String(id) : '',
       nodeId: id,
       nodeType: details[id]?.type,
       nodeLocation: details[id]?.location,
@@ -167,10 +203,19 @@ function renderGraph(highlightPath?: number[]) {
       latitude: details[id]?.latitude,
       x: pos.x,
       y: pos.y,
-      symbolSize: highlightPath?.includes(id) ? 18 : 10,
-      itemStyle: highlightPath?.includes(id)
-        ? { color: 'rgba(204,120,92,0.95)' }
-        : { color: 'rgba(255,255,255,0.65)' },
+      symbolSize: isVirtual && !showRoadNode ? 0 : isPoi ? (isHighlighted ? 18 : 10) : isHighlighted ? 8 : 4,
+      itemStyle: isPoi
+        ? isHighlighted
+          ? { color: 'rgba(204,120,92,0.95)' }
+          : isVirtual
+            ? showRoadNode
+              ? { color: 'rgba(255,255,255,0.1)' }
+              : { color: 'rgba(255,255,255,0.0)' }
+            : { color: 'rgba(255,255,255,0.65)' }
+        : isHighlighted
+          ? { color: 'rgba(204,120,92,0.55)' }
+          : { color: 'rgba(255,255,255,0.12)' },
+      label: isPoi && !isVirtual ? undefined : { show: false },
     }
   })
 
@@ -204,6 +249,9 @@ function renderGraph(highlightPath?: number[]) {
       formatter: (params: any) => {
         if (params.dataType === 'node') {
           const data = params.data || {}
+          if (!data.nodeType && !data.nodeLocation && typeof data.longitude !== 'number') {
+            return `<div>道路节点（ID：${data.nodeId ?? '-'}）</div>`
+          }
           const typeLabel = poiTypeLabel(data.nodeType)
           const location = data.nodeLocation || '未知位置'
           const lng = typeof data.longitude === 'number' ? data.longitude.toFixed(6) : '-'
@@ -253,7 +301,12 @@ function renderGraph(highlightPath?: number[]) {
 async function loadMap() {
   loading.value = true
   try {
-    map.value = await apiMapData({ areaId: form.areaId })
+    const [mapData, candidates] = await Promise.all([
+      apiMapData({ areaId: form.areaId }),
+      apiRoutePoiCandidates({ areaId: form.areaId }),
+    ])
+    map.value = mapData
+    poiCandidates.value = candidates
     result.value = null
     form.startId = null
     form.endId = null
@@ -364,13 +417,22 @@ watch(
             </el-radio-group>
           </el-form-item>
 
+          <el-form-item label="路网调试视图">
+            <el-switch
+              v-model="form.showRoadNodes"
+              active-text="显示道路辅助节点"
+              inactive-text="隐藏道路辅助节点"
+              @change="renderGraph(result?.path)"
+            />
+          </el-form-item>
+
           <div class="row">
             <el-form-item label="起点位置（必填）">
               <el-select
                 v-model="form.startId"
                 filterable
                 clearable
-                placeholder="请选择起点POI"
+                placeholder="请选择起点节点"
                 style="width: 100%"
               >
                 <el-option
@@ -386,7 +448,7 @@ watch(
                 v-model="form.endId"
                 filterable
                 clearable
-                placeholder="请选择终点POI"
+                placeholder="请选择终点节点"
                 style="width: 100%"
               >
                 <el-option

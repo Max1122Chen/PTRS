@@ -1,0 +1,9 @@
+{
+  "amap_web_key": "REPLACE_WITH_AMAP_WEB_SERVICE_KEY",
+  "target_name": "广州市执信中学（执信南路校区）",
+  "search_keyword": "广州市执信中学 执信路校区",
+  "city": "广州",
+  "radius": 700,
+  "pages": 2,
+  "offset": 20
+}

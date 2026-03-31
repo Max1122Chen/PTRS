@@ -1,9 +1,98 @@
 [
-  {"id": 701, "name": "东门卫生间", "type": "toilet", "description": "东门附近卫生间", "location": "东门", "longitude": 116.3128, "latitude": 39.9988, "areaId": 201, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 702, "name": "图书馆打印点", "type": "printer", "description": "自助打印服务", "location": "图书馆一层", "longitude": 116.3092, "latitude": 39.9991, "areaId": 201, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 703, "name": "校医院", "type": "hospital", "description": "基础医疗服务", "location": "校园中区", "longitude": 116.3087, "latitude": 39.9978, "areaId": 201, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 704, "name": "共享单车点", "type": "bike", "description": "共享单车停放点", "location": "食堂北侧", "longitude": 116.3074, "latitude": 39.9964, "areaId": 201, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 705, "name": "游客服务中心", "type": "service", "description": "问询与导览", "location": "西门", "longitude": 116.3042, "latitude": 39.9981, "areaId": 201, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 706, "name": "博物馆储物柜", "type": "locker", "description": "寄存行李", "location": "博物馆入口", "longitude": 116.3069, "latitude": 39.9991, "areaId": 203, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 707, "name": "校史馆讲解台", "type": "service", "description": "人工讲解服务", "location": "校史馆", "longitude": 116.3059, "latitude": 39.9981, "areaId": 205, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"}
+  {
+    "id": 701,
+    "name": "东门卫生间",
+    "type": "toilet",
+    "description": "东门附近卫生间",
+    "location": "东门",
+    "longitude": 116.3128,
+    "latitude": 39.9988,
+    "areaId": 201,
+    "createTime": "2026-03-28T12:00:00",
+    "updateTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 702,
+    "name": "图书馆打印点",
+    "type": "printer",
+    "description": "自助打印服务",
+    "location": "图书馆一层",
+    "longitude": 116.3092,
+    "latitude": 39.9991,
+    "areaId": 201,
+    "createTime": "2026-03-28T12:00:00",
+    "updateTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 703,
+    "name": "校医院",
+    "type": "hospital",
+    "description": "基础医疗服务",
+    "location": "校园中区",
+    "longitude": 116.3087,
+    "latitude": 39.9978,
+    "areaId": 201,
+    "createTime": "2026-03-28T12:00:00",
+    "updateTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 704,
+    "name": "共享单车点",
+    "type": "bike",
+    "description": "共享单车停放点",
+    "location": "食堂北侧",
+    "longitude": 116.3074,
+    "latitude": 39.9964,
+    "areaId": 201,
+    "createTime": "2026-03-28T12:00:00",
+    "updateTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 705,
+    "name": "游客服务中心",
+    "type": "service",
+    "description": "问询与导览",
+    "location": "西门",
+    "longitude": 116.3042,
+    "latitude": 39.9981,
+    "areaId": 201,
+    "createTime": "2026-03-28T12:00:00",
+    "updateTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 706,
+    "name": "博物馆储物柜",
+    "type": "locker",
+    "description": "寄存行李",
+    "location": "博物馆入口",
+    "longitude": 116.3069,
+    "latitude": 39.9991,
+    "areaId": 203,
+    "createTime": "2026-03-28T12:00:00",
+    "updateTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 707,
+    "name": "校史馆讲解台",
+    "type": "service",
+    "description": "人工讲解服务",
+    "location": "校史馆",
+    "longitude": 116.3059,
+    "latitude": 39.9981,
+    "areaId": 205,
+    "createTime": "2026-03-28T12:00:00",
+    "updateTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 708,
+    "name": "中山大学附属眼科医院",
+    "type": "hospital",
+    "description": "OSM source=way:699348650, review required",
+    "location": "先烈南路",
+    "longitude": 113.287493,
+    "latitude": 23.135926,
+    "areaId": 217,
+    "createTime": "2026-03-31T10:28:03",
+    "updateTime": "2026-03-31T10:28:03"
+  }
 ]

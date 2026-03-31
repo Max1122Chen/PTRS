@@ -1,0 +1,13 @@
+{
+  "target_name": "广州市执信中学（执信南路校区）",
+  "query": "广州市执信中学 执信路校区",
+  "radius": 700,
+  "user_agent": "BUPT-TravelSeedBot/1.0 (student-project)",
+  "output_dir": "src/main/resources/osm-data",
+  "run_name": "latest",
+  "map_imports": "src/main/resources/dev-seed/map-imports.json",
+  "update_map_imports": true,
+  "virtual_node_base": 900000000,
+  "sleep": 1.0,
+  "note": "执行写入 dataseed 需要命令行加 --apply-seed"
+}

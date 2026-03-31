@@ -1,0 +1,17 @@
+[
+  {
+    "id": 220,
+    "name": "北京邮电大学",
+    "description": "Generated from OpenStreetMap (review required).",
+    "location": "北京邮电大学, 杏坛路, 北太平庄街道, 海淀区, 北京市, 100088, 中国",
+    "longitude": 116.351933,
+    "latitude": 39.960227,
+    "type": "campus",
+    "rating": 0.0,
+    "heat": 0,
+    "openTime": "待核实",
+    "ticketPrice": "待核实",
+    "createTime": "2026-03-31T12:57:30",
+    "updateTime": "2026-03-31T12:57:30"
+  }
+]

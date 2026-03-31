@@ -4,7 +4,7 @@
     "name": "未名湖",
     "description": "校园核心景观湖区",
     "location": "北京大学",
-    "longitude": 116.310,
+    "longitude": 116.31,
     "latitude": 39.998,
     "type": "campus",
     "rating": 4.7,
@@ -238,5 +238,20 @@
     "ticketPrice": "免费",
     "createTime": "2026-03-28T12:00:00",
     "updateTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 217,
+    "name": "广州市执信中学（执信南路校区）",
+    "description": "Draft generated from OpenStreetMap (review required).",
+    "location": "广州市执信中学(执信路校区), 152, 执信南路, 竹丝岗, 农林街道, 越秀区, 广州市, 广东省, 510080, 中国",
+    "longitude": 113.288709,
+    "latitude": 23.135152,
+    "type": "campus",
+    "rating": 0.0,
+    "heat": 0,
+    "openTime": "待核实",
+    "ticketPrice": "待核实",
+    "createTime": "2026-03-31T10:28:03",
+    "updateTime": "2026-03-31T10:28:03"
   }
 ]

@@ -4,6 +4,7 @@ import com.travel.model.dto.route.MultiPointRouteRequest;
 import com.travel.model.dto.route.RoutePlanRequest;
 import com.travel.model.vo.route.RoutePlanVO;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,5 +30,10 @@ public interface RouteService
      * @return nodes/edges 结构
      */
     Map<String, Object> getMapData(Long areaId);
+
+    /**
+     * 获取可用于路线起终点选择的 POI 候选（不含虚拟道路节点）。
+     */
+    List<Map<String, Object>> listRoutePoiCandidates(Long areaId);
 }
 

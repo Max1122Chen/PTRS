@@ -3,6 +3,609 @@
 > 用途：跨会话、跨 AI 的最小必要交接记录。
 > 规则：每次开发结束后追加，不要覆盖历史；已解决的同类问题应合并为结果导向记录；每条记录需标注负责人（git 用户）。
 
+## 2026-03-31（会话目标：OpenStreetMap 采集脚本与样例审批）
+### 会话目标
+- 新增 OSM 采集脚本（Nominatim + Overpass）抓取校园内部可用数据。
+- 映射到现有 `scenic_areas/buildings/facilities/roads` 结构并输出“仅审核草案”。
+- 先提供样例结果供审批，不改写现有 seed 文件。
+
+### 已完成
+- 新增脚本 `scripts/osm_seed_draft.py`：
+  - 基于 Nominatim 获取目标校园中心与 OSM 对象。
+  - 基于 Overpass 抓取校园对象内（优先 area）命名要素、设施与步行道路候选。
+  - 映射输出 `scenic_areas/buildings/facilities/roads` 四类审核草案。
+- 新增配置文件 `scripts/config/osm_seed_config.json`。
+- 已执行脚本并产出审核样例：
+  - `docs/AI/data-drafts/osm_zhixin_review_20260331_102247/`
+- 修正输出命名：草案文件由 `buildings.append.json` 调整为 `pois.append.json`（语义与 POI 对齐）。
+- 增加 `--apply-seed` 开关：在用户批准后可将本次采集结果增量写入 dataseed。
+- 调整输出路径：默认输出改为 `src/main/resources/osm-drafts/`，并按景区名拆分目录（每个景区单独文件夹）。
+- 减少重复抓取：新增景区上下文缓存 `src/main/resources/osm-drafts/<景区>/_context.json`；后续执行优先复用缓存，不再重复基础定位请求。
+- 已执行写入模式并验证：
+  - 命令：`python scripts/osm_seed_draft.py --config scripts/config/osm_seed_config.json --apply-seed`
+  - 结果：成功追加 `scenic_areas +1 / buildings(POI) +9 / facilities +1 / roads +8`
+  - 当前 seed 规模：`scenic_areas=17, buildings=16, facilities=8, roads=16`
+
+### 验证
+- 命令：`python scripts/osm_seed_draft.py --config scripts/config/osm_seed_config.json`
+- 结果：成功输出样例，统计为 `POI=9, Facilities=1, Roads=8`。
+
+### 变更文件
+- scripts/osm_seed_draft.py
+- scripts/config/osm_seed_config.json
+- docs/AI/HANDOFF.md
+
+## 2026-03-31（后端配置化读取新增地图数据）
+### 会话目标
+- 通过配置文件声明后端需要读取的新增地图数据文件，而不是写死读取路径。
+
+### 已完成
+- `DevSeedDataLoader` 增加 `app.dev-seed.map-import-config` 配置支持。
+- 新增配置模型 `MapImportConfig`，支持按清单导入：`scenicAreas / pois / buildings(兼容) / roads / facilities`。
+- 导入逻辑支持多文件合并，按 `id` 去重覆盖，避免重复加载时同 ID 冲突。
+- 新增默认配置文件 `src/main/resources/dev-seed/map-imports.json`。
+- 已将当前 OSM 样例目录挂载到 `map-imports.json` 作为配置化导入示例。
+
+### 验证
+- `mvn -DskipTests compile` 通过。
+
+### 变更文件
+- src/main/java/com/travel/storage/DevSeedDataLoader.java
+- src/main/resources/application.yml
+- src/main/resources/dev-seed/map-imports.json
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（管理员任务日志中文乱码修复）
+### 会话目标
+- 修复“脚本执行日志返回前端时中文显示乱码”的问题。
+
+### 已完成
+- 后端子进程日志读取统一为 UTF-8：
+  - `AdminServiceImpl#exec` 中 `InputStreamReader` 显式使用 `StandardCharsets.UTF_8`。
+- 为 Python 子进程显式设置 UTF-8 输出环境：
+  - `PYTHONIOENCODING=utf-8`
+  - `PYTHONUTF8=1`
+
+### 验证
+- 后端编译：`mvn -f d:/Dev/GitRepo/BUPT_PersonalizedTravelRecommendationSystem/pom.xml -DskipTests compile` 通过。
+
+### 变更文件
+- src/main/java/com/travel/service/impl/AdminServiceImpl.java
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（重复判定优化 + 失败残留自动回收）
+### 会话目标
+- 解决“仅生成目录与 context 但未生成 latest 数据时，被误判已存在”的问题。
+
+### 旧依据（问题来源）
+- 旧逻辑按 OSM 实体身份匹配到 `_context.json` / `latest/raw/nominatim_top.json` 即判定重复，未区分是否存在可用 latest 数据。
+
+### 新依据（已落地）
+- 判定“已存在重复”必须同时满足：
+  - OSM 实体身份匹配（`place_id` 或 `osm_type+osm_id`）。
+  - 对应景区目录下存在完整且非空的 `latest/scenic_areas.append.json`、`latest/pois.append.json`、`latest/roads.append.json`。
+
+### 失败回收（已落地）
+- 在生成前会先清理该 OSM 实体对应的“不完整残留目录”（如只有 `_context.json` 或 latest 不完整）。
+- 当 seed 执行失败（`seed_failed`）时，会再次触发同样的清理，避免下次被误判重复。
+- 返回结果新增 `recycledIncompletePaths`，用于前端展示回收了哪些路径。
+
+### 验证
+- 后端编译：`mvn -f d:/Dev/GitRepo/BUPT_PersonalizedTravelRecommendationSystem/pom.xml -DskipTests compile` 通过。
+
+### 变更文件
+- src/main/java/com/travel/service/impl/AdminServiceImpl.java
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（修复：按选中 OSM 实体判重，避免关键词误拦截）
+### 会话目标
+- 解决“已存在北京邮电大学（沙河校区）时，再录入北京邮电大学（其他校区）被误判重复”的问题。
+
+### 根因
+- 旧逻辑在生成前按 `placeName` 调用本地 `contains` 模糊匹配判重，未使用管理员选中的 OSM 实体标识。
+
+### 已完成
+- 前端：
+  - 管理页 OSM 单选由字符串 `displayName` 改为选中对象。
+  - 生成请求新增 `selectedOsm`（`placeId/osmType/osmId/displayName/name`）。
+- 后端：
+  - `generate-from-osm` 接口透传 `selectedOsm` 唯一标识。
+  - 服务层改为“精确判重优先”：扫描 `src/main/resources/osm-data` 下 `_context.json` 与 `latest/raw/nominatim_top.json`，按 `place_id` 或 `osm_type+osm_id` 判断是否同一实体。
+  - 仅当“同一 OSM 实体”且非 `force` 时跳过；模糊本地匹配仅作为提示字段返回，不再阻断。
+  - 返回结果新增：`exactDuplicate`、`selectedPlaceId`、`selectedOsmType`、`selectedOsmId`、`fuzzyLocalMatchesCount`、`fuzzyExists`。
+
+### 验证
+- 后端：`mvn -f d:/Dev/GitRepo/BUPT_PersonalizedTravelRecommendationSystem/pom.xml -DskipTests compile`。
+- 前端：`npm.cmd run build` 通过。
+
+### 变更文件
+- src/main/java/com/travel/service/AdminService.java
+- src/main/java/com/travel/controller/AdminController.java
+- src/main/java/com/travel/service/impl/AdminServiceImpl.java
+- frontend/src/lib/api.ts
+- frontend/src/views/admin/AdminView.vue
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（ID 冲突双方案落地：全量来源发现 + 带锁注册表分配）
+### 会话目标
+- 一次性落地两套 ID 防冲突方案：
+  - 方案A：分配前扫描全量来源（base seed + map-imports + osm-data）获取各实体最大 ID。
+  - 方案B：引入仓库级 ID 注册表并加锁，支持并发场景下的原子号段分配。
+
+### 已完成
+- `scripts/osm_seed.py` 新增：
+  - `discover_existing_max_ids()`：聚合扫描 `scenic_areas/buildings/facilities/roads` 的已用最大 ID。
+  - `allocate_id_ranges()`：基于“全量最大 ID + 注册表高水位”分配新号段。
+  - 文件锁机制（`*.lock`）确保注册表更新原子性，避免并发抢号。
+  - 新增参数 `--id-registry`（默认 `src/main/resources/dev-seed/id-registry.json`）。
+- 生成流程改造：
+  - 先使用临时 ID 构建图与路网。
+  - 生成完成后统一重映射为全局真实 ID（景区/POI/设施/道路全覆盖）。
+  - 道路端点同步映射到新的 POI ID，保证引用一致性。
+- 报告补充：`Map Imports` 区块追加 `idRegistryFile` 方便追踪。
+
+### 验证
+- `python -m py_compile scripts/osm_seed.py scripts/validate_osm_output.py` 通过。
+
+### 变更文件
+- scripts/osm_seed.py
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（OSM 生成目录命名改为基于 OSM 命中地址）
+### 会话目标
+- 调整 OSM 生成脚本目录命名策略：不再使用管理员输入名，改为使用 OSM 实际命中地址名，避免输入简称导致目录语义不完整。
+
+### 已完成
+- `scripts/osm_seed.py` 调整目录命名逻辑：
+  - 先执行 Nominatim 查询得到命中结果 `top`。
+  - 新增 `resolve_matched_dir_key()`，优先使用 `display_name`（其次 `name`）作为目录 key 来源。
+  - `scenic_slug` 改为由该命中地址名生成。
+- 报告增强：`report.md` 增加 `matchedAddressName` 与 `outputDirSlug` 字段，便于排查目录来源。
+
+### 验证
+- 执行 `python scripts/osm_seed.py --help`，参数解析与脚本语法正常。
+
+### 变更文件
+- scripts/osm_seed.py
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（OSM 景区名改为命中结果）
+### 会话目标
+- 在目录名基于 OSM 命中的基础上，进一步将生成的景区名也改为 OSM 匹配结果，避免管理员输入简称导致景区名不完整。
+
+### 已完成
+- `scripts/osm_seed.py` 新增 `resolve_matched_scenic_name()`：
+  - 优先使用 Nominatim 命中 `name`，其次 `display_name`，最后回退 `target-name`。
+- `scenic_areas.append.json` 的 `name` 字段改由匹配结果填充，不再直接使用管理员输入。
+- 报告字段补充：
+  - `targetNameInput`
+  - `scenicNameMatched`
+
+### 验证
+- `python -m py_compile scripts/osm_seed.py` 通过（无语法错误）。
+
+### 变更文件
+- scripts/osm_seed.py
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（管理员开发工具按钮风格统一 + 后端重启）
+### 会话目标
+- 统一管理员开发工具区“查 OSM 候选”和“选择后生成”按钮的颜色风格。
+- 完成后端服务重启。
+
+### 已完成
+- 前端样式调整：
+  - 为开发工具区两个按钮统一使用 `type=primary` 与同一 `dev-action-btn` 样式类。
+  - 新增统一主色渐变与 hover 态，消除按钮风格不一致。
+- 后端重启：
+  - 已释放 8080 端口旧进程并重新启动服务（dev profile）。
+  - 启动日志显示 `Tomcat started on port 8080`，服务已拉起。
+
+### 说明
+- 启动过程中出现 MySQL 连接失败日志，但由于 dev 配置允许 DB 不可用时回退到内存种子，服务已成功启动并可用。
+
+### 变更文件
+- frontend/src/views/admin/AdminView.vue
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（前端生成失败排查：dev 环境管理员校验误拦截）
+### 问题现象
+- 管理员页面点击“选择后生成”失败，前端提示无权限或执行失败。
+
+### 根因
+- `application-dev.yml` 中 `app.security.auth-enabled=false`（开发态关闭鉴权）时，请求可能不带登录态。
+- 但 `AdminController` 仍执行 `isAdmin()` 强校验，`SecurityUtil.getCurrentUser()` 为空导致返回 403。
+- 结果表现为：开发环境能打开页面，但开发工具接口（`/api/admin/dev/*`）被误拦截。
+
+### 修复
+- `AdminController` 新增注入 `app.security.auth-enabled`。
+- `isAdmin()` 调整为：当 `auth-enabled=false` 时直接放行（仅开发态生效）；开启鉴权时仍按 ADMIN 角色严格校验。
+
+### 验证
+- `mvn -f d:/Dev/GitRepo/BUPT_PersonalizedTravelRecommendationSystem/pom.xml -DskipTests compile` 通过。
+
+### 变更文件
+- src/main/java/com/travel/controller/AdminController.java
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（管理员地名导入交互优化：输入即查重 + OSM 模糊召回 + 生成/构建解耦）
+### 会话目标
+- 管理员输入地名时自动进行本地已有数据检索（不再依赖手工点击）。
+- 保留“查询 OSM”按钮，但增强模糊召回能力（如“北京邮电大学”可召回“北京邮电大学（沙河校区）”等）。
+- 管理员从 OSM 候选中选中后再生成数据；生成流程可选择是否自动触发前端构建。
+
+### 已完成
+- 前端管理员页面（开发工具）改造：
+  - `placeName` 输入框新增防抖自动本地检索（350ms）。
+  - 本地检索按钮移除，改为“输入即查重”。
+  - 增加 `buildFrontend` 复选框，支持“生成后自动执行前端 build”开关。
+  - OSM 按钮文案更新为“支持模糊”，流程为：查 OSM 候选 -> 选中 -> 生成。
+- 后端 OSM 候选查询增强：
+  - 对同一关键词构造多组 query 变体（原词、去括号主名、追加“校区”），并聚合去重返回。
+  - 以 `osm_type + osm_id` 去重，最多返回 20 条候选。
+- 后端生成接口增强：
+  - `generate-from-osm` 新增 `buildFrontend` 参数（默认 true）。
+  - 当 `buildFrontend=false` 时，仅执行采集，不执行前端构建。
+- 落地开发工具安全开关：
+  - 新增配置 `app.admin.dev-tools.enabled`（默认 true）。
+  - `AdminController` 对 `/api/admin/dev/*` 接口统一校验该开关，关闭时返回 403。
+
+### 验证
+- 后端：`mvn -f d:/Dev/GitRepo/BUPT_PersonalizedTravelRecommendationSystem/pom.xml -DskipTests compile` 通过。
+- 前端：`npm.cmd run build`（在 `frontend` 目录）通过。
+
+### 变更文件
+- src/main/java/com/travel/service/AdminService.java
+- src/main/java/com/travel/controller/AdminController.java
+- src/main/java/com/travel/service/impl/AdminServiceImpl.java
+- src/main/resources/application.yml
+- frontend/src/lib/api.ts
+- frontend/src/views/admin/AdminView.vue
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（管理员地名导入流程细化 + 资源未新增问题修复）
+### 会话目标
+- 按架构化流程将“前端调用后端爬数据”拆分为三段：
+  1) 本地已有地名匹配查询；
+  2) OSM 候选结果查询（仅预览，不生成）；
+  3) 管理员选择候选后再生成数据并执行前端 build。
+- 排查“前端日志显示成功但资源未新增”的原因并修复。
+
+### 已完成
+- 后端新增开发接口：
+  - `GET /api/admin/dev/local-place-search?keyword=...`（本地景区匹配）
+  - `GET /api/admin/dev/osm-search?keyword=...`（OSM 候选查询）
+  - `POST /api/admin/dev/generate-from-osm`（按选中 query 生成并 build）
+- 前端管理员“开发工具”改为分步骤交互：显示本地匹配表、OSM 候选表（可选中），再触发生成。
+- 修复核心根因：`scripts/osm_seed.py` 新增 `--skip-config`，避免配置文件覆盖命令行地名参数。
+- 后端执行脚本时固定到项目根目录，避免工作目录漂移导致输出到错误位置。
+
+### 问题根因（资源未新增）
+- 之前后端调用脚本传了 `--target-name/--query`，但 `osm_seed.py` 会读取配置并覆盖参数，导致始终使用固定地名（看似执行成功，实际重复生成旧地点）。
+- 同时未显式锁定脚本执行目录，存在相对路径输出不稳定风险。
+
+### 验证
+- 后端：`mvn -f ../pom.xml -DskipTests compile` 通过。
+- 前端：`npm.cmd run build` 通过。
+
+### 变更文件
+- scripts/osm_seed.py
+- src/main/java/com/travel/service/AdminService.java
+- src/main/java/com/travel/service/impl/AdminServiceImpl.java
+- src/main/java/com/travel/controller/AdminController.java
+- frontend/src/lib/api.ts
+- frontend/src/views/admin/AdminView.vue
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（管理员开发面板增强 + 设施并入 POI 重构方案）
+### 会话目标
+- 需求1：路线页去除对“POI”概念的用户暴露，统一使用“节点”表达。
+- 需求2：管理员前端提供地名一键采集开发面板：输入地名 -> 后端检查是否已有数据 -> 无数据则触发 OSM 脚本 -> 自动执行前端 build。
+- 需求3：以 PM 与 Architect 视角给出“设施并入 POI”的重构设计。
+
+### 已完成（代码）
+- 路线页文案优化：起点/终点 placeholder 由“POI”改为“节点”。
+- 管理端新增开发工具能力：
+  - 后端新增 `POST /api/admin/dev/import-place`。
+  - 逻辑：检查景区名称/位置是否包含地名；若存在且非强制则跳过；否则执行 `scripts/osm_seed.py`，成功后执行 `frontend` 下 `npm run build`。
+  - 返回执行状态、退出码和日志片段，便于前端展示。
+- 前端管理员页面新增“开发工具”Tab：支持输入地名、强制重抓开关、查看脚本与构建日志。
+
+### PM + Architect 重构方案（设施并入 POI）
+- 目标定义：
+  - 将“可在地图展示/可参与检索与路线关联的设施”统一纳入 POI 语义层。
+  - `facility` 退化为 POI 的扩展详情（明细表/明细对象），不再与 POI 并行承担“点位实体”职责。
+- 分层模型：
+  - `poi`：统一点位主实体（id/name/type/location/lng/lat/areaId/...）。
+  - `facility_profile`（建议新增）：以 `poi_id` 关联的设施明细（开放时间、服务能力、电话、可达性等）。
+  - 路网节点中的 `virtual_node` 仍保留非业务节点语义，不进入候选与用户检索。
+- 迁移策略（低风险分阶段）：
+  1) 双写阶段：新增设施时同时写 `poi(type=facility_xxx)` + `facility`（兼容老逻辑）。
+  2) 读扩展阶段：地图与搜索优先从 `poi` 读，设施详情从 `facility_profile/facility` 读扩展字段。
+  3) 收口阶段：逐步下线“设施作为独立地图点”的旧读取路径，仅保留扩展明细职责。
+- 接口建议：
+  - 新增/扩展 `GET /api/poi` 支持 `type` 过滤（包含 facility 类）。
+  - 保留 `GET /api/facility/detail/{id}`，但入参改为 `poiId` 或返回中明确 `poiId` 关联。
+  - `map-data` 默认返回统一点位集合（业务 POI）；前端按 `type` 图层化展示。
+- 验收标准：
+  - 地图点位来源单一（POI），设施在地图上可见且详情可打开。
+  - 旧设施接口兼容期内可用，不影响现有页面。
+  - 路线候选仍不包含 `virtual_node`。
+
+### 验证
+- 后端：`mvn -f ../pom.xml -DskipTests compile` 通过。
+- 前端：`npm.cmd run build` 通过。
+
+### 变更文件
+- src/main/java/com/travel/service/AdminService.java
+- src/main/java/com/travel/service/impl/AdminServiceImpl.java
+- src/main/java/com/travel/controller/AdminController.java
+- frontend/src/lib/api.ts
+- frontend/src/views/admin/AdminView.vue
+- frontend/src/views/route/RoutePlannerView.vue
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（路线页圆圈兜底节点回归修复）
+### 问题现象
+- 前端路线图再次出现“兜底圆圈节点”，路网看起来围成一圈。
+
+### 根因
+- 之前将 `map-data` 的 `nodeDetails` 收敛为“仅业务 POI”（用于起终点候选解耦）后，前端 `buildNodePositionMap` 仍只从 `nodeDetails` 取坐标。
+- 虚拟道路节点缺失坐标后触发 fallback 圆圈布局，导致可视上出现环状兜底节点。
+
+### 修复
+- 后端 `RouteServiceImpl#getMapData` 新增 `nodeGeo` 字段：返回图中所有节点（含 virtual_node）的最小坐标信息（`nodeId/type/longitude/latitude`）。
+- 前端 `RoutePlannerView.vue` 改为优先使用 `nodeGeo` 进行布局；`nodeTypeMap` 由 `nodeGeo + nodeDetails` 合并推断节点类型，确保虚拟节点隐藏逻辑生效。
+- `api.ts` 同步补充 `nodeGeo` 类型定义。
+
+### 验证
+- `mvn -f ../pom.xml -DskipTests compile`：BUILD SUCCESS。
+- `npm.cmd run build`：前端构建成功（仅 chunk size warning）。
+
+### 变更文件
+- src/main/java/com/travel/service/impl/RouteServiceImpl.java
+- frontend/src/lib/api.ts
+- frontend/src/views/route/RoutePlannerView.vue
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（迭代目标清单交接 + 前5项启动落地）
+### 会话背景（供换 Agent 快速接手）
+- 用户要求将“从易到难、低耦合优先”的迭代目标与上下文写入 HANDOFF，并立即开始前 5 项。
+- 排序依据：先做对其他系统耦合最低、改动面最小、可快速验证的事项。
+
+### 迭代清单（从易到难）
+1. 数据字段瘦身规则固化（virtual_node 最小字段集）
+2. OSM 产物自动校验脚本（字段/拓扑/附着率）
+3. 生成报告增强（体积与拓扑指标）
+4. 前端默认隐藏道路辅助节点（可调试开关）
+5. 起终点候选独立接口（与 map-data 解耦）
+6. 路网按 area 分块懒加载
+7. 后端图结构缓存复用
+8. 不可达路径兜底与可解释建议
+9. 多策略路径优化（最短距离/最少转折/低拥挤）
+
+### 前 5 项执行状态
+- [完成] 第1项：`scripts/osm_seed.py` 已确保 virtual_node 不写 `description/createTime/updateTime`。
+- [完成] 第2项：新增 `scripts/validate_osm_output.py`，校验通过。
+- [完成] 第3项：`scripts/osm_seed.py` 报告新增附着率、虚拟节点连通、度分布、payload 体积统计。
+- [完成] 第4项：`frontend/src/views/route/RoutePlannerView.vue` 新增“显示道路辅助节点”开关，默认隐藏。
+- [完成] 第5项：新增后端接口 `GET /api/route/poi-candidates` 并在前端接入独立候选数据源。
+
+### 验证结果
+- `python ../scripts/osm_seed.py --config ../scripts/config/osm_seed_config.json`：成功生成 latest。
+- `python ../scripts/validate_osm_output.py --dir ../src/main/resources/osm-data/广州市执信中学-执信南路校区/latest`：Validation PASSED。
+- `mvn -f ../pom.xml -DskipTests compile`：BUILD SUCCESS。
+- `npm.cmd run build`：前端构建成功（仅 chunk size warning）。
+
+### 变更文件
+- scripts/osm_seed.py
+- scripts/validate_osm_output.py
+- src/main/java/com/travel/service/RouteService.java
+- src/main/java/com/travel/service/impl/RouteServiceImpl.java
+- src/main/java/com/travel/controller/RouteController.java
+- frontend/src/lib/api.ts
+- frontend/src/views/route/RoutePlannerView.vue
+- src/main/resources/osm-data/广州市执信中学-执信南路校区/latest/report.md
+- src/main/resources/osm-data/广州市执信中学-执信南路校区/latest/pois.append.json
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（脚本/输出去除 draft 后缀）
+### 已完成
+- 脚本重命名：`scripts/osm_seed_draft.py` -> `scripts/osm_seed.py`，`scripts/amap_seed_draft.py` -> `scripts/amap_seed.py`。
+- 输出目录去除 draft 后缀：OSM 默认输出改为 `src/main/resources/osm-data/`（原 `osm-drafts`）。
+- OSM 配置已同步：`scripts/config/osm_seed_config.json` 的 `output_dir` 更新为 `src/main/resources/osm-data`。
+- 重新执行脚本生成新样例：`src/main/resources/osm-data/广州市执信中学-执信南路校区/run_20260331_104557/`。
+- `map-imports.json` 已切换到新输出路径。
+
+### 说明
+- 当前 `roads.append.json` 仍为“按 POI 几何距离排序后近邻连边”的简化生成逻辑，并非直接将 OSM 路网拓扑映射为道路边。
+
+## 2026-03-31（OSM 道路切换为真路网）
+### 已完成
+- `scripts/osm_seed.py` 道路生成逻辑升级为真路网：
+  - Overpass 查询改为 `out geom tags`，提取 highway way 几何折线。
+  - 由 highway 折线构建路网图（节点+边权距离）。
+  - POI 吸附到最近路网节点后，使用最短路距离生成 POI 间道路边。
+- 新样例输出：`src/main/resources/osm-data/广州市执信中学-执信南路校区/run_20260331_105018/`。
+
+### 验证
+- 执行：`python scripts/osm_seed.py --config scripts/config/osm_seed_config.json`
+- 结果：`POI=9, Facilities=1, Roads=7`。
+- 报告中已包含路网统计：`roadNetworkNodes=32`、`roadGraphEdgesApprox=34`、`snappedPoiCount=9`。
+
+## 2026-03-31（真路网伪节点 + latest 覆盖 + map-imports 自动更新）
+### 已完成
+- `scripts/osm_seed.py` 支持以“非 POI 伪节点”作为道路端点：
+  - 从 OSM `highway` 几何构图生成虚拟路网节点（不写入 POI）。
+  - 道路由两类边组成：虚拟节点间的 highway 边 + POI 到最近虚拟节点的连接边。
+- 输出目录改为固定 `latest`（覆盖旧结果），避免每次累积新 run 目录。
+- 脚本执行后自动回写 `src/main/resources/dev-seed/map-imports.json` 到最新 `latest` 路径。
+- 后端 `RouteServiceImpl#getMapData` 仅返回 POI 的 `nodeDetails`，非 POI 伪节点不作为 POI 信息突出展示。
+- 前端 `RoutePlannerView.vue` 已将非 POI 节点弱化显示（无标签、低透明、更小尺寸）。
+
+### 验证
+- `python scripts/osm_seed.py --config scripts/config/osm_seed_config.json`
+  - 输出：`src/main/resources/osm-data/广州市执信中学-执信南路校区/latest`
+  - 报告显示：`roadCount=43`、`virtualNodeCount=32`、`snappedPoiCount=9`
+  - `map-imports.json` 已自动更新到 `classpath:osm-data/.../latest/*.append.json`
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（会话目标：高德采集脚本与审核草案）
+### 会话目标
+- 编写可执行 Python 脚本，通过高德 Web API 抓取“广州执信中学（执信南路校区）”相关真实地图数据。
+- 仅生成审核草案文件（景区/POI/设施/道路），不改动现有 seed 数据。
+
+### 已完成
+- 新增脚本 `scripts/amap_seed_draft.py`：
+  - 通过高德 Web API 执行文本检索、周边检索、步行路径采集。
+  - 自动读取现有 seed 最大 ID，生成 `scenic_areas/buildings/facilities/roads` 审核草案。
+  - 输出目录为 `docs/AI/data-drafts/amap_zhixin_review_<timestamp>/`，含 raw 响应与报告。
+  - 默认不改写任何现有 seed 文件。
+- 新增配置模板 `scripts/config/amap_seed_config.example.json`，支持独立配置 Web 服务 key。
+- 新增配置文件 `scripts/config/amap_seed_config.json`（用户已填入 key）。
+- 脚本增加请求限速与频控重试参数：`--request-interval`、`--max-retry`，用于缓解 `CUQPS_HAS_EXCEEDED_THE_LIMIT`。
+- 已成功产出两批审核草案：
+  - `docs/AI/data-drafts/amap_zhixin_review_20260331_090802/`
+  - `docs/AI/data-drafts/amap_zhixin_review_20260331_090833/`
+
+### 验证与当前阻塞
+- 执行命令：`python scripts/amap_seed_draft.py`
+- 已验证：
+  - 文本检索接口返回 `status=1, info=OK`，说明当前 key 可用于 Web 服务。
+  - 全流程脚本可执行并输出审核草案文件。
+- 当前非阻塞风险：周边检索半径内会混入校区外 POI（例如附近高校/社会餐饮），需要人工审核后再落地。
+
+### 下一步
+- 在人工审核确认后，再按同口径选择是否将审核通过的数据增量写入 seed。
+
+### 变更文件
+- scripts/amap_seed_draft.py
+- scripts/config/amap_seed_config.example.json
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（数据建模新要求记录：景区-POI 口径）
+### 会话目标
+- 仅记录用户最新的数据设计要求，不继续生成或修改任何 seed 数据文件。
+
+### 用户确认的新要求
+- 语义口径：一个校区整体作为“景区（scenic_area）”，校区内设施/场所统一作为“POI（buildings 语义层）”。
+- 语义细分：校园内可游览节点（如湖、广场、步道、纪念点）归类为 `scenic_spot` 类型 POI。
+- 数据来源：后续新样本的经纬度应尽量基于可核查地图来源，禁止凭空拟造坐标。
+- 交付流程：先提供样本信息供用户人工审核，用户确认后才允许继续落地到 seed 文件。
+- 变更边界：不改动当前既有拟造数据，仅在用户确认后新增符合新口径的数据。
+
+### 本轮执行结果
+- 已停止继续生成新样本，仅完成要求记录。
+
+### 变更文件
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（CVE 再复核：维持安全版本）
+### 会话目标
+- 按用户要求再次升级并验证漏洞依赖，使用 `#appmod-validate-cves-for-java` 复核结果。
+
+### 已完成
+- 重新解析当前直接依赖版本并核对关键历史风险构件版本。
+- 使用 `#appmod-validate-cves-for-java` 扫描后，结果为无已知待修复 CVE。
+- 执行 `mvn -q clean test`，构建与测试通过。
+
+### 结论
+- 当前依赖已处于非漏洞版本基线，本轮无新增升级改动。
+
+### 变更文件
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（CVE 复核：当前无需继续升级）
+### 会话目标
+- 按用户要求再次升级并复核漏洞依赖，使用 `#appmod-validate-cves-for-java` 验证结果。
+
+### 已完成
+- 重新解析当前直接依赖版本并复核关键历史高风险构件版本。
+- 使用 `#appmod-validate-cves-for-java` 扫描当前依赖集合，结果为无已知待修复 CVE。
+- 执行 `mvn -q clean test`，构建与测试通过。
+
+### 结论
+- 当前依赖已处于非漏洞版本基线，本轮无新增升级改动。
+
+### 变更文件
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（CVE 依赖复核：无新增升级）
+### 会话目标
+- 复核当前项目依赖是否仍存在需修复 CVE，并使用 `#appmod-validate-cves-for-java` 验证。
+
+### 已完成
+- 读取并确认 `pom.xml` 当前已采用安全版本基线（Spring Boot 3.5.0 + 关键安全覆盖版本）。
+- 生成当前解析依赖坐标（116 个）用于复核抽样。
+- 使用 `#appmod-validate-cves-for-java` 对直接依赖与关键历史漏洞构件版本执行扫描。
+- 运行 `mvn -q clean test` 回归验证通过。
+
+### 验证
+- CVE 扫描结果：No known CVEs that need to be fixed are found for the given dependencies.
+- 构建/测试：`mvn -q clean test` 通过。
+
+### 变更文件
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
 ## 2026-03-31（CVE 依赖升级与复核）
 ### 会话目标
 - 升级存在漏洞的依赖到无已知漏洞版本，并使用 `#appmod-validate-cves-for-java` 完成修复验证。
@@ -842,3 +1445,26 @@
 - frontend/src/views/HomeView.vue
 - docs/AI/HANDOFF.md
 
+
+## 2026-03-31（OSM道路节点字段瘦身 + 体验与架构优化评估）
+### 会话目标
+- 优化 POI 生成数据：道路虚拟节点不再记录 description/createTime/updateTime，降低内存占用。
+- 基于 project-manager 与 architect 视角评估现有方案，提出下一阶段设计与体验优化清单。
+
+### 已完成
+- 修改脚本 `scripts/osm_seed.py`：仅对 `type=virtual_node` 节点移除 `description/createTime/updateTime` 字段；保留必要字段（id/name/type/location/longitude/latitude/parentId/areaId）。
+- 重新生成 latest 数据：`python ../scripts/osm_seed.py --config ../scripts/config/osm_seed_config.json`。
+- 程序化校验通过：virtual_node=32，违规字段出现次数=0。
+
+### 验证
+- 执行：`python ../scripts/osm_seed.py --config ../scripts/config/osm_seed_config.json`
+- 执行：`python -c "..."` 校验 virtual_node 中是否含 description/createTime/updateTime
+- 结果：均通过。
+
+### 变更文件
+- scripts/osm_seed.py
+- src/main/resources/osm-data/广州市执信中学-执信南路校区/latest/pois.append.json
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）

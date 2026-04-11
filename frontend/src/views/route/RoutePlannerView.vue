@@ -7,7 +7,9 @@ import {
   apiPlanRoute,
   apiPlanRouteMulti,
   apiRoutePoiCandidates,
+  apiRoutePoiTypes,
   apiScenicSearchByKeyword,
+  type PoiTypeDictItem,
   type RoutePoiCandidate,
   type ScenicArea,
 } from '../../lib/api'
@@ -57,6 +59,7 @@ const form = reactive({
 const result = ref<{ path: number[]; distance: number; time: number } | null>(null)
 
 const areaOpts = ref<ScenicArea[]>([])
+const poiTypeOptions = ref<PoiTypeDictItem[]>([])
 const areaLoading = ref(false)
 let areaSeq = 0
 
@@ -98,30 +101,27 @@ const nodeTypeMap = computed(() => {
   return out
 })
 
+const hasSelectedArea = computed(() => form.areaId != null)
+const poiTypeLabelMap = computed(() => {
+  const out: Record<string, string> = {}
+  poiTypeOptions.value.forEach((item) => {
+    const key = item.code?.trim().toLowerCase()
+    if (key) out[key] = item.label || item.code
+  })
+  return out
+})
+
 function poiTypeLabel(type?: string) {
   if (!type) return '未分类'
   const key = type.trim().toLowerCase()
-  switch (key) {
-    case 'scenic_spot':
-      return '景点'
-    case 'gate':
-      return '出入口'
-    case 'library':
-      return '图书馆'
-    case 'teaching':
-      return '教学楼'
-    case 'canteen':
-      return '食堂'
-    case 'service':
-      return '服务点'
-    case 'toilet':
-      return '厕所'
-    case 'dormitory':
-      return '宿舍'
-    case 'lab':
-      return '实验楼'
-    default:
-      return type
+  return poiTypeLabelMap.value[key] || type
+}
+
+async function loadPoiTypes() {
+  try {
+    poiTypeOptions.value = await apiRoutePoiTypes()
+  } catch {
+    poiTypeOptions.value = []
   }
 }
 
@@ -176,6 +176,7 @@ function renderGraph(highlightPath?: number[]) {
   const labels = nodeLabelMap.value
   const details = nodeDetailMap.value
   const types = nodeTypeMap.value
+  const showPoiNodes = hasSelectedArea.value || Boolean(highlightPath?.length)
   const positionMap = buildNodePositionMap()
   const fallbackRadius = 280
   const fallbackCenterX = 500
@@ -193,9 +194,10 @@ function renderGraph(highlightPath?: number[]) {
     const isPoi = Boolean(details[id])
     const showRoadNode = form.showRoadNodes || !isVirtual
     const isHighlighted = Boolean(highlightPath?.includes(id))
+    const visiblePoi = isPoi && showPoiNodes
     return {
       id: String(id),
-      name: isVirtual && !showRoadNode ? '' : isPoi ? labels[id] || String(id) : '',
+      name: isVirtual && !showRoadNode ? '' : visiblePoi ? labels[id] || String(id) : '',
       nodeId: id,
       nodeType: details[id]?.type,
       nodeLocation: details[id]?.location,
@@ -203,8 +205,8 @@ function renderGraph(highlightPath?: number[]) {
       latitude: details[id]?.latitude,
       x: pos.x,
       y: pos.y,
-      symbolSize: isVirtual && !showRoadNode ? 0 : isPoi ? (isHighlighted ? 18 : 10) : isHighlighted ? 8 : 4,
-      itemStyle: isPoi
+      symbolSize: isVirtual && !showRoadNode ? 0 : visiblePoi ? (isHighlighted ? 18 : 10) : isHighlighted ? 8 : 4,
+      itemStyle: visiblePoi
         ? isHighlighted
           ? { color: 'rgba(204,120,92,0.95)' }
           : isVirtual
@@ -215,7 +217,7 @@ function renderGraph(highlightPath?: number[]) {
         : isHighlighted
           ? { color: 'rgba(204,120,92,0.55)' }
           : { color: 'rgba(255,255,255,0.12)' },
-      label: isPoi && !isVirtual ? undefined : { show: false },
+      label: visiblePoi && !isVirtual ? undefined : { show: false },
     }
   })
 
@@ -299,6 +301,17 @@ function renderGraph(highlightPath?: number[]) {
 }
 
 async function loadMap() {
+  if (form.areaId == null) {
+    map.value = null
+    poiCandidates.value = []
+    result.value = null
+    form.startId = null
+    form.endId = null
+    form.multiPoints = ''
+    chart?.clear()
+    return
+  }
+
   loading.value = true
   try {
     const [mapData, candidates] = await Promise.all([
@@ -361,14 +374,16 @@ async function planMulti() {
   }
 }
 
-onMounted(loadMap)
-
 watch(
   () => form.areaId,
   () => {
     void loadMap()
   },
 )
+
+onMounted(() => {
+  void loadPoiTypes()
+})
 </script>
 
 <template>

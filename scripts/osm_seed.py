@@ -15,7 +15,7 @@ import os
 import shutil
 import time
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 from urllib.parse import quote_plus, urlencode
 from urllib.request import Request, urlopen
 
@@ -26,6 +26,49 @@ SEED_DIR = Path("src/main/resources/dev-seed")
 DEFAULT_OUTPUT_DIR = Path("src/main/resources/osm-data")
 DEFAULT_MAP_IMPORTS = Path("src/main/resources/dev-seed/map-imports.json")
 DEFAULT_ID_REGISTRY = Path("src/main/resources/dev-seed/id-registry.json")
+DEFAULT_POI_TYPES_CONFIG = Path("src/main/resources/config/poi-types.json")
+
+
+def load_known_poi_type_codes(repo_root: Path) -> Set[str]:
+    default_codes = {
+        "scenic_spot",
+        "gate",
+        "library",
+        "teaching",
+        "restaurant",
+        "service",
+        "toilet",
+        "dormitory",
+        "lab",
+        "virtual_node",
+        "shop",
+        "medical",
+        "parking",
+        "sports",
+    }
+
+    path = repo_root / DEFAULT_POI_TYPES_CONFIG
+    if not path.exists():
+        return default_codes
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return default_codes
+
+    types = data.get("types", []) if isinstance(data, dict) else []
+    if not isinstance(types, list):
+        return default_codes
+
+    codes: Set[str] = set()
+    for row in types:
+        if not isinstance(row, dict):
+            continue
+        code = str(row.get("code", "")).strip().lower()
+        if code:
+            codes.add(code)
+
+    return codes or default_codes
 
 
 def now_iso() -> str:
@@ -366,8 +409,8 @@ def classify_poi(tags: Dict[str, object]) -> Optional[str]:
         return "teaching"
     if amenity == "library":
         return "library"
-    if amenity in {"canteen", "food_court"}:
-        return "canteen"
+    if amenity in {"canteen", "food_court", "restaurant", "fast_food", "cafe", "pub", "bar"}:
+        return "restaurant"
     if leisure in {"sports_centre", "stadium", "pitch"}:
         return "service"
     if tourism in {"attraction", "viewpoint"}:
@@ -388,7 +431,51 @@ def classify_poi(tags: Dict[str, object]) -> Optional[str]:
         return "teaching"
     if highway == "gate":
         return "gate"
+    
+    # 名称-based fallback
+    name_lower = name.lower()
+    if "店" in name_lower or "shop" in name_lower or "store" in name_lower:
+        return "shop"
+    if "餐厅" in name_lower or "饭" in name_lower or "食堂" in name_lower or "餐馆" in name_lower or "饭店" in name_lower:
+        return "restaurant"
+    if "医院" in name_lower or "诊所" in name_lower or "医疗" in name_lower:
+        return "medical"
+    if "停车场" in name_lower or "停车" in name_lower:
+        return "parking"
+    if "体育" in name_lower or "运动" in name_lower or " gym" in name_lower:
+        return "sports"
     return None
+
+
+def is_poi_candidate(tags: Dict[str, object]) -> bool:
+    """Whether an OSM element should be persisted as a POI candidate."""
+    has_name = bool(str(tags.get("name:zh", "") or tags.get("name", "")).strip())
+    amenity = str(tags.get("amenity", "")).strip().lower()
+    building = str(tags.get("building", "")).strip().lower()
+    leisure = str(tags.get("leisure", "")).strip().lower()
+    tourism = str(tags.get("tourism", "")).strip().lower()
+    highway = str(tags.get("highway", "")).strip().lower()
+
+    # Skip pure road geometry that does not represent a POI.
+    if highway and not (amenity or building or leisure or tourism or has_name):
+        return False
+
+    return bool(has_name or amenity or building or leisure or tourism)
+
+
+def build_unmatched_poi_item(el: Dict[str, object], tags: Dict[str, object], name: str, loc_text: str) -> Dict[str, object]:
+    return {
+        "osmType": str(el.get("type", "")),
+        "osmId": el.get("id"),
+        "name": name,
+        "location": loc_text,
+        "amenity": tags.get("amenity"),
+        "building": tags.get("building"),
+        "leisure": tags.get("leisure"),
+        "tourism": tags.get("tourism"),
+        "highway": tags.get("highway"),
+        "landuse": tags.get("landuse"),
+    }
 
 
 def classify_facility(tags: Dict[str, object]) -> Optional[str]:
@@ -479,6 +566,7 @@ def main() -> int:
 
     repo_root = Path(__file__).resolve().parents[1]
     os.chdir(repo_root)
+    known_poi_type_codes = load_known_poi_type_codes(repo_root)
 
     cfg_path = Path(args.config)
     if not cfg_path.is_absolute():
@@ -552,6 +640,7 @@ def main() -> int:
     poi_rows: List[Dict[str, object]] = []
     fac_rows: List[Dict[str, object]] = []
     road_rows: List[Dict[str, object]] = []
+    unmatched_poi_items: List[Dict[str, object]] = []
 
     for el in elements:
         if not isinstance(el, dict):
@@ -572,7 +661,7 @@ def main() -> int:
         loc_text = str(tags.get("addr:full", "") or tags.get("addr:street", "") or name)[:255]
 
         poi_type = classify_poi(tags)
-        if poi_type:
+        if poi_type and poi_type in known_poi_type_codes:
             poi_rows.append(
                 {
                     "id": poi_id,
@@ -588,6 +677,25 @@ def main() -> int:
                     "updateTime": ts,
                 }
             )
+            poi_id += 1
+        elif is_poi_candidate(tags):
+            # Keep candidate POI with explicit null type for later taxonomy expansion.
+            poi_rows.append(
+                {
+                    "id": poi_id,
+                    "name": name,
+                    "type": None,
+                    "description": f"OSM source={el.get('type')}:{el.get('id')}, poi_type_unmatched",
+                    "location": loc_text,
+                    "longitude": round(lng, 6),
+                    "latitude": round(lat, 6),
+                    "parentId": None,
+                    "areaId": scenic_id,
+                    "createTime": ts,
+                    "updateTime": ts,
+                }
+            )
+            unmatched_poi_items.append(build_unmatched_poi_item(el, tags, name, loc_text))
             poi_id += 1
 
         fac_type = classify_facility(tags)
@@ -851,6 +959,7 @@ def main() -> int:
 
     (raw_dir / "nominatim_top.json").write_text(json.dumps(top, ensure_ascii=False, indent=2), encoding="utf-8")
     (raw_dir / "overpass.json").write_text(json.dumps(overpass_raw, ensure_ascii=False, indent=2), encoding="utf-8")
+    (raw_dir / "unmatched_poi_types.json").write_text(json.dumps(unmatched_poi_items, ensure_ascii=False, indent=2), encoding="utf-8")
 
     file_size_stats = {
         "scenic_areas.append.json": (out_dir / "scenic_areas.append.json").stat().st_size,
@@ -874,6 +983,7 @@ def main() -> int:
         f"- poiCount: {len(poi_rows)}",
         f"- facilityCount: {len(fac_rows)}",
         f"- roadCount: {len(road_rows)}",
+        f"- unmatchedPoiTypeCount: {len(unmatched_poi_items)}",
         "",
         "## Notes",
         "- Review-only output. Existing seed files remain unchanged.",
@@ -887,6 +997,7 @@ def main() -> int:
         f"- degreeOneVirtualNodeCount: {degree_one_virtual_count}",
         f"- nodeDegreeHistogram: deg1={degree_hist['deg1']}, deg2={degree_hist['deg2']}, deg3plus={degree_hist['deg3_plus']}",
         "- Roads are generated from OSM highway network with virtual non-POI nodes as endpoints.",
+        f"- unmatchedPoiTypeLog: raw/unmatched_poi_types.json",
         f"- contextSource: {'cache' if context_from_cache else 'nominatim'}",
         "",
         "## Payload Size",
@@ -942,6 +1053,8 @@ def main() -> int:
 
     print(f"Output written to: {out_dir}")
     print(f"POI={len(poi_rows)}, Facilities={len(fac_rows)}, Roads={len(road_rows)}")
+    if unmatched_poi_items:
+        print(f"Unmatched POI types: {len(unmatched_poi_items)} (see {raw_dir / 'unmatched_poi_types.json'})")
     return 0
 
 

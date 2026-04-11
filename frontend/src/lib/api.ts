@@ -105,6 +105,15 @@ export type RoutePoiCandidate = {
   areaId?: number
 }
 
+export type PoiTypeDictItem = {
+  code: string
+  label: string
+  category?: string
+  searchable?: boolean
+  routeVisible?: boolean
+  deprecated?: boolean
+}
+
 export async function apiRegister(payload: { username: string; password: string; email: string; nickname: string }) {
   const res = (await http.post('/api/auth/register', payload)) as ApiResponse<{
     user_id: number
@@ -225,6 +234,11 @@ export async function apiMapData(params: { areaId?: number }) {
 
 export async function apiRoutePoiCandidates(params: { areaId?: number }) {
   const res = (await http.get('/api/route/poi-candidates', { params })) as ApiResponse<RoutePoiCandidate[]>
+  return res.data ?? []
+}
+
+export async function apiRoutePoiTypes() {
+  const res = (await http.get('/api/route/poi-types')) as ApiResponse<PoiTypeDictItem[]>
   return res.data ?? []
 }
 

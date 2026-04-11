@@ -1,0 +1,122 @@
+{
+  "version": "1.0.0",
+  "types": [
+    {
+      "code": "scenic_spot",
+      "label": "景点",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "gate",
+      "label": "出入口",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "library",
+      "label": "图书馆",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "teaching",
+      "label": "教学楼",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "restaurant",
+      "label": "餐厅",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "service",
+      "label": "服务点",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "toilet",
+      "label": "厕所",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "dormitory",
+      "label": "宿舍",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "lab",
+      "label": "实验楼",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "shop",
+      "label": "商店",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "medical",
+      "label": "医疗",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "parking",
+      "label": "停车场",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "sports",
+      "label": "运动场所",
+      "category": "business",
+      "searchable": true,
+      "routeVisible": true,
+      "deprecated": false
+    },
+    {
+      "code": "virtual_node",
+      "label": "道路辅助节点",
+      "category": "system",
+      "searchable": false,
+      "routeVisible": false,
+      "deprecated": false
+    }
+  ],
+  "aliases": {
+    "entrance": "gate",
+    "sports_hall": "service",
+    "gym": "service"
+  }
+}

@@ -4,6 +4,7 @@ import com.travel.common.ApiResponse;
 import com.travel.model.dto.route.MultiPointRouteRequest;
 import com.travel.model.dto.route.RoutePlanRequest;
 import com.travel.model.vo.route.RoutePlanVO;
+import com.travel.service.PoiTypeService;
 import com.travel.service.RouteService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,9 +27,12 @@ public class RouteController
 
     private final RouteService routeService;
 
-    public RouteController(RouteService routeService)
+    private final PoiTypeService poiTypeService;
+
+    public RouteController(RouteService routeService, PoiTypeService poiTypeService)
     {
         this.routeService = routeService;
+        this.poiTypeService = poiTypeService;
     }
 
     /**
@@ -65,6 +69,15 @@ public class RouteController
     public ApiResponse<List<Map<String, Object>>> poiCandidates(@RequestParam(required = false) Long areaId)
     {
         return ApiResponse.success(routeService.listRoutePoiCandidates(areaId), "获取成功");
+    }
+
+    /**
+     * 获取 POI 类型字典。
+     */
+    @GetMapping("/poi-types")
+    public ApiResponse<List<Map<String, Object>>> poiTypes()
+    {
+        return ApiResponse.success(poiTypeService.listPoiTypes(), "获取成功");
     }
 }
 

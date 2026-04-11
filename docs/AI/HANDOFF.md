@@ -3,6 +3,74 @@
 > 用途：跨会话、跨 AI 的最小必要交接记录。
 > 规则：每次开发结束后追加，不要覆盖历史；已解决的同类问题应合并为结果导向记录；每条记录需标注负责人（git 用户）。
 
+## 2026-03-31（POI 类型收束：JSON 单一事实源 + 多端读取）
+### 会话目标
+- 将 POI type 从分散字符串定义收束为统一配置源，并支持后端/前端/脚本共用。
+
+### 已完成
+- 新增统一配置文件：`src/main/resources/config/poi-types.json`。
+- 后端新增 `PoiTypeService` 与 `PoiTypeServiceImpl`：
+  - 启动时从 `classpath:config/poi-types.json` 加载类型字典并缓存。
+  - 提供 `code -> label` 与完整类型列表读取能力。
+  - 配置加载失败时回退内置默认字典，避免服务不可用。
+- 后端接口新增：`GET /api/route/poi-types`（`RouteController`）。
+- 前端改造：
+  - `frontend/src/lib/api.ts` 新增 `PoiTypeDictItem` 与 `apiRoutePoiTypes()`。
+  - `frontend/src/views/route/RoutePlannerView.vue` 改为组件初始化时拉取字典。
+  - `poiTypeLabel()` 不再写死 switch，改为按后端字典动态映射。
+- 脚本侧改造：
+  - `scripts/osm_seed.py` 新增 `load_known_poi_type_codes()`，读取同一 `poi-types.json`。
+  - 仅当 `classify_poi()` 结果存在于统一字典时才作为已匹配类型写入；否则落入未匹配分支。
+
+### 验证
+- 前端：`npm.cmd run build` 通过。
+- 后端：`mvn -f d:/Dev/GitRepo/BUPT_PersonalizedTravelRecommendationSystem/pom.xml -DskipTests compile -q` 执行成功（`LASTEXIT=0`）。
+- 脚本：`python ../scripts/osm_seed.py --help` 正常输出。
+
+### 变更文件
+- src/main/resources/config/poi-types.json
+- src/main/java/com/travel/service/PoiTypeService.java
+- src/main/java/com/travel/service/impl/PoiTypeServiceImpl.java
+- src/main/java/com/travel/controller/RouteController.java
+- frontend/src/lib/api.ts
+- frontend/src/views/route/RoutePlannerView.vue
+- scripts/osm_seed.py
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（POI 类型治理：未匹配类型保留与日志化）
+### 会话目标
+- 盘点当前 POI 类型，并修复 OSM 生成流程中“未匹配类型 POI 被直接丢弃”的问题。
+- 新增可观测性：将未匹配类型输出为独立日志文件并写入报告摘要。
+
+### 已完成
+- `scripts/osm_seed.py` 新增 `is_poi_candidate()`：判断元素是否应作为 POI 候选。
+- `scripts/osm_seed.py` 新增 `build_unmatched_poi_item()`：记录未匹配类型的 OSM 元信息。
+- 生成逻辑改造：
+  - 先按 `classify_poi()` 正常分类；
+  - 若未匹配但属于 POI 候选，则仍写入 `pois.append.json`，并将 `type` 设为 `null`。
+- 新增输出文件：`latest/raw/unmatched_poi_types.json`（未匹配清单）。
+- `report.md` 新增字段：
+  - `unmatchedPoiTypeCount`
+  - `unmatchedPoiTypeLog`
+- 控制台运行摘要新增未匹配计数提示。
+
+### 验证
+- 命令：`python ../scripts/osm_seed.py --help`（在 `frontend` 目录执行）
+- 结果：脚本正常启动并输出帮助信息（无语法/导入错误）。
+
+### 当前类型盘点（已统计）
+- `canteen=1, dormitory=13, gate=2, library=4, scenic_spot=6, service=3, teaching=39, virtual_node=895`
+
+### 变更文件
+- scripts/osm_seed.py
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
 ## 2026-03-31（会话目标：OpenStreetMap 采集脚本与样例审批）
 ### 会话目标
 - 新增 OSM 采集脚本（Nominatim + Overpass）抓取校园内部可用数据。
@@ -637,6 +705,62 @@
 
 ### 负责人
 - Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（POI 类型简化与 OSM 映射优化）
+### 会话目标
+- 简化 POI 类型体系，避免冗余分类。
+- 将 canteen（食堂）改为 restaurant（餐厅），使语义更准确。
+- 增强 OSM 数据采集时的类型映射能力，包括标签映射和名称提取。
+
+### 已完成
+- **更新 POI 类型配置**：
+  - 将 `canteen` 改为 `restaurant`，标签从「食堂」改为「餐厅」
+  - 新增 `shop`（商店）、`medical`（医疗）、`parking`（停车场）、`sports`（运动场所）类型
+- **增强 OSM 类型映射**：
+  - 更新 `classify_poi` 函数，支持更多 OSM 标签映射到新的 POI 类型
+  - 添加名称-based fallback 逻辑，从 POI 名称中提取类型信息
+  - 支持从名称中识别商店、餐厅、医疗、停车场、运动场所等类型
+- **更新默认类型列表**：在 `load_known_poi_type_codes` 中添加新的类型代码
+
+### 验证
+- 脚本语法检查：`python scripts/osm_seed.py --help` 执行成功
+- 类型配置文件格式正确，可被系统加载
+
+### 变更文件
+- src/main/resources/config/poi-types.json
+- scripts/osm_seed.py
+- docs/AI/HANDOFF.md
+
+### 负责人
+- 系统默认用户
+
+## 2026-03-31（同步项目进度）
+### 会话目标
+- 阅读 AGENTS.md、PROJECT_CONTEXT.md、WORKFLOW.md 和 HANDOFF.md，了解项目当前状态和进展。
+- 总结项目核心功能实现情况、需求差距和工程风险。
+- 明确后续开发重点和优先级。
+
+### 已完成
+- 阅读并分析了项目相关文档，了解了项目架构、技术栈和实现状态。
+- 梳理了核心功能实现情况，确认大部分功能已实现。
+- 识别了需求-实现差距和重要工程风险。
+- 了解了最近的开发活动和变更。
+
+### 项目当前状态
+- **核心功能**：旅游推荐、兴趣设置、路线规划、附近设施查询、美食推荐、日记管理等已实现。
+- **需求差距**：离线地图包、AIGC 旅游动画、日记压缩存储、自动化测试等尚未实现。
+- **工程风险**：环境基线不一致、配置安全问题、开发日志更新不及时。
+- **最近进展**：POI 类型治理、OSM 采集脚本、ID 冲突解决、CVE 依赖升级等。
+
+### 后续重点
+1. 补齐自动化测试，覆盖核心服务层。
+2. 修复配置安全问题，移除明文数据库密码。
+3. 按课程要求替换核心数据结构为自定义实现。
+4. 实现剩余需求功能：离线地图包、AIGC 旅游动画、日记压缩存储。
+5. 保持开发日志与代码进度一致。
+
+### 负责人
+- 系统默认用户
 
 ## 2026-03-30（会话目标：Building 语义升级为 POI）
 ### 会话目标
@@ -1464,6 +1588,54 @@
 ### 变更文件
 - scripts/osm_seed.py
 - src/main/resources/osm-data/广州市执信中学-执信南路校区/latest/pois.append.json
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（路线页修复：未输入路径点时不显示 POI）
+### 会话目标
+- 修复路线规划页面在“未输入任何起终点/多点”时出现零散 POI 的问题。
+
+### 根因
+- 初始进入页面时会直接渲染 map-data 中的 POI 节点，未区分用户是否已开始规划输入。
+
+### 已完成
+- 前端 RoutePlannerView.vue 新增 hasRouteInputs 判定。
+- 图渲染逻辑改为：仅当用户已输入路径点（起点/终点/多点）或已有规划结果高亮路径时，才显示 POI 名称与符号。
+- 未输入状态下隐藏 POI 可视节点，避免页面出现“无端零散 POI”。
+
+### 验证
+- 文件级错误检查通过：rontend/src/views/route/RoutePlannerView.vue 无报错。
+
+### 变更文件
+- frontend/src/views/route/RoutePlannerView.vue
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-03-31（路线页修复二次调整：取消初始化无意义请求 + 选景区即显示 POI）
+### 会话目标
+- 修复路线页初始化时未选择景区仍请求地图数据的问题。
+- 修复 POI 显示条件错误（不应依赖起终点输入，而应在选择景区后正常显示）。
+
+### 根因
+- 页面 onMounted 无条件执行 loadMap()，导致 reaId 为空时仍请求 map-data/poi-candidates。
+- 之前 POI 显示逻辑绑定到“已输入路径点”，与业务预期不一致。
+
+### 已完成
+- 移除 onMounted(loadMap)，避免页面初始无意义请求。
+- loadMap() 增加空景区保护：reaId 为空时仅清空地图状态与图表，不发起后端请求。
+- POI 显示条件改为“已选景区即显示”（或已有高亮路径），恢复正常浏览景区路网与 POI 的行为。
+
+### 验证
+- 文件级错误检查：rontend/src/views/route/RoutePlannerView.vue 无报错。
+- 前端构建：
+pm.cmd run build 通过（仅 chunk size warning）。
+
+### 变更文件
+- frontend/src/views/route/RoutePlannerView.vue
 - docs/AI/HANDOFF.md
 
 ### 负责人

@@ -1,0 +1,17 @@
+[
+  {
+    "id": 221,
+    "name": "贵阳一中",
+    "description": "Generated from OpenStreetMap (review required).",
+    "location": "贵阳一中, 黔灵山路, 金阳街道, 观山湖区, 贵阳市, 贵州省, 550081, 中国",
+    "longitude": 106.623998,
+    "latitude": 26.624311,
+    "type": "campus",
+    "rating": 0.0,
+    "heat": 0,
+    "openTime": "待核实",
+    "ticketPrice": "待核实",
+    "createTime": "2026-04-13T23:27:24",
+    "updateTime": "2026-04-13T23:27:24"
+  }
+]

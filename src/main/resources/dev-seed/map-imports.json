@@ -2,22 +2,26 @@
   "scenicAreas": [
     "classpath:osm-data/广州市执信中学-执信南路校区/latest/scenic_areas.append.json",
     "classpath:osm-data/北京邮电大学-沙河校区-南丰路-沙河镇-昌平区-北京市-102206-中国/latest/scenic_areas.append.json",
-    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/scenic_areas.append.json"
+    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/贵阳一中-黔灵山路-金阳街道-观山湖区-贵阳市-贵州省-550081-中国/latest/scenic_areas.append.json"
   ],
   "pois": [
     "classpath:osm-data/广州市执信中学-执信南路校区/latest/pois.append.json",
     "classpath:osm-data/北京邮电大学-沙河校区-南丰路-沙河镇-昌平区-北京市-102206-中国/latest/pois.append.json",
-    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/pois.append.json"
+    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/pois.append.json",
+    "classpath:osm-data/贵阳一中-黔灵山路-金阳街道-观山湖区-贵阳市-贵州省-550081-中国/latest/pois.append.json"
   ],
   "buildings": [],
   "roads": [
     "classpath:osm-data/广州市执信中学-执信南路校区/latest/roads.append.json",
     "classpath:osm-data/北京邮电大学-沙河校区-南丰路-沙河镇-昌平区-北京市-102206-中国/latest/roads.append.json",
-    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/roads.append.json"
+    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/roads.append.json",
+    "classpath:osm-data/贵阳一中-黔灵山路-金阳街道-观山湖区-贵阳市-贵州省-550081-中国/latest/roads.append.json"
   ],
   "facilities": [
     "classpath:osm-data/广州市执信中学-执信南路校区/latest/facilities.append.json",
     "classpath:osm-data/北京邮电大学-沙河校区-南丰路-沙河镇-昌平区-北京市-102206-中国/latest/facilities.append.json",
-    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/facilities.append.json"
+    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/facilities.append.json",
+    "classpath:osm-data/贵阳一中-黔灵山路-金阳街道-观山湖区-贵阳市-贵州省-550081-中国/latest/facilities.append.json"
   ]
 }

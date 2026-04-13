@@ -1,0 +1,14 @@
+[
+  {
+    "id": 726,
+    "name": "osm-node-12801907574",
+    "type": "toilet",
+    "description": "OSM source=node:12801907574, review required",
+    "location": "osm-node-12801907574",
+    "longitude": 106.629259,
+    "latitude": 26.627815,
+    "areaId": 221,
+    "createTime": "2026-04-13T23:27:24",
+    "updateTime": "2026-04-13T23:27:24"
+  }
+]

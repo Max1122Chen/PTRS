@@ -29,6 +29,19 @@ mybatis-plus:
 server:
   port: 8080
 
+management:
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    redis:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: "health,info"
+
 logging:
   level:
     com.travel: INFO
@@ -44,14 +57,14 @@ app:
     auth-enabled: true
   dev-seed:
     # 全局默认关闭开发种子数据，仅在 dev 配置中开启。
-    enabled: false
+    enabled: true
     # 开发种子数据目录（支持 classpath: 或 file:）。
     path: classpath:dev-seed
     # 地图增量导入配置（JSON），用于声明需要额外读取的景区/POI/设施/道路文件。
     map-import-config: classpath:dev-seed/map-imports.json
   storage:
     preload:
-      enabled: true
+      enabled: false
   admin:
     dev-tools:
       # 管理员开发工具（地名采集/构建）开关，生产环境建议关闭。

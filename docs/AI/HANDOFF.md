@@ -3,6 +3,56 @@
 > 用途：跨会话、跨 AI 的最小必要交接记录。
 > 规则：每次开发结束后追加，不要覆盖历史；已解决的同类问题应合并为结果导向记录；每条记录需标注负责人（git 用户）。
 
+## 2026-04-13（会话目标：路线规划多点最优路径）
+### 会话目标
+- 支持路线页多点规划“最优访问顺序”而非按输入顺序直连。
+- 新增“是否回到起点”开关：开启时最终回到第一个点；关闭时最终结束在最后一个点。
+- 保持现有 `code/data/message` 返回结构与两点规划兼容性。
+
+## 2026-04-13（FR-004 路线页多点输入体验升级）
+### 负责人
+- Ryemon（3267348244@qq.com）
+
+### 新增/完成功能
+- 路线页多点规划输入由“手输逗号分隔节点 ID”升级为“地点多选下拉”。
+- 新增“访问顺序（可调整）”列表，支持上移/下移以手动控制多点顺序。
+- 保留并强化规则提示：第一个点为起点；未回起点时最后一个点为终点。
+- 与后端 `returnToStart` 开关联动保持一致（闭环/非闭环）。
+
+### 验证结果
+- 前端构建通过：`npm.cmd run build`（Vite build success）。
+- 编辑器诊断通过：`RoutePlannerView.vue` 无新增 lints。
+
+### 变更文件
+- frontend/src/views/route/RoutePlannerView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-04-13（FR-004 多点最优路径 + 回起点开关）
+### 负责人
+- Ryemon（3267348244@qq.com）
+
+### 新增/完成功能
+- 后端多点规划从“按输入顺序拼接”升级为“全局最优访问顺序”：
+  - 第一个点固定为起点；
+  - 未开启回起点时，最后一个点固定为终点；
+  - 开启 `returnToStart=true` 时，最终回到第一个点形成闭环路径。
+- `MultiPointRouteRequest` 新增 `returnToStart` 字段，兼容旧请求（默认 false）。
+- 路线页新增“闭环设置”开关并透传 `returnToStart`，多点输入提示同步更新。
+- 最优顺序求解采用位压缩 DP（TSP 路径变体），并在中间点超过 20 时给出友好错误提示。
+
+### 验证结果
+- 后端编译通过：`mvn -DskipTests compile`（BUILD SUCCESS）。
+- 前端构建通过：`npm.cmd run build`（Vite build success）。
+- 编辑器诊断通过：本次改动文件无新增 lints。
+
+### 变更文件
+- src/main/java/com/travel/model/dto/route/MultiPointRouteRequest.java
+- src/main/java/com/travel/service/RouteService.java
+- src/main/java/com/travel/service/impl/RouteServiceImpl.java
+- frontend/src/lib/api.ts
+- frontend/src/views/route/RoutePlannerView.vue
+- docs/AI/HANDOFF.md
+
 ## 2026-03-31（会话目标：OpenStreetMap 采集脚本与样例审批）
 ### 会话目标
 - 新增 OSM 采集脚本（Nominatim + Overpass）抓取校园内部可用数据。
@@ -57,6 +107,51 @@
 
 ### 负责人
 - Max1122Chen（max1122chen@126.com）
+
+## 2026-04-13（管理员 OSM 搜索错误透传）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 修复管理员 `OSM` 候选查询“静默空数组”问题：服务层在 `0` 结果且存在上游异常/非 `2xx` 时，抛出带细节原因的异常（含 query 变体、HTTP 状态码或异常类型）。
+- 控制器 `/api/admin/dev/osm-search` 增加异常兜底，将上述原因以 `ApiResponse.failure(502, message)` 返回给前端，便于界面直接提示具体失败原因。
+- 新增服务端日志：记录 Nominatim 非 `2xx` 和单次 query 异常，便于在后端控制台快速定位（如 `429` 限流）。
+
+### 验证结果
+- 后端编译通过：`mvn -DskipTests compile`（BUILD SUCCESS）。
+
+### 变更文件
+- src/main/java/com/travel/service/impl/AdminServiceImpl.java
+- src/main/java/com/travel/controller/AdminController.java
+- docs/AI/HANDOFF.md
+
+## 2026-03-31（管理端任务：禁用 axios timeout 以防超时误报）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 原因摘要
+- 管理端调用 `/api/admin/dev/generate-from-osm`、`/api/admin/dev/import-place` 属于长耗时任务。
+- 前端全局 axios timeout 可能导致提前 abort，并显示“请求超时”误报。
+
+### 已采取修复
+- 在 `frontend/src/lib/http.ts` 的请求拦截器中：对上述 URL 将 `config.timeout` 设为 `0`（禁用客户端超时）。
+
+### 验证方式
+- 重启/重新加载前端后再次执行管理员“地名导入 -> 选择后生成”，确认不再出现“请求超时”。
+
+## 2026-03-31（管理员导入/生成超时误报修复：前端 axios timeout）
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 原因摘要
+- 管理端 `/api/admin/dev/generate-from-osm` / `/api/admin/dev/import-place` 会执行 Python 采集并可能触发前端 build，单次耗时经常超过全局 axios 默认 `20000ms`。
+- 超时后前端会走 axios error 分支，误提示“网络错误（无法连接后端）”，尽管后端任务可能仍在执行。
+
+### 已采取修复
+- 在 `frontend/src/lib/http.ts` 里对上述 URL 将 `config.timeout` 提高到 `180000ms`（3分钟）。
+
+### 验证方式
+- 重启/重新加载前端后，再执行管理员“地名导入 -> 选择后生成 / 导入”，确认不再出现“无法连接后端”超时误报。
 
 ## 2026-03-31（管理员任务日志中文乱码修复）
 ### 会话目标

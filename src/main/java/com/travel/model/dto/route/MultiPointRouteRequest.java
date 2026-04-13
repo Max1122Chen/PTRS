@@ -19,6 +19,11 @@ public class MultiPointRouteRequest
 
     private Long areaId;
 
+    /**
+     * 是否回到起点（第一个点）。
+     */
+    private Boolean returnToStart;
+
     public List<Long> getPoints()
     {
         return points;
@@ -57,6 +62,16 @@ public class MultiPointRouteRequest
     public void setAreaId(Long areaId)
     {
         this.areaId = areaId;
+    }
+
+    public Boolean getReturnToStart()
+    {
+        return returnToStart;
+    }
+
+    public void setReturnToStart(Boolean returnToStart)
+    {
+        this.returnToStart = returnToStart;
     }
 }
 

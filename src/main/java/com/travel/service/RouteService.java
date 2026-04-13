@@ -19,7 +19,7 @@ public interface RouteService
     RoutePlanVO plan(RoutePlanRequest request);
 
     /**
-     * 多点路径规划（基础实现：按 points 顺序依次拼接最优路径）。
+     * 多点路径规划（第一个点为起点；可选回到起点，否则最后一个点为终点）。
      */
     RoutePlanVO planMultiPoint(MultiPointRouteRequest request);
 

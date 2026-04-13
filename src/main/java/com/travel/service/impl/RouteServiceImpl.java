@@ -28,6 +28,7 @@ import java.util.Map;
 @Service
 public class RouteServiceImpl implements RouteService
 {
+    private static final double INF = 1e18;
 
     /**
      * 步行速度（米/秒）：4km/h。
@@ -99,31 +100,14 @@ public class RouteServiceImpl implements RouteService
         EdgeFilter edgeFilter = buildVehicleFilter(request.getVehicle());
         String strategy = StringUtils.defaultIfBlank(request.getStrategy(), "distance");
         EdgeWeightFunc weightFunc = "time".equalsIgnoreCase(strategy) ? buildTimeWeightFunc(request.getVehicle()) : Edge::getDistance;
+        boolean returnToStart = Boolean.TRUE.equals(request.getReturnToStart());
+        long start = points.get(0);
+        long fixedEnd = returnToStart ? start : points.get(points.size() - 1);
+        List<Long> middle = extractMiddle(points, returnToStart);
 
+        List<Long> waypointOrder = buildBestWaypointOrder(graph, start, fixedEnd, middle, weightFunc, edgeFilter);
         List<Long> fullPath = new ArrayList<>();
-        double totalPrimary = 0.0;
-
-        for (int i = 0; i < points.size() - 1; i++)
-        {
-            long start = points.get(i);
-            long end = points.get(i + 1);
-            PathResult segment = dijkstra.shortestPath(graph, start, end, weightFunc, edgeFilter);
-            if (segment.getPath().isEmpty())
-            {
-                throw new IllegalArgumentException("无法规划到达路径");
-            }
-            List<Long> segmentPath = segment.getPath();
-            if (fullPath.isEmpty())
-            {
-                fullPath.addAll(segmentPath);
-            }
-            else
-            {
-                // 拼接时避免重复节点
-                fullPath.addAll(segmentPath.subList(1, segmentPath.size()));
-            }
-            totalPrimary += segment.getTotalWeight();
-        }
+        double totalPrimary = stitchPathByWaypoints(graph, waypointOrder, weightFunc, edgeFilter, fullPath);
 
         RoutePlanVO vo = new RoutePlanVO();
         vo.setPath(fullPath);
@@ -138,6 +122,172 @@ public class RouteServiceImpl implements RouteService
             vo.setTime(calcTimeByPath(graph, fullPath, request.getVehicle(), edgeFilter));
         }
         return vo;
+    }
+
+    private List<Long> extractMiddle(List<Long> points, boolean returnToStart)
+    {
+        List<Long> middle = new ArrayList<>();
+        int endIndex = returnToStart ? points.size() : points.size() - 1;
+        for (int i = 1; i < endIndex; i++)
+        {
+            middle.add(points.get(i));
+        }
+        return middle;
+    }
+
+    private List<Long> buildBestWaypointOrder(Graph graph, long start, long end, List<Long> middle,
+                                              EdgeWeightFunc weightFunc, EdgeFilter edgeFilter)
+    {
+        List<Long> ordered = solveOptimalMiddleOrder(graph, start, end, middle, weightFunc, edgeFilter);
+        List<Long> waypoints = new ArrayList<>();
+        waypoints.add(start);
+        waypoints.addAll(ordered);
+        waypoints.add(end);
+        return waypoints;
+    }
+
+    private List<Long> solveOptimalMiddleOrder(Graph graph, long start, long end, List<Long> middle,
+                                               EdgeWeightFunc weightFunc, EdgeFilter edgeFilter)
+    {
+        int m = middle.size();
+        if (m == 0)
+        {
+            return new ArrayList<>();
+        }
+        if (m > 20)
+        {
+            throw new IllegalArgumentException("中间点数量过多，请控制在20个以内");
+        }
+
+        PathResult[] startTo = new PathResult[m];
+        PathResult[] toEnd = new PathResult[m];
+        PathResult[][] between = new PathResult[m][m];
+
+        for (int i = 0; i < m; i++)
+        {
+            startTo[i] = shortestOrFail(graph, start, middle.get(i), weightFunc, edgeFilter);
+            toEnd[i] = shortestOrFail(graph, middle.get(i), end, weightFunc, edgeFilter);
+        }
+        for (int i = 0; i < m; i++)
+        {
+            for (int j = 0; j < m; j++)
+            {
+                if (i == j)
+                {
+                    continue;
+                }
+                between[i][j] = shortestOrFail(graph, middle.get(i), middle.get(j), weightFunc, edgeFilter);
+            }
+        }
+
+        int fullMask = (1 << m) - 1;
+        double[][] dp = new double[1 << m][m];
+        int[][] prev = new int[1 << m][m];
+        for (int mask = 0; mask <= fullMask; mask++)
+        {
+            for (int i = 0; i < m; i++)
+            {
+                dp[mask][i] = INF;
+                prev[mask][i] = -1;
+            }
+        }
+
+        for (int i = 0; i < m; i++)
+        {
+            dp[1 << i][i] = startTo[i].getTotalWeight();
+        }
+
+        for (int mask = 1; mask <= fullMask; mask++)
+        {
+            for (int last = 0; last < m; last++)
+            {
+                if ((mask & (1 << last)) == 0 || dp[mask][last] >= INF)
+                {
+                    continue;
+                }
+                for (int next = 0; next < m; next++)
+                {
+                    if ((mask & (1 << next)) != 0)
+                    {
+                        continue;
+                    }
+                    int nextMask = mask | (1 << next);
+                    double candidate = dp[mask][last] + between[last][next].getTotalWeight();
+                    if (candidate < dp[nextMask][next])
+                    {
+                        dp[nextMask][next] = candidate;
+                        prev[nextMask][next] = last;
+                    }
+                }
+            }
+        }
+
+        double best = INF;
+        int bestLast = -1;
+        for (int last = 0; last < m; last++)
+        {
+            double candidate = dp[fullMask][last] + toEnd[last].getTotalWeight();
+            if (candidate < best)
+            {
+                best = candidate;
+                bestLast = last;
+            }
+        }
+        if (bestLast < 0)
+        {
+            throw new IllegalArgumentException("无法规划到达路径");
+        }
+
+        int[] orderIndex = new int[m];
+        int mask = fullMask;
+        int curr = bestLast;
+        for (int pos = m - 1; pos >= 0; pos--)
+        {
+            orderIndex[pos] = curr;
+            int p = prev[mask][curr];
+            mask ^= 1 << curr;
+            curr = p;
+        }
+
+        List<Long> ordered = new ArrayList<>();
+        for (int idx : orderIndex)
+        {
+            ordered.add(middle.get(idx));
+        }
+        return ordered;
+    }
+
+    private double stitchPathByWaypoints(Graph graph, List<Long> waypoints, EdgeWeightFunc weightFunc,
+                                         EdgeFilter edgeFilter, List<Long> fullPath)
+    {
+        double total = 0.0;
+        for (int i = 0; i < waypoints.size() - 1; i++)
+        {
+            PathResult segment = shortestOrFail(graph, waypoints.get(i), waypoints.get(i + 1), weightFunc, edgeFilter);
+            appendSegmentPath(fullPath, segment.getPath());
+            total += segment.getTotalWeight();
+        }
+        return total;
+    }
+
+    private void appendSegmentPath(List<Long> fullPath, List<Long> segmentPath)
+    {
+        if (fullPath.isEmpty())
+        {
+            fullPath.addAll(segmentPath);
+            return;
+        }
+        fullPath.addAll(segmentPath.subList(1, segmentPath.size()));
+    }
+
+    private PathResult shortestOrFail(Graph graph, long start, long end, EdgeWeightFunc weightFunc, EdgeFilter edgeFilter)
+    {
+        PathResult result = dijkstra.shortestPath(graph, start, end, weightFunc, edgeFilter);
+        if (result.getPath().isEmpty())
+        {
+            throw new IllegalArgumentException("无法规划到达路径");
+        }
+        return result;
     }
 
     @Override

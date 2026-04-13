@@ -50,7 +50,8 @@ const form = reactive({
   endId: null as number | null,
   vehicle: '' as string,
   strategy: '' as '' | 'distance' | 'time',
-  multiPoints: '',
+  multiPointIds: [] as number[],
+  returnToStart: false,
   showRoadNodes: false,
 })
 
@@ -77,6 +78,14 @@ const nodeLabelMap = computed(() => {
     out[node.nodeId] = node.name || `节点${node.nodeId}`
   })
   return out
+})
+
+const selectedMultiPointLabels = computed(() => {
+  const labelMap = nodeLabelMap.value
+  return form.multiPointIds.map((id) => ({
+    id,
+    label: labelMap[id] || `节点${id}`,
+  }))
 })
 
 const nodeDetailMap = computed(() => {
@@ -310,7 +319,7 @@ async function loadMap() {
     result.value = null
     form.startId = null
     form.endId = null
-    form.multiPoints = ''
+    form.multiPointIds = []
     renderGraph()
   } finally {
     loading.value = false
@@ -338,12 +347,9 @@ async function plan() {
 }
 
 async function planMulti() {
-  const points = form.multiPoints
-    .split(',')
-    .map((s) => Number(s.trim()))
-    .filter((n) => Number.isFinite(n))
+  const points = form.multiPointIds.map((n) => Number(n)).filter((n) => Number.isFinite(n))
   if (points.length < 2) {
-    ElMessage.warning('多点规划至少需要 2 个位置（用逗号分隔节点ID）')
+    ElMessage.warning('多点规划至少需要选择 2 个地点')
     return
   }
 
@@ -352,6 +358,7 @@ async function planMulti() {
     result.value = await apiPlanRouteMulti({
       areaId: form.areaId,
       points,
+      returnToStart: form.returnToStart,
       vehicle: form.vehicle || undefined,
       strategy: form.strategy || undefined,
     })
@@ -359,6 +366,16 @@ async function planMulti() {
   } finally {
     loading.value = false
   }
+}
+
+function moveMultiPoint(index: number, direction: -1 | 1) {
+  const target = index + direction
+  if (target < 0 || target >= form.multiPointIds.length) return
+  const copied = [...form.multiPointIds]
+  const temp = copied[index]
+  copied[index] = copied[target]
+  copied[target] = temp
+  form.multiPointIds = copied
 }
 
 onMounted(loadMap)
@@ -468,8 +485,50 @@ watch(
 
           <el-divider />
 
-          <el-form-item label="多点规划（用逗号分隔）">
-            <el-input v-model="form.multiPoints" placeholder="输入多个节点 ID，用逗号分隔（必填：至少 2 个点）" />
+          <el-form-item label="多点规划地点（多选）">
+            <el-select
+              v-model="form.multiPointIds"
+              multiple
+              filterable
+              clearable
+              collapse-tags
+              collapse-tags-tooltip
+              placeholder="请选择多个地点（至少 2 个）"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="node in nodeOptions"
+                :key="`multi-${node.nodeId}`"
+                :label="`${node.name}（ID ${node.nodeId}）`"
+                :value="node.nodeId"
+              />
+            </el-select>
+            <div class="hint muted">第一个点固定为起点；未回起点时最后一个点固定为终点。</div>
+          </el-form-item>
+          <el-form-item label="闭环设置">
+            <el-switch
+              v-model="form.returnToStart"
+              active-text="回到起点"
+              inactive-text="结束于最后一个点"
+            />
+          </el-form-item>
+          <el-form-item v-if="selectedMultiPointLabels.length" label="访问顺序（可调整）">
+            <div class="order-list">
+              <div v-for="(item, idx) in selectedMultiPointLabels" :key="`order-${item.id}-${idx}`" class="order-row">
+                <span class="order-name">{{ idx + 1 }}. {{ item.label }}（ID {{ item.id }}）</span>
+                <span class="order-actions">
+                  <el-button size="small" text :disabled="idx === 0" @click="moveMultiPoint(idx, -1)">上移</el-button>
+                  <el-button
+                    size="small"
+                    text
+                    :disabled="idx === selectedMultiPointLabels.length - 1"
+                    @click="moveMultiPoint(idx, 1)"
+                  >
+                    下移
+                  </el-button>
+                </span>
+              </div>
+            </div>
           </el-form-item>
           <el-button type="primary" plain @click="planMulti" :loading="loading">多点规划</el-button>
 
@@ -518,6 +577,30 @@ watch(
 .hint {
   margin-top: 6px;
   font-size: 12px;
+}
+.order-list {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.order-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.order-row:last-child {
+  border-bottom: none;
+}
+.order-name {
+  font-size: 13px;
+}
+.order-actions {
+  display: inline-flex;
+  gap: 4px;
 }
 .chart {
   height: 560px;

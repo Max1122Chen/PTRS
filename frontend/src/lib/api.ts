@@ -242,6 +242,7 @@ export async function apiPlanRoute(payload: {
 export async function apiPlanRouteMulti(payload: {
   areaId?: number
   points: number[]
+  returnToStart?: boolean
   strategy?: 'distance' | 'time'
   vehicle?: 'walk' | 'bike' | 'shuttle' | string
 }) {

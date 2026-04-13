@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 管理端服务实现。
@@ -39,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AdminServiceImpl implements AdminService
 {
+    private static final Logger log = LoggerFactory.getLogger(AdminServiceImpl.class);
 
     private static final String NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
 
@@ -181,56 +184,85 @@ public class AdminServiceImpl implements AdminService
             List<String> queryVariants = buildQueryVariants(k);
             List<Map<String, Object>> out = new ArrayList<>();
             Set<String> dedup = new HashSet<>();
+            List<String> failureReasons = new ArrayList<>();
 
             for (String query : queryVariants)
             {
-                String url = NOMINATIM_BASE + "?format=jsonv2&limit=8&addressdetails=1&q=" +
-                    URLEncoder.encode(query, StandardCharsets.UTF_8);
-                HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                    .header("User-Agent", "BUPT-TravelSystem-Admin/1.0")
-                    .GET()
-                    .build();
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-                if (response.statusCode() < 200 || response.statusCode() >= 300)
+                try
                 {
-                    continue;
-                }
-                List<Map<String, Object>> raw = objectMapper.readValue(response.body(), new TypeReference<List<Map<String, Object>>>()
-                {
-                });
-
-                for (Map<String, Object> row : raw)
-                {
-                    String dedupKey = String.valueOf(row.get("osm_type")) + ":" + String.valueOf(row.get("osm_id"));
-                    if (dedup.contains(dedupKey))
+                    String url = NOMINATIM_BASE + "?format=jsonv2&limit=8&addressdetails=1&q=" +
+                        URLEncoder.encode(query, StandardCharsets.UTF_8);
+                    HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                        .header("User-Agent", "BUPT-TravelSystem-Admin/1.0")
+                        .GET()
+                        .build();
+                    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                    if (response.statusCode() < 200 || response.statusCode() >= 300)
                     {
+                        String reason = "query=\"" + query + "\" HTTP " + response.statusCode();
+                        failureReasons.add(reason);
+                        log.warn("OSM nominatim non-2xx: {}", reason);
                         continue;
                     }
-                    dedup.add(dedupKey);
-
-                    Map<String, Object> item = new HashMap<>();
-                    item.put("placeId", row.get("place_id"));
-                    item.put("osmType", row.get("osm_type"));
-                    item.put("osmId", row.get("osm_id"));
-                    item.put("name", row.get("name"));
-                    item.put("displayName", row.get("display_name"));
-                    item.put("lat", row.get("lat"));
-                    item.put("lon", row.get("lon"));
-                    item.put("category", row.get("category"));
-                    item.put("type", row.get("type"));
-                    out.add(item);
-
-                    if (out.size() >= 20)
+                    List<Map<String, Object>> raw = objectMapper.readValue(response.body(), new TypeReference<List<Map<String, Object>>>()
                     {
-                        return out;
+                    });
+
+                    for (Map<String, Object> row : raw)
+                    {
+                        String dedupKey = String.valueOf(row.get("osm_type")) + ":" + String.valueOf(row.get("osm_id"));
+                        if (dedup.contains(dedupKey))
+                        {
+                            continue;
+                        }
+                        dedup.add(dedupKey);
+
+                        Map<String, Object> item = new HashMap<>();
+                        item.put("placeId", row.get("place_id"));
+                        item.put("osmType", row.get("osm_type"));
+                        item.put("osmId", row.get("osm_id"));
+                        item.put("name", row.get("name"));
+                        item.put("displayName", row.get("display_name"));
+                        item.put("lat", row.get("lat"));
+                        item.put("lon", row.get("lon"));
+                        item.put("category", row.get("category"));
+                        item.put("type", row.get("type"));
+                        out.add(item);
+
+                        if (out.size() >= 20)
+                        {
+                            return out;
+                        }
                     }
                 }
+                catch (Exception innerEx)
+                {
+                    String reason = "query=\"" + query + "\" exception=" + innerEx.getClass().getSimpleName()
+                        + ": " + (innerEx.getMessage() == null ? "null" : innerEx.getMessage());
+                    failureReasons.add(reason);
+                    log.warn("OSM nominatim query failed: {}", reason);
+                }
+            }
+
+            if (out.isEmpty() && !failureReasons.isEmpty())
+            {
+                String reasonMessage = String.join(" | ", failureReasons);
+                throw new IllegalStateException("OSM 查询失败或被限流，未返回候选结果。原因：" + reasonMessage);
+            }
+            if (out.isEmpty())
+            {
+                log.info("OSM nominatim returns empty with no explicit error. keyword={}", k);
             }
             return out;
         }
+        catch (IllegalStateException ex)
+        {
+            throw ex;
+        }
         catch (Exception ex)
         {
-            return List.of();
+            String detail = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+            throw new IllegalStateException("OSM 查询异常：" + detail, ex);
         }
     }
 

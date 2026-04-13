@@ -144,7 +144,14 @@ public class AdminController
         {
             return ApiResponse.failure(403, "无权限");
         }
-        return ApiResponse.success(adminService.searchOsmCandidates(keyword), "获取成功");
+        try
+        {
+            return ApiResponse.success(adminService.searchOsmCandidates(keyword), "获取成功");
+        }
+        catch (IllegalStateException ex)
+        {
+            return ApiResponse.failure(502, ex.getMessage());
+        }
     }
 
     @PostMapping("/dev/generate-from-osm")

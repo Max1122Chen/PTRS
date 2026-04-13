@@ -4,6 +4,7 @@ import com.travel.common.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -40,6 +41,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.failure(400, "请求体解析失败"));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(NoResourceFoundException ex) {
+        return ResponseEntity
+                .status(404)
+                .body(ApiResponse.failure(404, "请求路径不存在"));
     }
 
     @ExceptionHandler(Exception.class)

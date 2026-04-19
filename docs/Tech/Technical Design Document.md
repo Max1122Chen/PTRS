@@ -260,13 +260,15 @@ sequenceDiagram
 | id          | BIGINT   | 20   | PRIMARY KEY, AUTO_INCREMENT                                  | 日记ID              |
 | user_id     | BIGINT   | 20   | NOT NULL                                                     | 用户ID              |
 | title       | VARCHAR  | 200  | NOT NULL                                                     | 日记标题            |
-| content     | TEXT     |      | NOT NULL                                                     | 日记内容            |
+| content     | TEXT     |      | NOT NULL                                                     | 日记正文存储字段（RAW:/GZB64: 编码） |
 | images      | TEXT     |      |                                                              | 图片URL（JSON格式） |
 | videos      | TEXT     |      |                                                              | 视频URL（JSON格式） |
 | heat        | INT      |      | DEFAULT 0                                                    | 热度                |
 | rating      | DOUBLE   |      | DEFAULT 0.0                                                  | 评分                |
 | create_time | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP                          | 创建时间            |
 | update_time | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间            |
+
+> 说明：日记正文对外接口与内存检索均使用明文；仅在写入数据库时按阈值进行压缩编码（`GZB64:`），短文本或压缩收益不足时使用 `RAW:` 前缀原文存储；读取时自动解码，兼容历史无前缀明文数据。
 
 #### 3.1.11 日记-目的地关联表（diary_destinations）
 | 字段名         | 数据类型 | 长度 | 约束                                | 描述               |

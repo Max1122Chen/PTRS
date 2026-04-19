@@ -930,6 +930,7 @@ public class InMemoryStore
     {
         int l = limit <= 0 ? 50 : limit;
         boolean hasKeyword = keyword != null && !keyword.isBlank();
+        String normalizedKeyword = hasKeyword ? keyword.trim().toLowerCase() : "";
 
         if (!hasKeyword)
         {
@@ -948,6 +949,38 @@ public class InMemoryStore
                     {
                         continue;
                     }
+                }
+                result.add(d);
+                if (result.size() >= l)
+                {
+                    break;
+                }
+            }
+            return result;
+        }
+
+        if (normalizedKeyword.length() < 2)
+        {
+            // NGram 索引默认最小粒度为 2，单字查询回退到内存线性匹配。
+            List<Diary> result = new ArrayList<>();
+            for (Diary d : diariesById.values())
+            {
+                if (userId != null && !userId.equals(d.getUserId()))
+                {
+                    continue;
+                }
+                if (destinationId != null)
+                {
+                    List<Long> destIds = diaryDestinationIdsByDiaryId.get(d.getId());
+                    if (destIds == null || !destIds.contains(destinationId))
+                    {
+                        continue;
+                    }
+                }
+                if (!containsIgnoreCase(d.getTitle(), normalizedKeyword)
+                    && !containsIgnoreCase(d.getContent(), normalizedKeyword))
+                {
+                    continue;
                 }
                 result.add(d);
                 if (result.size() >= l)
@@ -991,6 +1024,15 @@ public class InMemoryStore
     private boolean isBlank(String s)
     {
         return s == null || s.trim().isEmpty();
+    }
+
+    private boolean containsIgnoreCase(String raw, String keyword)
+    {
+        if (raw == null || keyword == null || keyword.isBlank())
+        {
+            return false;
+        }
+        return raw.toLowerCase().contains(keyword);
     }
 
     private void rebuildFacilityFoodDiarySearchIndices()

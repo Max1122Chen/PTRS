@@ -12,6 +12,11 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      // 日记附件静态资源回传路径
+      '/media': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
     },
   },
 })

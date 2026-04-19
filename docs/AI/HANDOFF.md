@@ -3,6 +3,220 @@
 > 用途：跨会话、跨 AI 的最小必要交接记录。
 > 规则：每次开发结束后追加，不要覆盖历史；已解决的同类问题应合并为结果导向记录；每条记录需标注负责人（git 用户）。
 
+## 2026-04-19（第七周周报产出：md + html）
+### 会话目标
+- 基于本周提交与当日工作内容，生成第七周周报，并输出 Markdown 与 HTML 两种格式以支持后续转 Docx。
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 新增第七周周报 Markdown 版本：
+  - 时间范围：2026-04-13 至 2026-04-19。
+  - 内容覆盖：本周提交摘要、日记模块闭环改造、稳定性修复、FR 口径同步、正文压缩落地、风险与下周计划。
+- 新增第七周周报 HTML 版本：
+  - 与 Markdown 内容一致，补充可直接打印/转 Word 的基础排版样式（标题、表格、分页友好）。
+
+### 变更文件
+- docs/Progress/Weekly_report/Weekly_Report_Week7.md
+- docs/Progress/Weekly_report/Weekly_Report_Week7.html
+- docs/AI/HANDOFF.md
+
+## 2026-04-19（日记正文压缩存储 FR-009-4）
+### 会话目标
+- 在不改变现有前后端 API 的前提下，为日记正文实现“写库压缩、读取解码、内存检索保持明文”的存储方案。
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 新增 `DiaryContentCodec`：
+  - 写库前按阈值进行正文编码：短文本或压缩收益不足使用 `RAW:`，长文本压缩后使用 `GZB64:`。
+  - 读取时自动解码，兼容历史无前缀明文数据。
+- `DiaryServiceImpl` 写库路径接入正文编码：
+  - `create/update/rate` 写数据库前统一走编码副本，避免明文覆盖压缩存储。
+  - 内存中的 `Diary` 仍保持明文，保证列表/详情/搜索行为不变。
+- `InMemoryDataLoader` 预加载流程接入解码：
+  - 启动加载日记时先解码正文再写入内存索引。
+- 新增配置项：
+  - `app.diary.content-compression.enabled`
+  - `app.diary.content-compression.threshold-bytes`
+- 文档同步：
+  - 技术设计文档补充 `diaries.content` 编码约定。
+  - 需求文档细化 FR-009-4 验收标准为“压缩后自动解码且不影响检索”。
+
+### 验证结果
+- 后端编译通过：`mvn -DskipTests compile`（BUILD SUCCESS）。
+
+### 变更文件
+- src/main/java/com/travel/util/DiaryContentCodec.java
+- src/main/java/com/travel/service/impl/DiaryServiceImpl.java
+- src/main/java/com/travel/storage/InMemoryDataLoader.java
+- src/main/resources/application.yml
+- docs/Tech/Technical Design Document.md
+- docs/Requirements/Requirements Documendation.md
+- Requirements Documendation.md
+- docs/AI/HANDOFF.md
+
+## 2026-04-19（日记搜索结果支持点击直达详情）
+### 会话目标
+- 在统一搜索输入框下的候选结果中，支持用户直接点击并跳转到对应日记详情页。
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 前端 `DiaryListView`：
+  - 候选项点击行为由“回填搜索条件”调整为“直接跳转日记详情页”。
+  - 保留候选来源说明，新增提示文案“点击任意结果可直接进入日记详情”。
+
+### 验证结果
+- 前端构建通过：`npm run build` 成功（仅存在既有 chunk size 提示）。
+
+### 变更文件
+- frontend/src/views/diary/DiaryListView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-04-19（日记统一搜索修正：候选仅日记 + 单字可匹配）
+### 会话目标
+- 统一搜索输入框下的候选结果仅展示“日记”，不再混入景点对象。
+- 修复输入单字时标题/正文无法命中的问题。
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 前端 `DiaryListView`：
+  - 即时候选改为“只展示日记条目”。
+  - 目的地命中场景下，候选展示为“关联该目的地的日记”，并标注 `目的地匹配：xxx`。
+  - 候选点击后仍走“确认搜索再刷新主列表”流程。
+- 后端 `InMemoryStore.searchDiaries`：
+  - 当关键词长度 `<2`（如单字）时，不再直接返回空；
+  - 回退到内存线性匹配（标题/正文 `contains`）后再返回结果。
+
+### 验证结果
+- 后端编译通过：`mvn -DskipTests compile`。
+- 前端构建通过：`npm run build`（仅有既有 chunk size 提示）。
+- 接口验收：`GET /api/diary/search?keyword=大&page=1&size=5` 返回 `code=200` 且有命中结果。
+
+### 变更文件
+- frontend/src/views/diary/DiaryListView.vue
+- src/main/java/com/travel/storage/InMemoryStore.java
+- docs/AI/HANDOFF.md
+
+## 2026-04-19（日记检索交互升级：统一输入 + 即时候选 + 确认回显）
+### 会话目标
+- 支持日记按标题搜索、按正文内容检索，并与目的地检索共用一个输入框。
+- 用户输入后实时在输入框下方展示候选结果（搜索引擎式联想列表）。
+- 用户点击“确认搜索”后，再把结果回显到日记主列表区域。
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- `DiaryListView` 搜索交互重构：
+  - 新增统一搜索输入框（标题/正文/目的地共用）。
+  - 输入后并行调用日记关键词检索与目的地关键字检索，实时展示候选列表。
+  - 候选列表区分三类：`标题匹配`、`正文匹配`、`目的地匹配`。
+  - 点击候选仅选中检索意图，不立即刷新主列表；按回车或点击“确认搜索”后执行检索。
+  - 目的地候选支持精确命中后按 `destination` 条件搜索；未命中目的地则按 `keyword` 搜索标题/正文。
+  - 新增“当前结果：xxx”提示与“查看全部”回退。
+
+### 验证结果
+- 前端构建通过：`npm run build` 成功（仅存在既有 chunk size 提示）。
+
+### 变更文件
+- frontend/src/views/diary/DiaryListView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-04-19（日记提交 500 排障：数据库不可用时回退内存写）
+### 会话目标
+- 排查前端提交日记（有无附件均失败）返回“服务器内部错误”的原因并修复。
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 根因定位
+- 复现请求：`POST /api/diary`（携带有效登录 token）稳定返回 500。
+- 调试实例日志显示：`CannotCreateTransactionException`，根因为 `DataSourceDisableException`（数据库连接池不可用）。
+- 触发机制：`DiaryServiceImpl` 写接口使用 `@Transactional`，在方法执行前创建事务连接，数据库不可用时直接失败并返回 500。
+
+### 修复措施
+- 对 `DiaryServiceImpl` 写接口（create/update/delete/rate）移除事务前置依赖。
+- 新增数据库写入包装：
+  - 正常场景优先落库；
+  - 当 `app.debug.ignore-db-connection-failure=true` 且识别为数据库不可用异常时，跳过 DB 写并回退为内存写入；
+  - 非数据库连通性异常仍按原逻辑抛出，避免吞掉真实业务错误。
+
+### 验证结果
+- 后端编译：`mvn -DskipTests compile` 通过。
+- 复现回归：数据库不可用场景下，`POST /api/diary` 由 500 修复为 200，返回 `diary_id`。
+
+### 变更文件
+- src/main/java/com/travel/service/impl/DiaryServiceImpl.java
+- docs/AI/HANDOFF.md
+
+## 2026-04-19（前端构建补修：RoutePlannerView 字段名纠正）
+### 会话目标
+- 修复前端构建中与本次交付并发出现的字段名错误，确保整体构建可通过。
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 将 `RoutePlannerView` 中不存在字段 `form.multiPoints` 更正为 `form.multiPointIds`。
+
+### 验证结果
+- 前端构建通过：`npm run build` 成功（仅存在 chunk size 提示）。
+
+### 变更文件
+- frontend/src/views/route/RoutePlannerView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-04-19（日记附件：单区拖拽上传 + 回传展示）
+### 会话目标
+- 日记编辑页改为单一上传区：用户可直接拖拽图片/视频文件上传，不再手填 URL。
+- 后端将附件落盘到本地资源目录（按 image/video 子目录），返回可访问 URL。
+- 日记详情页支持视频直接播放，保证附件回传可浏览。
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 后端：
+  - `DiaryController` 新增 `POST /api/diary/upload`，支持上传 JPG/PNG/MP4（单文件最大 10MB）。
+  - 上传文件按类型落盘到 `data/media/image` 与 `data/media/video`。
+  - 上传成功返回 `url/mediaType/originalName/size`，供前端写入日记 `images/videos` 字段。
+- 资源回传：
+  - `WebConfig` 新增静态资源映射，将 `/media/**` 指向本地 `data/media`。
+  - `SecurityConfig` 放行 `GET/HEAD /media/**`，保证浏览端可访问附件。
+  - `application.yml` / `application-dev.yml` 新增媒体目录配置；新增 multipart 限制。
+- 前端：
+  - `DiaryEditorView` 改为单区拖拽上传（自动识别图片/视频并分类存储 URL）。
+  - 上传完成后在页面统一展示附件卡片，支持预览与移除。
+  - 提交日记时自动将 URL 数组回传到现有创建/更新接口。
+  - `DiaryDetailView` 视频由链接展示升级为内嵌播放器（`video controls`）。
+  - `api.ts` 新增上传 API 封装；`vite.config.ts` 新增 `/media` 代理。
+
+### 验证结果
+- 后端构建：`mvn -DskipTests clean compile` 通过（BUILD SUCCESS）。
+- 前端构建：`npm run build` 未完全通过，剩余 1 个既有错误：
+  - `frontend/src/views/route/RoutePlannerView.vue` 使用了不存在字段 `form.multiPoints`（应为 `form.multiPointIds`）。
+  - 本次上传相关改动的新增类型错误已修复。
+
+### 变更文件
+- src/main/java/com/travel/controller/DiaryController.java
+- src/main/java/com/travel/config/WebConfig.java
+- src/main/java/com/travel/security/SecurityConfig.java
+- src/main/resources/application.yml
+- src/main/resources/application-dev.yml
+- frontend/src/lib/api.ts
+- frontend/src/views/diary/DiaryEditorView.vue
+- frontend/src/views/diary/DiaryDetailView.vue
+- frontend/vite.config.ts
+- .gitignore
+- docs/AI/HANDOFF.md
+
 ## 2026-04-14（Reviews 页：搜索位与排序位调整）
 ### 会话目标
 - 在 `reviews`（`DiaryListView`）页头红框位置新增搜索组件。
@@ -216,6 +430,45 @@
 - frontend/src/lib/api.ts
 - frontend/src/views/route/RoutePlannerView.vue
 - scripts/osm_seed.py
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-04-19（FR-008-4 修订：日记热度权重固定为1.0）
+### 会话目标
+- 按需求调整日记热度权重：热度永远按浏览次数 1.0 倍计算（每次浏览 +1）。
+- 同步修订需求文档与后端实现，避免“近期 7 天权重 1.5”歧义。
+
+### 已完成
+- 需求文档修订：
+  - `FR-008-4` 改为“热度按浏览次数计算，权重固定 1.0，不做近期加权”。
+- 后端算法修订：
+  - `DiaryServiceImpl` 新增固定权重常量 `DIARY_VIEW_HEAT_WEIGHT=1`。
+  - 详情访问增热逻辑改为统一函数 `nextHeatByView()`，显式按固定权重计算。
+
+### 变更文件
+- src/main/java/com/travel/service/impl/DiaryServiceImpl.java
+- Requirements Documendation.md
+- docs/Requirements/Requirements Documendation.md
+- docs/AI/HANDOFF.md
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+## 2026-04-19（FR007 需求修订：改为手动生成 + 日记需求盘点）
+### 会话目标
+- 将 `FR-007` 从“自动生成日记”修订为“用户手动生成日记”，并同步需求流程描述。
+- 盘点旅游日记相关需求（FR-007/008/009）当前实现状态，形成当日开发重点清单。
+
+### 已完成
+- 已在需求文档中将 `FR-007` 描述修订为手动生成导向（取消“自动生成草稿”表述）。
+- 已同步修订“旅游日记流程”中的关键节点命名，保持与新需求一致。
+- 已完成日记模块实现现状盘点，并明确当日优先补齐项（详见会话输出）。
+
+### 变更文件
+- Requirements Documendation.md
+- docs/Requirements/Requirements Documendation.md
 - docs/AI/HANDOFF.md
 
 ### 负责人

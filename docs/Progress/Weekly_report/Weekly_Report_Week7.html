@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>个性化旅游推荐系统 - 第七周工作周报</title>
+  <style>
+    :root {
+      --text: #1f2937;
+      --muted: #4b5563;
+      --line: #d1d5db;
+      --bg: #ffffff;
+      --head: #111827;
+      --table-head: #f3f4f6;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+      line-height: 1.75;
+      font-size: 15px;
+    }
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 32px 28px 48px;
+    }
+    h1, h2, h3, h4 {
+      color: var(--head);
+      margin: 22px 0 12px;
+      line-height: 1.4;
+    }
+    h1 {
+      font-size: 30px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 10px;
+      margin-top: 0;
+    }
+    h2 {
+      font-size: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 8px;
+    }
+    h3 {
+      font-size: 20px;
+    }
+    h4 {
+      font-size: 17px;
+    }
+    p {
+      margin: 8px 0;
+    }
+    ul {
+      margin: 8px 0 12px;
+      padding-left: 24px;
+    }
+    li {
+      margin: 6px 0;
+    }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.93em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 16px;
+      table-layout: fixed;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      word-break: break-word;
+    }
+    th {
+      background: var(--table-head);
+      text-align: left;
+    }
+    .meta {
+      color: var(--muted);
+      margin-top: -4px;
+    }
+    .footer {
+      margin-top: 28px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      font-weight: 600;
+    }
+    @media print {
+      .page {
+        max-width: none;
+        padding: 0;
+      }
+      h1, h2, h3, h4 {
+        page-break-after: avoid;
+      }
+      table, tr, td, th {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>个性化旅游推荐系统 - 第七周工作周报</h1>
+    <p class="meta">成员：陈逸 程小路</p>
+
+    <h2>1. 第七周（2026-04-13 至 2026-04-19）：日记功能闭环、稳定性修复与需求口径统一</h2>
+
+    <h3>1.1 工作目标</h3>
+    <ul>
+      <li>基于本周主干提交推进路线页、地图数据与旅游助手相关能力，保证前后端可构建、可演示。</li>
+      <li>围绕日记模块完成“可用性 + 稳定性 + 一致性”专项迭代：附件上传回传、搜索交互升级、500 故障修复。</li>
+      <li>同步需求与实现口径（FR-007、FR-008-4、FR-009-4），确保需求文档、技术设计文档、代码行为一致。</li>
+      <li>在保持课程约束前提下（检索走内存索引，不在 SQL 层做 LIKE/JOIN 检索计算）优化检索体验。</li>
+    </ul>
+
+    <h3>1.2 具体完成工作</h3>
+
+    <h4>1.2.1 本周提交与主干合并情况</h4>
+    <ul>
+      <li>本周主干可见提交（含合并）完成了路线规划、地图数据测试与旅游助手能力接入：</li>
+      <li><code>797c674</code>、<code>f079c40</code>（路线规划相关）</li>
+      <li><code>24e28f3</code>、<code>3579aaa</code>（地图数据测试）</li>
+      <li><code>597ddea</code>（旅游问答助手）</li>
+      <li>合并节点：<code>0e81e8f</code>、<code>2df4c89</code>、<code>13855e2</code></li>
+      <li>本周持续在主干完成文档与实现对齐，<code>HANDOFF</code> 记录覆盖问题定位、修复措施与验证方式。</li>
+    </ul>
+
+    <h4>1.2.2 需求口径对齐（FR-007 / FR-008-4）</h4>
+    <ul>
+      <li>FR-007 从“自动生成日记”调整为“用户手动生成日记”，并同步需求流程描述。</li>
+      <li>FR-008-4 明确为“热度 = 浏览次数 × 1.0（每次浏览 +1）”，移除近期加权歧义。</li>
+      <li>两份需求文档与后端实现已保持一致，避免验收标准冲突。</li>
+    </ul>
+
+    <h4>1.2.3 日记附件上传与回传浏览闭环</h4>
+    <ul>
+      <li>后端新增 <code>POST /api/diary/upload</code>，支持 JPG/PNG/MP4、大小校验、按类型落盘并回传 <code>url/mediaType</code>。</li>
+      <li>新增 <code>/media/**</code> 静态资源映射与安全放行，前端可直接访问上传内容。</li>
+      <li>前端日记编辑页改为单拖拽区上传；详情页视频由链接改为内嵌播放器。</li>
+      <li>前后端形成“上传 -> 回传 URL -> 提交日记 -> 详情浏览”的完整链路。</li>
+    </ul>
+
+    <h4>1.2.4 日记提交 500 故障修复（数据库离线场景）</h4>
+    <ul>
+      <li>根因定位：事务创建阶段即触发数据库连接异常（<code>CannotCreateTransactionException</code> / <code>DataSourceDisableException</code>）。</li>
+      <li>修复策略：写接口采用“DB 优先 + dev 容错回退内存写入”，数据库不可用时不再直接 500。</li>
+      <li>覆盖 create/update/delete/rate 写路径，保障开发环境离线可演示能力。</li>
+    </ul>
+
+    <h4>1.2.5 日记搜索交互升级（统一输入 + 候选直达）</h4>
+    <ul>
+      <li>统一输入框支持“标题/正文/目的地”检索。</li>
+      <li>即时候选仅展示“日记实体”，并支持点击候选直达详情。</li>
+      <li>单字搜索可命中标题/正文：当关键词长度 <code>&lt;2</code> 时回退内存 contains 匹配，避免 NGram 最小粒度限制导致漏检。</li>
+      <li>保持课程约束：检索计算仍在内存索引与应用层完成。</li>
+    </ul>
+
+    <h4>1.2.6 今日新增：FR-009-4 正文压缩存储落地</h4>
+    <ul>
+      <li>新增 <code>DiaryContentCodec</code>，采用 <code>RAW:</code> / <code>GZB64:</code> 双协议：</li>
+      <li>写库按阈值压缩（GZIP + Base64），读取自动解码并兼容历史无前缀明文。</li>
+      <li><code>DiaryServiceImpl</code> 写库路径接入编码，<code>InMemoryDataLoader</code> 预加载接入解码。</li>
+      <li>对外 API 与内存检索保持明文语义不变，避免影响现有搜索与展示。</li>
+      <li>新增配置项：<code>app.diary.content-compression.enabled</code>、<code>app.diary.content-compression.threshold-bytes</code>。</li>
+    </ul>
+
+    <h3>1.3 验证与质量门禁</h3>
+    <ul>
+      <li>后端编译通过：<code>mvn -DskipTests compile</code>。</li>
+      <li>前端构建通过：<code>npm run build</code>（仅有既有 chunk size 提示）。</li>
+      <li>关键回归项：</li>
+      <li>数据库离线时 <code>POST /api/diary</code> 返回 200（不再 500）。</li>
+      <li><code>GET /api/diary/search?keyword=大&page=1&size=5</code> 可返回单字命中结果。</li>
+      <li>上传后的图片/视频可在详情页回传浏览。</li>
+    </ul>
+
+    <h3>1.4 风险与应对</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>风险</th>
+          <th>影响</th>
+          <th>概率</th>
+          <th>应对措施</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>数据库离线回退内存写入可能导致重启后数据不持久</td>
+          <td>中</td>
+          <td>中</td>
+          <td>在 dev 明确“仅演示容错”边界；恢复 DB 后优先落库</td>
+        </tr>
+        <tr>
+          <td>正文压缩后数据库可读性下降，排障成本上升</td>
+          <td>中</td>
+          <td>中</td>
+          <td>采用 <code>RAW:/GZB64:</code> 显式前缀协议，工具化解码查看</td>
+        </tr>
+        <tr>
+          <td>单字搜索回退线性匹配在大数据量下性能下降</td>
+          <td>中</td>
+          <td>中</td>
+          <td>保留 limit 限制；后续评估 1-gram 辅助索引</td>
+        </tr>
+        <tr>
+          <td>本地媒体文件持续增长导致磁盘占用上升</td>
+          <td>中</td>
+          <td>中</td>
+          <td>增加定期清理策略与容量告警</td>
+        </tr>
+        <tr>
+          <td>自动化测试覆盖仍不足</td>
+          <td>中</td>
+          <td>高</td>
+          <td>下周补服务层单测与接口冒烟脚本</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>1.5 进度评估</h3>
+    <ul>
+      <li><strong>完成度</strong>：约 95%（本周提交内容 + 今日 FR-009-4 实现均已落地并通过编译门禁）。</li>
+      <li><strong>里程碑</strong>：日记模块从“可提交”提升至“可上传、可检索、可回传、可容错”；需求文档与代码口径完成对齐。</li>
+      <li><strong>交付物</strong>：</li>
+      <li>日记上传回传全链路（后端接口 + 前端交互 + 静态资源映射）</li>
+      <li>日记搜索交互升级（统一输入、候选直达、单字匹配）</li>
+      <li>500 故障修复（DB 离线回退）</li>
+      <li>正文压缩存储实现（<code>RAW:/GZB64:</code>）</li>
+      <li>需求/技术文档与 <code>HANDOFF</code> 同步更新</li>
+    </ul>
+
+    <h3>1.6 下周计划（2026-04-20 至 2026-04-26）</h3>
+    <ul>
+      <li>补齐日记模块关键服务层单元测试与接口回归脚本。</li>
+      <li>为正文压缩补充统计脚本（压缩率、异常回退率）与巡检日志。</li>
+      <li>清理媒体目录策略（过期附件/无引用附件）并补后台观测项。</li>
+      <li>持续推进未完成低优先级项（FR-009-5、FR-016）的方案细化。</li>
+    </ul>
+
+    <p class="footer">编写日期：2026-04-19</p>
+  </main>
+</body>
+</html>

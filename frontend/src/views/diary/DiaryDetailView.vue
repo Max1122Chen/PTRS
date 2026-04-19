@@ -95,9 +95,10 @@ onMounted(load)
 
         <div v-if="parseJsonList(diary?.videos).length" class="gallery">
           <div class="muted" style="margin-bottom: 6px">视频</div>
-          <a v-for="(u, idx) in parseJsonList(diary?.videos)" :key="idx" :href="u" target="_blank" class="link">
-            {{ u }}
-          </a>
+          <div v-for="(u, idx) in parseJsonList(diary?.videos)" :key="idx" class="video-card">
+            <video :src="u" controls class="video-player" />
+            <a :href="u" target="_blank" class="link">{{ u }}</a>
+          </div>
         </div>
       </div>
 
@@ -143,6 +144,17 @@ onMounted(load)
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.video-card {
+  width: min(420px, 100%);
+}
+
+.video-player {
+  width: 100%;
+  max-height: 260px;
+  border-radius: 10px;
+  background: #000;
 }
 .rateBox {
   padding: 14px;

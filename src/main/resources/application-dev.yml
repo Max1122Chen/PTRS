@@ -13,3 +13,6 @@ app:
   dev-seed:
     # 开发环境默认开启测试种子数据。
     enabled: true
+  media:
+    # 开发环境附件落盘目录。
+    base-path: data/media

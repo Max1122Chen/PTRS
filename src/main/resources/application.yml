@@ -20,6 +20,11 @@ spring:
     serialization:
       write-dates-as-timestamps: false
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 30MB
+
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*.xml
   configuration:
@@ -72,4 +77,15 @@ app:
   debug:
     # 调试开关：当数据库不可用时，跳过预加载并允许应用启动。
     ignore-db-connection-failure: false
+  media:
+    # 附件本地存储根目录（图片、视频按子目录保存）。
+    base-path: data/media
+    # 资源公开访问前缀。
+    url-prefix: /media
+  diary:
+    content-compression:
+      # 开启后：写库使用 RAW:/GZB64: 协议；读取时自动解码为明文。
+      enabled: true
+      # 仅当正文 UTF-8 字节长度达到阈值时尝试压缩。
+      threshold-bytes: 256
 

@@ -71,6 +71,8 @@ public class SecurityConfig
                 .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/ai/chat").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+            .requestMatchers(HttpMethod.GET, "/media/**").permitAll()
+            .requestMatchers(HttpMethod.HEAD, "/media/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/recommendation/scenic-search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tags").permitAll()

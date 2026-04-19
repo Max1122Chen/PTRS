@@ -93,6 +93,13 @@ export type DiaryDetailVO = Diary & {
   comments?: any[]
 }
 
+export type DiaryAttachmentUploadResult = {
+  url: string
+  mediaType: 'image' | 'video'
+  originalName?: string
+  size?: number
+}
+
 export type RoutePlanVO = { path: number[]; distance: number; time: number }
 
 export type RoutePoiCandidate = {
@@ -403,6 +410,13 @@ export async function apiDiarySearch(params: { keyword?: string; destination?: n
 
 export async function apiDiaryRate(payload: { diaryId: number; rating: number }) {
   const res = (await http.post('/api/diary/rate', payload)) as ApiResponse<void>
+  return res.data
+}
+
+export async function apiDiaryUploadAttachment(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  const res = (await http.post('/api/diary/upload', form)) as ApiResponse<DiaryAttachmentUploadResult>
   return res.data
 }
 

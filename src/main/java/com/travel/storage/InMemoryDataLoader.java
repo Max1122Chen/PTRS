@@ -26,6 +26,7 @@ import com.travel.model.entity.ScenicAreaTag;
 import com.travel.model.entity.Tag;
 import com.travel.model.entity.User;
 import com.travel.model.entity.UserInterest;
+import com.travel.util.DiaryContentCodec;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +82,8 @@ public class InMemoryDataLoader
 
     private final DevSeedDataLoader devSeedDataLoader;
 
+    private final DiaryContentCodec diaryContentCodec;
+
     @Value("${app.storage.preload.enabled:true}")
     private boolean preloadEnabled;
 
@@ -101,7 +104,8 @@ public class InMemoryDataLoader
                                DiaryMapper diaryMapper,
                                DiaryDestinationMapper diaryDestinationMapper,
                                CommentMapper commentMapper,
-                               DevSeedDataLoader devSeedDataLoader)
+                               DevSeedDataLoader devSeedDataLoader,
+                               DiaryContentCodec diaryContentCodec)
     {
         this.store = store;
         this.userMapper = userMapper;
@@ -118,6 +122,7 @@ public class InMemoryDataLoader
         this.diaryDestinationMapper = diaryDestinationMapper;
         this.commentMapper = commentMapper;
         this.devSeedDataLoader = devSeedDataLoader;
+        this.diaryContentCodec = diaryContentCodec;
     }
 
     @PostConstruct
@@ -210,6 +215,7 @@ public class InMemoryDataLoader
         List<Diary> diaries = diaryMapper.selectList(null);
         for (Diary d : diaries)
         {
+            d.setContent(diaryContentCodec.decodeFromStorage(d.getContent()));
             store.insertDiary(d);
         }
 

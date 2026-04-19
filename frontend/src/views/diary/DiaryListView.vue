@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import {
   apiDiaryDelete,
@@ -10,12 +11,12 @@ import {
   apiRecommendationList,
   apiScenicSearchByKeyword,
   type Diary,
-  type ScenicArea,
 } from '../../lib/api'
 import { interestLabelZh, isExcludedTagPickerKey, normalizeInterestKey } from '../../lib/interestTags'
 import { useAuthStore } from '../../stores/auth'
 
 const auth = useAuthStore()
+const router = useRouter()
 const loading = ref(false)
 
 const listQuery = reactive({ page: 1, size: 50, sortBy: 'heat' })
@@ -52,28 +53,183 @@ watch(diaryFilterChips, (chips) => {
 const searchQuery = reactive({ keyword: '', destination: undefined as number | undefined, page: 1, size: 50 })
 const searchList = ref<Diary[]>([])
 
-const searchPanelOpen = ref(false)
 const fromSearch = ref(false)
 const sortBy = ref<'heat' | 'rating'>('heat')
+const searchInput = ref('')
+const confirmedSearchLabel = ref('')
 
-const destOptions = ref<ScenicArea[]>([])
-const destLoading = ref(false)
-let destSearchSeq = 0
+type SearchSuggestion = {
+  kind: 'title' | 'content' | 'destination'
+  id: string
+  diaryId: number
+  label: string
+  subLabel: string
+  keyword?: string
+  destinationId?: number
+  destinationName?: string
+}
 
-async function remoteDestSearch(keyword: string) {
-  const q = keyword.trim()
+const suggestionLoading = ref(false)
+const suggestionOpen = ref(false)
+const suggestionList = ref<SearchSuggestion[]>([])
+const selectedDestination = ref<{ id: number; name: string } | null>(null)
+let suggestSeq = 0
+let suggestTimer: ReturnType<typeof setTimeout> | null = null
+
+function uniqueByDiaryId(rows: SearchSuggestion[]) {
+  const seen = new Set<number>()
+  const out: SearchSuggestion[] = []
+  for (const row of rows) {
+    if (seen.has(row.diaryId)) continue
+    seen.add(row.diaryId)
+    out.push(row)
+  }
+  return out
+}
+
+function includesIgnoreCase(raw: string | null | undefined, keyword: string) {
+  if (!raw) return false
+  return raw.toLowerCase().includes(keyword.toLowerCase())
+}
+
+function contentSnippet(content: string | null | undefined, keyword: string) {
+  if (!content) return ''
+  const source = content.replace(/\s+/g, ' ').trim()
+  if (!source) return ''
+  const idx = source.toLowerCase().indexOf(keyword.toLowerCase())
+  if (idx < 0) {
+    return source.length > 42 ? `${source.slice(0, 42)}...` : source
+  }
+  const start = Math.max(0, idx - 10)
+  const end = Math.min(source.length, idx + keyword.length + 24)
+  const snippet = source.slice(start, end)
+  return `${start > 0 ? '...' : ''}${snippet}${end < source.length ? '...' : ''}`
+}
+
+function buildDiarySuggestions(rows: Diary[], keyword: string) {
+  const suggestions: SearchSuggestion[] = []
+  for (const row of rows) {
+    if (suggestions.length >= 8) break
+    const titleMatch = includesIgnoreCase(row.title, keyword)
+    if (titleMatch) {
+      suggestions.push({
+        kind: 'title',
+        id: `title-${row.id}`,
+        diaryId: row.id,
+        label: row.title || '(无标题)',
+        subLabel: '标题匹配',
+        keyword,
+      })
+      continue
+    }
+    const snippet = contentSnippet(row.content, keyword)
+    const contentMatch = includesIgnoreCase(row.content, keyword)
+    suggestions.push({
+      kind: contentMatch ? 'content' : 'title',
+      id: `${contentMatch ? 'content' : 'title'}-${row.id}`,
+      diaryId: row.id,
+      label: row.title || '(无标题)',
+      subLabel: contentMatch
+        ? (snippet ? `正文匹配：${snippet}` : '正文匹配')
+        : '标题匹配',
+      keyword,
+    })
+  }
+  return suggestions
+}
+
+async function buildDestinationDiarySuggestions(keyword: string) {
+  const scenicRows = await apiScenicSearchByKeyword({ keyword, limit: 4 })
+  if (!scenicRows.length) return [] as SearchSuggestion[]
+
+  const groups = await Promise.all(
+    scenicRows.map(async (scenic) => {
+      const diaries = await apiDiarySearch({ destination: scenic.id, page: 1, size: 4 })
+      return diaries.map((row) => ({
+        kind: 'destination' as const,
+        id: `destination-${scenic.id}-${row.id}`,
+        diaryId: row.id,
+        label: row.title || '(无标题)',
+        subLabel: `目的地匹配：${scenic.name}`,
+        destinationId: scenic.id,
+        destinationName: scenic.name,
+      }))
+    }),
+  )
+
+  return uniqueByDiaryId(groups.flat())
+}
+
+async function fetchSearchSuggestions(keyword: string, seq: number) {
+  suggestionLoading.value = true
+  try {
+    const [diaryRows, destinationDiaryRows] = await Promise.all([
+      apiDiarySearch({ keyword, page: 1, size: 8 }),
+      buildDestinationDiarySuggestions(keyword),
+    ])
+
+    if (seq !== suggestSeq) return
+
+    const diarySuggestions = buildDiarySuggestions(diaryRows || [], keyword)
+    suggestionList.value = uniqueByDiaryId([...diarySuggestions, ...destinationDiaryRows]).slice(0, 12)
+    suggestionOpen.value = true
+  } finally {
+    if (seq === suggestSeq) suggestionLoading.value = false
+  }
+}
+
+function onSearchFocus() {
+  if (searchInput.value.trim()) {
+    suggestionOpen.value = true
+  }
+}
+
+function onSearchBlur() {
+  window.setTimeout(() => {
+    suggestionOpen.value = false
+  }, 120)
+}
+
+function onSearchClear() {
+  selectedDestination.value = null
+  suggestionList.value = []
+  suggestionOpen.value = false
+  suggestionLoading.value = false
+}
+
+function applySuggestion(item: SearchSuggestion) {
+  suggestionOpen.value = false
+  void router.push(`/diary/${item.diaryId}`)
+}
+
+async function confirmSearch() {
+  const q = searchInput.value.trim()
   if (!q) {
-    destSearchSeq++
-    destOptions.value = []
+    await showAll()
     return
   }
-  const seq = ++destSearchSeq
-  destLoading.value = true
-  try {
-    destOptions.value = await apiScenicSearchByKeyword({ keyword: q, limit: 50 })
-  } finally {
-    if (seq === destSearchSeq) destLoading.value = false
+
+  const exactDestination = suggestionList.value.find(
+    (item) => item.kind === 'destination' && item.destinationName === q && item.destinationId,
+  )
+
+  if (selectedDestination.value && selectedDestination.value.name === q) {
+    searchQuery.destination = selectedDestination.value.id
+    searchQuery.keyword = ''
+    confirmedSearchLabel.value = `目的地：${q}`
+  } else if (exactDestination) {
+    searchQuery.destination = exactDestination.destinationId
+    searchQuery.keyword = ''
+    confirmedSearchLabel.value = `目的地：${q}`
+  } else {
+    searchQuery.keyword = q
+    searchQuery.destination = undefined
+    selectedDestination.value = null
+    confirmedSearchLabel.value = `关键词：${q}`
   }
+
+  await runSearch()
+  suggestionOpen.value = false
 }
 
 async function load() {
@@ -157,27 +313,16 @@ function firstImage(d: Diary): string | null {
   }
 }
 
-function toggleSearchPanel() {
-  searchPanelOpen.value = !searchPanelOpen.value
-  if (!searchPanelOpen.value) {
-    fromSearch.value = false
-    searchQuery.destination = undefined
-    void load()
-  }
-}
-
-async function onSearchClick() {
-  if (!searchPanelOpen.value) {
-    toggleSearchPanel()
-    return
-  }
-  await runSearch()
-}
-
 async function showAll() {
   fromSearch.value = false
-  searchPanelOpen.value = false
+  searchQuery.keyword = ''
   searchQuery.destination = undefined
+  confirmedSearchLabel.value = ''
+  searchInput.value = ''
+  selectedDestination.value = null
+  suggestionList.value = []
+  suggestionOpen.value = false
+  suggestionLoading.value = false
   await load()
 }
 
@@ -285,6 +430,31 @@ watch(
   },
   { deep: true },
 )
+
+watch(searchInput, (value) => {
+  const q = value.trim()
+
+  if (selectedDestination.value && q !== selectedDestination.value.name) {
+    selectedDestination.value = null
+  }
+
+  if (suggestTimer) {
+    clearTimeout(suggestTimer)
+    suggestTimer = null
+  }
+
+  if (!q) {
+    suggestionList.value = []
+    suggestionOpen.value = false
+    suggestionLoading.value = false
+    return
+  }
+
+  const seq = ++suggestSeq
+  suggestTimer = setTimeout(() => {
+    void fetchSearchSuggestions(q, seq)
+  }, 180)
+})
 </script>
 
 <template>
@@ -304,26 +474,6 @@ watch(
           </button>
         </div>
         <div class="hdr-actions">
-          <el-select
-            v-if="searchPanelOpen"
-            v-model="searchQuery.destination"
-            filterable
-            remote
-            clearable
-            :reserve-keyword="false"
-            placeholder="目的地"
-            :remote-method="remoteDestSearch"
-            :loading="destLoading"
-            class="dest-pill"
-          >
-            <el-option
-              v-for="o in destOptions"
-              :key="o.id"
-              :label="o.name"
-              :value="o.id"
-            />
-          </el-select>
-          <el-button type="primary" plain class="hdr-btn search-btn" @click="onSearchClick">搜索</el-button>
           <el-dropdown trigger="click" @command="onSortCommand">
             <el-button type="primary" plain class="hdr-btn sort-btn">{{ sortLabel }}</el-button>
             <template #dropdown>
@@ -339,8 +489,44 @@ watch(
         </div>
       </div>
 
+      <div class="search-engine-wrap">
+        <div class="search-input-row">
+          <el-input
+            v-model="searchInput"
+            clearable
+            class="search-input"
+            placeholder="搜索标题、正文或目的地（统一输入）"
+            @focus="onSearchFocus"
+            @blur="onSearchBlur"
+            @keyup.enter="confirmSearch"
+            @clear="onSearchClear"
+          />
+          <el-button type="primary" plain class="hdr-btn search-btn" @click="confirmSearch">确认搜索</el-button>
+        </div>
+
+        <div v-if="suggestionOpen" class="suggestion-panel">
+          <div v-if="suggestionLoading" class="suggestion-status muted">正在检索...</div>
+
+          <template v-else-if="suggestionList.length">
+            <div class="suggestion-status muted">点击任意结果可直接进入日记详情</div>
+            <button
+              v-for="item in suggestionList"
+              :key="item.id"
+              class="suggestion-item"
+              type="button"
+              @mousedown.prevent="applySuggestion(item)"
+            >
+              <div class="suggestion-title">{{ item.label }}</div>
+              <div class="suggestion-meta">{{ item.subLabel }}</div>
+            </button>
+          </template>
+
+          <div v-else class="suggestion-status muted">暂无匹配项，按回车可直接按关键词搜索</div>
+        </div>
+      </div>
+
       <div v-if="fromSearch" class="search-hint">
-        <span class="muted">以下为搜索结果</span>
+        <span class="muted">当前结果：{{ confirmedSearchLabel || '搜索结果' }}</span>
         <el-button text type="primary" @click="showAll">查看全部</el-button>
       </div>
 
@@ -446,7 +632,7 @@ watch(
 }
 
 .search-btn {
-  min-width: 70px;
+  min-width: 84px;
 }
 
 .sort-btn {
@@ -460,62 +646,88 @@ watch(
   font-weight: 700;
 }
 
-.dest-pill {
-  width: 240px;
+.search-engine-wrap {
+  position: relative;
+  margin-bottom: 12px;
 }
 
-.dest-pill :deep(.el-input__wrapper),
-.dest-pill :deep(.el-select__wrapper) {
-  border-radius: 999px !important;
-  border: 1px solid var(--glass-border-faint) !important;
-  box-shadow: none !important;
-  background: var(--glass-muted) !important;
-  backdrop-filter: blur(var(--glass-subtle-blur)) saturate(var(--glass-saturate)) !important;
-  -webkit-backdrop-filter: blur(var(--glass-subtle-blur)) saturate(var(--glass-saturate)) !important;
-}
-
-.dest-pill :deep(.el-input__inner),
-.dest-pill :deep(.el-select__selected-value) {
-  border-radius: 999px !important;
-}
-
-.dest-pill :deep(.el-input__wrapper) {
-  height: 34px;
-  padding: 0 14px;
-}
-
-.search-panel {
+.search-input-row {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 10px;
   align-items: center;
-  margin-bottom: 16px;
-  padding: 12px;
-  border-radius: 12px;
+  gap: 10px;
+}
+
+.search-input {
+  flex: 1;
+}
+
+.search-input :deep(.el-input__wrapper) {
+  border-radius: 999px;
+  height: 36px;
+}
+
+.suggestion-panel {
+  position: absolute;
+  left: 0;
+  right: 94px;
+  top: calc(100% + 8px);
+  z-index: 40;
+  max-height: 320px;
+  overflow-y: auto;
   border: 1px solid var(--glass-border-soft);
-  background: rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  background: var(--glass-card);
   backdrop-filter: blur(14px) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(14px) saturate(var(--glass-saturate));
   box-shadow: var(--shadow-sm);
 }
 
-.search-dest {
-  flex: 1;
-  min-width: 240px;
+.suggestion-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.search-panel :deep(.el-input) {
-  flex: 1;
-  min-width: 200px;
+.suggestion-item:last-child {
+  border-bottom: none;
 }
 
-.search-panel :deep(.el-button) {
-  flex-shrink: 0;
+.suggestion-item:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.suggestion-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #2d2618);
+}
+
+.suggestion-meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(58, 51, 40, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestion-status {
+  padding: 10px 12px;
+  font-size: 13px;
 }
 
 @media (max-width: 860px) {
-  .search-panel {
-    flex-wrap: wrap;
+  .search-input-row {
+    gap: 8px;
+  }
+
+  .suggestion-panel {
+    right: 0;
+    top: calc(100% + 6px);
   }
 }
 

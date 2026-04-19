@@ -13,9 +13,12 @@ import com.travel.model.entity.DiaryDestination;
 import com.travel.model.entity.User;
 import com.travel.model.vo.diary.DiaryDetailVO;
 import com.travel.service.DiaryService;
+import com.travel.util.DiaryContentCodec;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,6 +32,16 @@ import java.util.Objects;
 public class DiaryServiceImpl implements DiaryService
 {
 
+    private static final Logger log = LoggerFactory.getLogger(DiaryServiceImpl.class);
+
+    /**
+     * 日记热度浏览权重：固定为 1.0（即每次浏览 +1）。
+     */
+    private static final int DIARY_VIEW_HEAT_WEIGHT = 1;
+
+    @Value("${app.debug.ignore-db-connection-failure:false}")
+    private boolean ignoreDbConnectionFailure;
+
     private final InMemoryStore store;
 
     private final ObjectMapper objectMapper;
@@ -39,25 +52,29 @@ public class DiaryServiceImpl implements DiaryService
 
     private final CommentMapper commentMapper;
 
+    private final DiaryContentCodec diaryContentCodec;
+
     public DiaryServiceImpl(
         InMemoryStore store,
         ObjectMapper objectMapper,
         DiaryMapper diaryMapper,
         DiaryDestinationMapper diaryDestinationMapper,
-        CommentMapper commentMapper)
+        CommentMapper commentMapper,
+        DiaryContentCodec diaryContentCodec)
     {
         this.store = store;
         this.objectMapper = objectMapper;
         this.diaryMapper = diaryMapper;
         this.diaryDestinationMapper = diaryDestinationMapper;
         this.commentMapper = commentMapper;
+        this.diaryContentCodec = diaryContentCodec;
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Long create(Long userId, DiaryCreateRequest request)
     {
         LocalDateTime now = LocalDateTime.now();
+        List<Long> destinations = request.getDestinations() == null ? List.of() : request.getDestinations();
 
         Diary diary = new Diary();
         diary.setUserId(userId);
@@ -70,16 +87,18 @@ public class DiaryServiceImpl implements DiaryService
         diary.setCreateTime(now);
         diary.setUpdateTime(now);
 
-        // 先落库：避免“重启后数据丢失”的问题
-        diaryMapper.insert(diary);
-        if (diary.getId() == null)
+        // 优先落库；若开发模式下数据库不可用，则回退到内存写入。
+        runDbWrite("create-diary", () ->
         {
-            throw new IllegalStateException("diary 插入后 id 为空");
-        }
+            Diary dbDiary = toDiaryForDb(diary);
+            diaryMapper.insert(dbDiary);
+            if (dbDiary.getId() == null)
+            {
+                throw new IllegalStateException("diary 插入后 id 为空");
+            }
+            diary.setId(dbDiary.getId());
 
-        if (request.getDestinations() != null && !request.getDestinations().isEmpty())
-        {
-            for (Long destId : request.getDestinations())
+            for (Long destId : destinations)
             {
                 DiaryDestination dd = new DiaryDestination();
                 dd.setDiaryId(diary.getId());
@@ -87,17 +106,16 @@ public class DiaryServiceImpl implements DiaryService
                 dd.setCreateTime(now);
                 diaryDestinationMapper.insert(dd);
             }
-        }
+        });
 
         // 再更新内存索引
         store.insertDiary(diary);
-        store.replaceDiaryDestinations(diary.getId(), request.getDestinations());
+        store.replaceDiaryDestinations(diary.getId(), destinations);
         store.rebuildSearchIndicesAll();
         return diary.getId();
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void update(Long userId, DiaryUpdateRequest request)
     {
         Diary existing = store.findDiaryById(request.getId());
@@ -122,27 +140,30 @@ public class DiaryServiceImpl implements DiaryService
         update.setHeat(existing.getHeat());
         update.setRating(existing.getRating());
 
-        // 落库
-        diaryMapper.updateById(update);
-
-        // destinations 可选；不传则保持不变
-        if (request.getDestinations() != null)
+        // 先尝试落库；若开发模式下数据库不可用，则回退到内存更新。
+        runDbWrite("update-diary", () ->
         {
-            Long diaryId = existing.getId();
-            diaryDestinationMapper.delete(
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<DiaryDestination>()
-                    .eq(DiaryDestination::getDiaryId, diaryId));
+            diaryMapper.updateById(toDiaryForDb(update));
 
-            LocalDateTime now = LocalDateTime.now();
-            for (Long destId : request.getDestinations())
+            // destinations 可选；不传则保持不变
+            if (request.getDestinations() != null)
             {
-                DiaryDestination dd = new DiaryDestination();
-                dd.setDiaryId(diaryId);
-                dd.setDestinationId(destId);
-                dd.setCreateTime(now);
-                diaryDestinationMapper.insert(dd);
+                Long diaryId = existing.getId();
+                diaryDestinationMapper.delete(
+                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<DiaryDestination>()
+                        .eq(DiaryDestination::getDiaryId, diaryId));
+
+                LocalDateTime now = LocalDateTime.now();
+                for (Long destId : request.getDestinations())
+                {
+                    DiaryDestination dd = new DiaryDestination();
+                    dd.setDiaryId(diaryId);
+                    dd.setDestinationId(destId);
+                    dd.setCreateTime(now);
+                    diaryDestinationMapper.insert(dd);
+                }
             }
-        }
+        });
 
         // 内存更新
         store.updateDiary(update);
@@ -154,7 +175,6 @@ public class DiaryServiceImpl implements DiaryService
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void delete(Long userId, Long diaryId)
     {
         Diary existing = store.findDiaryById(diaryId);
@@ -167,11 +187,13 @@ public class DiaryServiceImpl implements DiaryService
             throw new IllegalArgumentException("无权限操作该日记");
         }
 
-        // 落库
-        diaryDestinationMapper.delete(
-            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<DiaryDestination>()
-                .eq(DiaryDestination::getDiaryId, diaryId));
-        diaryMapper.deleteById(diaryId);
+        runDbWrite("delete-diary", () ->
+        {
+            diaryDestinationMapper.delete(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<DiaryDestination>()
+                    .eq(DiaryDestination::getDiaryId, diaryId));
+            diaryMapper.deleteById(diaryId);
+        });
 
         // 内存
         store.deleteDiary(diaryId);
@@ -187,10 +209,10 @@ public class DiaryServiceImpl implements DiaryService
             throw new IllegalArgumentException("日记不存在");
         }
 
-        // 浏览热度：每次详情访问 heat + 1（后续可改为按 7 天权重计算）
+        // 浏览热度：固定权重模型（权重=1.0），每次详情访问 heat + 1。
         Diary update = new Diary();
         update.setId(diaryId);
-        update.setHeat((diary.getHeat() == null ? 0 : diary.getHeat()) + 1);
+        update.setHeat(nextHeatByView(diary.getHeat()));
         update.setCreateTime(diary.getCreateTime());
         update.setRating(diary.getRating());
         update.setTitle(diary.getTitle());
@@ -302,7 +324,6 @@ public class DiaryServiceImpl implements DiaryService
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void rate(Long userId, Long diaryId, double rating)
     {
         Diary diary = store.findDiaryById(diaryId);
@@ -321,8 +342,7 @@ public class DiaryServiceImpl implements DiaryService
         c.setCreateTime(now);
         c.setUpdateTime(now);
 
-        // 先落库评论，避免重启丢失
-        commentMapper.insert(c);
+        runDbWrite("insert-diary-comment", () -> commentMapper.insert(c));
 
         store.insertComment(c);
 
@@ -330,11 +350,69 @@ public class DiaryServiceImpl implements DiaryService
         diary.setRating(avg);
         diary.setUpdateTime(LocalDateTime.now());
 
-        // 落库更新日记评分
-        diaryMapper.updateById(diary);
+        runDbWrite("update-diary-rating", () -> diaryMapper.updateById(toDiaryForDb(diary)));
 
         // 内存更新
         store.updateDiary(diary);
+    }
+
+    private Diary toDiaryForDb(Diary source)
+    {
+        Diary target = new Diary();
+        target.setId(source.getId());
+        target.setUserId(source.getUserId());
+        target.setTitle(source.getTitle());
+        target.setContent(diaryContentCodec.encodeForStorage(source.getContent()));
+        target.setImages(source.getImages());
+        target.setVideos(source.getVideos());
+        target.setHeat(source.getHeat());
+        target.setRating(source.getRating());
+        target.setCreateTime(source.getCreateTime());
+        target.setUpdateTime(source.getUpdateTime());
+        return target;
+    }
+
+    private void runDbWrite(String operation, Runnable action)
+    {
+        try
+        {
+            action.run();
+        }
+        catch (RuntimeException ex)
+        {
+            if (ignoreDbConnectionFailure && isDbUnavailable(ex))
+            {
+                log.warn("DB write skipped for {} because DB is unavailable and app.debug.ignore-db-connection-failure=true. " +
+                    "Falling back to in-memory write. cause={}: {}", operation, ex.getClass().getName(), ex.getMessage());
+                return;
+            }
+            throw ex;
+        }
+    }
+
+    private boolean isDbUnavailable(Throwable ex)
+    {
+        Throwable current = ex;
+        while (current != null)
+        {
+            String name = current.getClass().getName();
+            if (name.contains("DataSourceDisableException")
+                || name.contains("CannotCreateTransactionException")
+                || name.contains("CannotGetJdbcConnectionException")
+                || name.contains("DataAccessResourceFailureException")
+                || name.contains("CommunicationsException"))
+            {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private int nextHeatByView(Integer currentHeat)
+    {
+        int base = currentHeat == null ? 0 : currentHeat;
+        return base + DIARY_VIEW_HEAT_WEIGHT;
     }
 
     private String toJson(List<String> list)

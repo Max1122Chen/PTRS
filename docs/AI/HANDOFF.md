@@ -3,11 +3,142 @@
 > 用途：跨会话、跨 AI 的最小必要交接记录。
 > 规则：每次开发结束后追加，不要覆盖历史；已解决的同类问题应合并为结果导向记录；每条记录需标注负责人（git 用户）。
 
+## 2026-04-14（Reviews 页：搜索位与排序位调整）
+### 会话目标
+- 在 `reviews`（`DiaryListView`）页头红框位置新增搜索组件。
+- 将原搜索按钮位置替换为排序按钮，下拉可选“热度排序/评分排序”，并保持与搜索按钮风格尺寸一致。
+
+### 负责人
+- Ryemon（3267348244@qq.com）
+
+### 新增/完成功能
+- 在 `frontend/src/views/diary/DiaryListView.vue` 头部操作区新增“搜索”按钮，并将其布局放到原空白位（红框位置）。
+- 原“搜索”按钮位置改为“排序”按钮，点击后弹出下拉菜单，可选择“热度排序”或“评分排序”。
+- 排序行为在前端列表渲染层生效：对当前展示集合（含推荐标签筛选与搜索结果）统一按所选维度降序排序。
+- 搜索请求补充透传 `keyword` 参数，关键词与目的地筛选可组合使用。
+
+### 验证结果
+- 前端构建通过：`frontend` 目录执行 `npm.cmd run build` 成功（仅保留 chunk size warning）。
+- 编辑器诊断通过：`DiaryListView.vue` 无新增 lints。
+
+### 变更文件
+- frontend/src/views/diary/DiaryListView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-04-14（Gallery 激活态控制二级功能入口显示）
+### 会话目标
+- 仅在用户处于并激活 `Gallery` 主导航时，显示“推荐、路线、设施、美食、管理”等二级功能入口；其余主页面不显示。
+
+### 负责人
+- Ryemon（3267348244@qq.com）
+
+### 新增/完成功能
+- 调整 `AppLayout` 的主导航激活判断：`Gallery` 激活范围扩展为 `/recommend`、`/scenic/*`、`/route*`、`/facility*`、`/food*`、`/admin*`。
+- 新增 `isGallerySection` 计算属性，统一控制二级功能入口可见性。
+- 桌面端二级导航（推荐/路线/设施/美食/管理）改为仅在 `Gallery` 激活时渲染。
+- 移动端抽屉中的同组入口同样改为仅在 `Gallery` 激活时显示。
+
+### 验证结果
+- `frontend` 构建执行：`npm.cmd run build`
+- 结果：未通过，存在既有 TypeScript 错误（`src/views/route/RoutePlannerView.vue` 中使用了不存在字段 `multiPoints`，应为 `multiPointIds`），与本次布局改动无直接关系。
+
+### 变更文件
+- frontend/src/layouts/AppLayout.vue
+- docs/AI/HANDOFF.md
+
+## 2026-04-14（首页英文宣传语替换）
+### 会话目标
+- 依据项目“个性化旅游推荐系统”定位，替换首页英雄区英文段落文案；仅改文字内容，保持原有字体样式与位置不变。
+
+### 负责人
+- Ryemon（3267348244@qq.com）
+
+### 新增/完成功能
+- 将 `frontend/src/views/HomePageView.vue` 中旧的 Kerala 介绍段落替换为项目导向英文宣传文案，突出推荐、路线、设施与美食能力，并强化“鼓励出行探索”的表达。
+
+### 验证结果
+- 静态检查：仅替换 `<p>` 文本内容，未改动样式类名与结构层级（`es-info-wrap`、`p` 保持不变）。
+
+### 变更文件
+- frontend/src/views/HomePageView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-04-14（前端构建修复：RoutePlannerView 字段名错误）
+### 会话目标
+- 修复前端构建报错：`RoutePlannerView.vue` 中不存在字段 `multiPoints` 导致 `vue-tsc` 失败。
+
+### 负责人
+- Ryemon（3267348244@qq.com）
+
+### 新增/完成功能
+- 将 `loadMap()` 空景区分支中的 `form.multiPoints = ''` 更正为 `form.multiPointIds = []`，与表单数据结构一致。
+
+### 验证结果
+- 前端构建通过：`frontend` 目录执行 `npm.cmd run build` 成功（仅保留 chunk size warning）。
+- 编辑器诊断通过：`RoutePlannerView.vue` 无新增 lints。
+
+### 变更文件
+- frontend/src/views/route/RoutePlannerView.vue
+- docs/AI/HANDOFF.md
+
 ## 2026-04-13（会话目标：路线规划多点最优路径）
 ### 会话目标
 - 支持路线页多点规划“最优访问顺序”而非按输入顺序直连。
 - 新增“是否回到起点”开关：开启时最终回到第一个点；关闭时最终结束在最后一个点。
 - 保持现有 `code/data/message` 返回结构与两点规划兼容性。
+
+## 2026-04-14（About 页旅游助手 Agent）
+### 会话目标
+- 在 `About` 页面新增仿微信聊天界面，支持用户提问旅游相关问题并调用大模型回复。
+- 支持用户输入 API Key/模型接口地址/模型名称；聊天记录仅保留在当前页面内存，不做持久化。
+
+### 负责人
+- Ryemon（3267348244@qq.com）
+
+### 新增/完成功能
+- 将 `frontend/src/views/AboutView.vue` 从占位文案改造为完整对话页，包含：
+  - 模型配置区（接口地址、模型名、API Key 输入）；
+  - 微信风格消息列表（左右气泡、头像、时间、滚动到底部）；
+  - 输入发送区（Enter 发送、按钮发送、加载中状态）；
+  - 会话清空能力（仅清内存消息，不写本地存储）。
+- 前端直接通过 `fetch` 调用兼容 OpenAI Chat Completions 的接口（默认 `https://api.openai.com/v1/chat/completions`），携带用户输入的 API Key。
+- 补充错误处理：接口失败时显示错误信息，并给出助手兜底提示。
+
+### 验证结果
+- 前端构建通过：`frontend` 目录执行 `npm.cmd run build` 成功（仅保留 chunk size warning）。
+
+### 变更文件
+- frontend/src/views/AboutView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-04-14（About 旅游助手修复：前端直连失败改后端代理）
+### 会话目标
+- 修复 About 页旅游助手“无法连接模型服务”的问题，兼容 `https://open.bigmodel.cn/api/paas/v4` 这类平台根地址填写方式。
+
+### 负责人
+- Ryemon（3267348244@qq.com）
+
+### 新增/完成功能
+- 新增后端代理接口 `POST /api/ai/chat`（`AiChatController`）：
+  - 前端改为请求本项目后端，由后端转发第三方模型请求，规避浏览器跨域限制。
+  - 自动规范化 endpoint：若用户填的是根地址（如 `/v1` 或 `/api/paas/v4`），自动补全 `/chat/completions`。
+  - 兼容主流 chat completions 返回结构，解析 `choices[0].message.content`（含数组文本片段场景）。
+  - 非 2xx 或响应异常时，返回明确失败原因给前端展示。
+- 安全配置更新：放行匿名调用 `POST /api/ai/chat`。
+- 前端 About 页面改造：
+  - 发送逻辑从“浏览器直连第三方”改为“调用 `/api/ai/chat`”。
+  - 请求体携带 `endpoint/apiKey/model/messages`，响应从统一 `code/data/message` 中读取内容。
+
+### 验证结果
+- 后端编译通过：`mvn -DskipTests compile`（BUILD SUCCESS）。
+- 前端构建通过：`frontend` 目录执行 `npm.cmd run build` 成功（仅保留 chunk size warning）。
+- 编辑器诊断通过：本次改动文件无新增 lints。
+
+### 变更文件
+- src/main/java/com/travel/controller/AiChatController.java
+- src/main/java/com/travel/security/SecurityConfig.java
+- frontend/src/views/AboutView.vue
+- docs/AI/HANDOFF.md
 
 ## 2026-04-13（FR-004 路线页多点输入体验升级）
 ### 负责人

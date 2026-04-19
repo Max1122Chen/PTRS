@@ -54,6 +54,7 @@ const searchList = ref<Diary[]>([])
 
 const searchPanelOpen = ref(false)
 const fromSearch = ref(false)
+const sortBy = ref<'heat' | 'rating'>('heat')
 
 const destOptions = ref<ScenicArea[]>([])
 const destLoading = ref(false)
@@ -92,6 +93,7 @@ async function runSearch() {
   try {
     await ensureScenicTagMap()
     searchList.value = await apiDiarySearch({
+      keyword: searchQuery.keyword.trim() || undefined,
       destination: searchQuery.destination,
       page: searchQuery.page,
       size: searchQuery.size,
@@ -105,7 +107,7 @@ async function runSearch() {
 
 const baseItems = computed(() => (fromSearch.value ? searchList.value : list.value))
 
-const displayItems = computed(() => {
+const filteredItems = computed(() => {
   if (activeChipId.value === RECOMMEND_CHIP_ID) return baseItems.value
   const key = activeChipId.value
   return baseItems.value.filter((row) => {
@@ -117,6 +119,28 @@ const displayItems = computed(() => {
     })
   })
 })
+
+function scoreOf(row: Diary, key: 'heat' | 'rating') {
+  const value = key === 'rating' ? row.rating : row.heat
+  const num = Number(value ?? 0)
+  return Number.isFinite(num) ? num : 0
+}
+
+const displayItems = computed(() => {
+  const rows = [...filteredItems.value]
+  rows.sort((a, b) => scoreOf(b, sortBy.value) - scoreOf(a, sortBy.value))
+  return rows
+})
+
+const sortLabel = computed(() => (sortBy.value === 'rating' ? '评分排序' : '热度排序'))
+
+function onSortCommand(command: string | number | object) {
+  if (command === 'rating') {
+    sortBy.value = 'rating'
+    return
+  }
+  sortBy.value = 'heat'
+}
 
 function firstImage(d: Diary): string | null {
   const raw = d.images
@@ -300,6 +324,15 @@ watch(
             />
           </el-select>
           <el-button type="primary" plain class="hdr-btn search-btn" @click="onSearchClick">搜索</el-button>
+          <el-dropdown trigger="click" @command="onSortCommand">
+            <el-button type="primary" plain class="hdr-btn sort-btn">{{ sortLabel }}</el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="heat">热度排序</el-dropdown-item>
+                <el-dropdown-item command="rating">评分排序</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <el-button type="primary" class="hdr-btn plus-btn" :disabled="!auth.isAuthed" @click="$router.push('/diary/new')">
             +
           </el-button>
@@ -413,6 +446,10 @@ watch(
 }
 
 .search-btn {
+  min-width: 70px;
+}
+
+.sort-btn {
   min-width: 70px;
 }
 

@@ -14,13 +14,23 @@ const isMobile = useMediaQuery('(max-width: 720px)')
 const drawerOpen = ref(false)
 
 const isHome = computed(() => route.path === '/home')
+const isGallerySection = computed(() => mainNavActive('/recommend'))
 
 function mainNavActive(path: string): boolean {
   const p = route.path
   if (path === '/home') return p === '/home'
   if (path === '/about') return p === '/about'
   if (path === '/diary') return p.startsWith('/diary')
-  if (path === '/recommend') return p === '/recommend' || /^\/scenic\/[^/]+$/.test(p)
+  if (path === '/recommend') {
+    return (
+      p === '/recommend' ||
+      /^\/scenic\/[^/]+$/.test(p) ||
+      p.startsWith('/route') ||
+      p.startsWith('/facility') ||
+      p.startsWith('/food') ||
+      p.startsWith('/admin')
+    )
+  }
   if (path === '/contacts') return p === '/profile' || p === '/login'
   return false
 }
@@ -76,11 +86,13 @@ function closeDrawer() {
             <router-link to="/diary" class="drawer-link" @click="closeDrawer">Reviews</router-link>
             <router-link to="/recommend" class="drawer-link" @click="closeDrawer">Gallery</router-link>
             <router-link :to="contactsTo" class="drawer-link" @click="closeDrawer">Contacts</router-link>
-            <div class="drawer-sep" />
-            <router-link to="/route" class="drawer-link" @click="closeDrawer">路线</router-link>
-            <router-link to="/facility" class="drawer-link" @click="closeDrawer">设施</router-link>
-            <router-link to="/food" class="drawer-link" @click="closeDrawer">美食</router-link>
-            <router-link v-if="auth.user?.role?.toUpperCase() === 'ADMIN'" to="/admin" class="drawer-link" @click="closeDrawer">管理</router-link>
+            <template v-if="isGallerySection">
+              <div class="drawer-sep" />
+              <router-link to="/route" class="drawer-link" @click="closeDrawer">路线</router-link>
+              <router-link to="/facility" class="drawer-link" @click="closeDrawer">设施</router-link>
+              <router-link to="/food" class="drawer-link" @click="closeDrawer">美食</router-link>
+              <router-link v-if="auth.user?.role?.toUpperCase() === 'ADMIN'" to="/admin" class="drawer-link" @click="closeDrawer">管理</router-link>
+            </template>
             <template v-if="auth.isAuthed">
               <el-button style="margin-top: 12px" @click="logout(); closeDrawer()">退出登录</el-button>
             </template>
@@ -92,7 +104,7 @@ function closeDrawer() {
       </template>
     </header>
 
-    <nav v-if="!isMobile" class="es-subnav" aria-label="App features">
+    <nav v-if="!isMobile && isGallerySection" class="es-subnav" aria-label="App features">
       <router-link to="/recommend" class="es-subnav__link">推荐</router-link>
       <span style="color: rgba(255,255,255,0.25)">·</span>
       <router-link to="/route" class="es-subnav__link">路线</router-link>

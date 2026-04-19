@@ -33,7 +33,7 @@ function exploreMore() {
 
       <div class="es-info-wrap">
         <p>
-          Kerala is a tropical paradise in southern India, known for its breathtaking landscapes, rich culture, and serene backwaters. Whether you're seeking adventure, relaxation, or a taste of India's unique traditions, Kerala has something for everyone. From the lush hill stations to pristine beaches, and Ayurvedic retreats to vibrant festivals, this enchanting state offers a perfect blend of natural beauty and cultural experiences.
+          Discover a smarter way to travel with our Personalized Travel Recommendation System. From scenic spots and local food to route planning and nearby facilities, every feature is designed to help you explore more easily and enjoy every journey. Start your next adventure, find places that match your interests, and let every trip become a memorable story.
         </p>
       </div>
 

@@ -9,18 +9,18 @@ import {
   apiRoutePoiCandidates,
   apiRoutePoiTypes,
   apiScenicSearchByKeyword,
+  type RoadEdge,
   type PoiTypeDictItem,
   type RoutePoiCandidate,
   type ScenicArea,
 } from '../../lib/api'
 
-type Edge = {
-  startId: number
-  endId: number
-  distance: number
-  speed: number
-  congestion: number
-  vehicleType?: string
+type Edge = RoadEdge
+
+const MODE_LABEL_MAP: Record<string, string> = {
+  walk: '步行',
+  bike: '自行车',
+  shuttle: '电瓶车',
 }
 
 const loading = ref(false)
@@ -110,6 +110,59 @@ const nodeTypeMap = computed(() => {
   return out
 })
 
+const pathSegments = computed(() => {
+  const path = result.value?.path ?? []
+  const edges = map.value?.edges ?? []
+  if (path.length < 2 || edges.length === 0) {
+    return []
+  }
+
+  const edgeIndex = new Map<string, Edge[]>()
+  edges.forEach((edge) => {
+    const key = `${edge.startId}-${edge.endId}`
+    const list = edgeIndex.get(key)
+    if (list) {
+      list.push(edge)
+      return
+    }
+    edgeIndex.set(key, [edge])
+  })
+
+  const labels = nodeLabelMap.value
+  const segments: {
+    index: number
+    startId: number
+    endId: number
+    startName: string
+    endName: string
+    distance: number
+    modeCongestion: Record<string, number>
+    allowedModes: string[]
+  }[] = []
+
+  for (let i = 0; i < path.length - 1; i++) {
+    const startId = path[i]
+    const endId = path[i + 1]
+    const direct = edgeIndex.get(`${startId}-${endId}`)?.[0]
+    const reverse = edgeIndex.get(`${endId}-${startId}`)?.[0]
+    const edge = direct || reverse
+    const modeCongestion = normalizeModeCongestion(edge?.modeCongestion)
+    const allowedModes = edge?.allowedModes?.length ? edge.allowedModes : Object.keys(modeCongestion)
+    segments.push({
+      index: i + 1,
+      startId,
+      endId,
+      startName: labels[startId] || `节点${startId}`,
+      endName: labels[endId] || `节点${endId}`,
+      distance: edge?.distance ?? 0,
+      modeCongestion,
+      allowedModes,
+    })
+  }
+
+  return segments
+})
+
 const hasSelectedArea = computed(() => form.areaId != null)
 const poiTypeLabelMap = computed(() => {
   const out: Record<string, string> = {}
@@ -124,6 +177,27 @@ function poiTypeLabel(type?: string) {
   if (!type) return '未分类'
   const key = type.trim().toLowerCase()
   return poiTypeLabelMap.value[key] || type
+}
+
+function modeLabel(mode: string) {
+  return MODE_LABEL_MAP[mode] || mode
+}
+
+function formatCongestion(value: number | undefined) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return '-'
+  }
+  return value.toFixed(2)
+}
+
+function normalizeModeCongestion(raw: Record<string, number | undefined> | undefined) {
+  const out: Record<string, number> = {}
+  Object.entries(raw ?? {}).forEach(([key, value]) => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      out[key] = value
+    }
+  })
+  return out
 }
 
 async function loadPoiTypes() {
@@ -241,10 +315,14 @@ function renderGraph(highlightPath?: number[]) {
   const links = map.value.edges.map((e) => {
     const key = `${e.startId}-${e.endId}`
     const isOnPath = pathSet.has(key)
+    const modeCongestion = normalizeModeCongestion(e.modeCongestion)
+    const allowedModes = e.allowedModes?.length ? e.allowedModes : Object.keys(modeCongestion)
     return {
       source: String(e.startId),
       target: String(e.endId),
       value: e.distance,
+      modeCongestion,
+      allowedModes,
       lineStyle: isOnPath
         ? { width: 3, color: 'rgba(204,120,92,0.95)' }
         : { width: 1, color: 'rgba(255,255,255,0.12)' },
@@ -276,7 +354,17 @@ function renderGraph(highlightPath?: number[]) {
           ].join('')
         }
         if (params.dataType === 'edge') {
-          return `道路：${params.data?.source} → ${params.data?.target}<br/>距离：${Number(params.data?.value ?? 0).toFixed(1)} m`
+          const allowedModes = Array.isArray(params.data?.allowedModes) ? params.data.allowedModes : []
+          const profile = normalizeModeCongestion(params.data?.modeCongestion)
+          const lines = (allowedModes.length > 0 ? allowedModes : Object.keys(profile)).map((mode: string) => {
+            return `<div>${modeLabel(String(mode))}：${formatCongestion(profile[String(mode)])}</div>`
+          })
+          return [
+            `<div style="font-weight:700;margin-bottom:4px;">道路：${params.data?.source} → ${params.data?.target}</div>`,
+            `<div>距离：${Number(params.data?.value ?? 0).toFixed(1)} m</div>`,
+            '<div style="margin-top:4px;">可通行交通工具与拥堵度：</div>',
+            lines.length > 0 ? lines.join('') : '<div>未标注</div>',
+          ].join('')
         }
         return ''
       },
@@ -554,6 +642,20 @@ onMounted(() => {
             <div class="muted">path：{{ result.path.join(' → ') }}</div>
             <div class="muted">distance：{{ result.distance.toFixed(2) }} m</div>
             <div class="muted">time：{{ result.time.toFixed(2) }} s</div>
+            <div v-if="pathSegments.length" class="segment-list">
+              <div v-for="segment in pathSegments" :key="`segment-${segment.index}-${segment.startId}-${segment.endId}`" class="segment-item">
+                <div class="segment-header">
+                  <span>#{{ segment.index }} {{ segment.startName }} → {{ segment.endName }}</span>
+                  <span>{{ segment.distance.toFixed(1) }} m</span>
+                </div>
+                <div class="muted segment-modes" v-if="segment.allowedModes.length">
+                  <span v-for="mode in segment.allowedModes" :key="`mode-${segment.index}-${mode}`" class="mode-badge">
+                    {{ modeLabel(mode) }}：拥堵度 {{ formatCongestion(segment.modeCongestion[mode]) }}
+                  </span>
+                </div>
+                <div class="muted segment-modes" v-else>可通行交通工具：未标注</div>
+              </div>
+            </div>
           </div>
         </el-form>
       </el-card>
@@ -590,6 +692,35 @@ onMounted(() => {
 .result {
   margin-top: 12px;
   padding: 14px;
+}
+.segment-list {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+.segment-item {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 8px;
+}
+.segment-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.segment-modes {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.mode-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 12px;
 }
 .hint {
   margin-top: 6px;

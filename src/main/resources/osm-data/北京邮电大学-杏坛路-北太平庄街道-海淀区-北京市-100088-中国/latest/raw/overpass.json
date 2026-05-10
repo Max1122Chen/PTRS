@@ -2,8 +2,8 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.62.11 87bfad18",
   "osm3s": {
-    "timestamp_osm_base": "2026-03-31T04:55:44Z",
-    "timestamp_areas_base": "2026-03-30T19:51:40Z",
+    "timestamp_osm_base": "2026-04-20T02:22:15Z",
+    "timestamp_areas_base": "2026-04-19T14:33:56Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
@@ -345,42 +345,6 @@
       "id": 12738869768,
       "lat": 39.9616379,
       "lon": 116.3511356,
-      "tags": {
-        "amenity": "bench"
-      }
-    },
-    {
-      "type": "node",
-      "id": 12738869769,
-      "lat": 39.9607974,
-      "lon": 116.3503461,
-      "tags": {
-        "amenity": "bench"
-      }
-    },
-    {
-      "type": "node",
-      "id": 12738869770,
-      "lat": 39.9607614,
-      "lon": 116.3503349,
-      "tags": {
-        "amenity": "bench"
-      }
-    },
-    {
-      "type": "node",
-      "id": 12738869771,
-      "lat": 39.960767,
-      "lon": 116.3499004,
-      "tags": {
-        "amenity": "bench"
-      }
-    },
-    {
-      "type": "node",
-      "id": 12738869772,
-      "lat": 39.9607933,
-      "lon": 116.3498551,
       "tags": {
         "amenity": "bench"
       }
@@ -807,6 +771,16 @@
       "tags": {
         "amenity": "exhibition_centre",
         "name": "北京邮电大学科技成果展厅"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13694775719,
+      "lat": 39.9602795,
+      "lon": 116.3543331,
+      "tags": {
+        "leisure": "fitness_centre",
+        "name": "鸿雁健身中心"
       }
     },
     {
@@ -2971,6 +2945,10 @@
           "lon": 116.3506432
         },
         {
+          "lat": 39.960654,
+          "lon": 116.3501108
+        },
+        {
           "lat": 39.96064,
           "lon": 116.3495784
         },
@@ -3057,6 +3035,10 @@
           "lon": 116.3520945
         },
         {
+          "lat": 39.9601793,
+          "lon": 116.3521429
+        },
+        {
           "lat": 39.9601832,
           "lon": 116.3523003
         },
@@ -3071,6 +3053,10 @@
         {
           "lat": 39.9601016,
           "lon": 116.3523803
+        },
+        {
+          "lat": 39.9599277,
+          "lon": 116.3523815
         },
         {
           "lat": 39.9597598,
@@ -3103,6 +3089,10 @@
         {
           "lat": 39.9597677,
           "lon": 116.3520213
+        },
+        {
+          "lat": 39.9599328,
+          "lon": 116.35201
         },
         {
           "lat": 39.9601115,
@@ -4255,10 +4245,10 @@
       "type": "way",
       "id": 399017968,
       "bounds": {
-        "minlat": 39.9606653,
+        "minlat": 39.9609213,
         "minlon": 116.3500219,
         "maxlat": 39.9623219,
-        "maxlon": 116.3501098
+        "maxlon": 116.3501004
       },
       "geometry": [
         {
@@ -4288,10 +4278,6 @@
         {
           "lat": 39.9609213,
           "lon": 116.3501004
-        },
-        {
-          "lat": 39.9606653,
-          "lon": 116.3501098
         }
       ],
       "tags": {
@@ -15107,6 +15093,29 @@
         {
           "lat": 39.9627241,
           "lon": 116.3528467
+        }
+      ],
+      "tags": {
+        "highway": "footway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1498130102,
+      "bounds": {
+        "minlat": 39.960654,
+        "minlon": 116.3501004,
+        "maxlat": 39.9609213,
+        "maxlon": 116.3501108
+      },
+      "geometry": [
+        {
+          "lat": 39.9609213,
+          "lon": 116.3501004
+        },
+        {
+          "lat": 39.960654,
+          "lon": 116.3501108
         }
       ],
       "tags": {

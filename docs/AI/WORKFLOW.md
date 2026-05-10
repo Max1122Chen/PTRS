@@ -56,6 +56,10 @@
 按严重程度输出问题，并给出建议修复。
 """
 
+## 4.1 演示模式（无数据库 / 内存为主）
+- 启动：`spring.profiles.active=dev`，并依赖 `application-dev.yml` 中的 `app.debug.ignore-db-connection-failure=true`。
+- 实现约束：**AIGC 动画**及任何「先内存、后可选落库」的接口，在 DB 不可用时**禁止**因写库异常导致任务失败；须捕获连接类异常并仅更新 `InMemoryStore`（与 `PROJECT_CONTEXT` §3 一致）。
+
 ## 5. 文档更新规则
 - `docs/AI/PROJECT_CONTEXT.md`：当架构、环境基线、功能状态发生变化时更新。
 - `docs/AI/HANDOFF.md`：每次会话都要追加（不可覆盖历史）。

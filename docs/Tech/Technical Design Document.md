@@ -221,8 +221,7 @@ sequenceDiagram
 | end_id       | BIGINT   | 20   | NOT NULL                                                     | 终点ID（POI或设施） |
 | distance     | DOUBLE   |      | NOT NULL                                                     | 距离（米）             |
 | speed        | DOUBLE   |      | NOT NULL, DEFAULT 5.0                                        | 理想速度（米/秒）      |
-| congestion   | DOUBLE   |      | NOT NULL, DEFAULT 1.0                                        | 拥挤度（0-1）          |
-| vehicle_type | VARCHAR  | 50   |                                                              | 允许的交通工具类型     |
+| mode_profile | TEXT     |      | NOT NULL                                                     | 交通工具拥挤度配置（JSON 字符串），键为 `walk/bike/shuttle`，值为 [0,1] 拥挤度；键存在即表示该道路允许对应交通工具通行 |
 | create_time  | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP                          | 创建时间               |
 | update_time  | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间               |
 
@@ -363,9 +362,9 @@ sequenceDiagram
 - **路由**：/diaries、/diary/create、/diary/:id、/diary/search
 
 #### 4.1.7 旅游动画模块
-- **功能**：基于照片和文字生成旅游动画
-- **组件**：AnimationGenerate.vue、AnimationPreview.vue
-- **路由**：/animation/generate、/animation/preview/:id
+- **功能**：基于日记中的文字与图片，调用**配置的云端视频生成 HTTP API**（服务端代理，密钥不落前端）；任务多为异步，完成后将视频**下载落盘**至本地媒体目录（与日记附件同源策略），并将**本站可访问 URL** 写入日记字段持久化。
+- **组件**：可在 `DiaryDetailView` / `DiaryEditorView` 嵌入生成按钮与 `<video>` 预览（具体组件名以实现为准）。
+- **路由**：由日记详情/编辑页触发，可不单独拆路由；若独立页面以实现为准。
 
 #### 4.1.8 系统管理模块
 - **功能**：用户管理、景区信息管理、道路图管理、美食信息管理
@@ -385,7 +384,7 @@ sequenceDiagram
 - **API**：/api/recommendation、/api/recommendation/personalized、/api/recommendation/hot、/api/recommendation/detail/:id
 
 #### 4.2.3 路线规划服务
-- **功能**：最优路径计算、导航数据提供
+- **功能**：最优路径计算、导航数据提供（含道路可通行交通工具及对应拥挤度展示）
 - **类**：RouteController、RouteService、GraphService
 - **API**：/api/route、/api/route/multi-point、/api/route/map-data
 
@@ -402,7 +401,7 @@ sequenceDiagram
 #### 4.2.6 旅游日记服务
 - **功能**：日记管理、交流、动画生成
 - **类**：DiaryController、DiaryService、AnimationService
-- **API**：/api/diary、/api/diary/:id、/api/diary/search、/api/diary/rate、/api/animation/generate
+- **API**：/api/diary、/api/diary/:id、/api/diary/search、/api/diary/rate、/api/diary/:id/animation/generate、/api/diary/animation/jobs/:jobId、/api/diary/animation/jobs/:jobId/message
 
 #### 4.2.7 数据管理服务
 - **功能**：景区、校园、POI、道路、美食等数据管理
@@ -440,7 +439,7 @@ sequenceDiagram
 | ---------------------- | ---- | ------------ | -------------- | --------------------------------- | ------------------------------------------------------------ |
 | /api/route             | POST | 路线规划服务 | 两点间路径规划 | startId, endId, strategy, vehicle | `{"code": 200, "data": {"path": [...], "distance": 1000, "time": 600}, "message": "规划成功"}` |
 | /api/route/multi-point | POST | 路线规划服务 | 多点路径规划   | points: [id1, id2, id3], strategy | `{"code": 200, "data": {"path": [...], "distance": 2000, "time": 1200}, "message": "规划成功"}` |
-| /api/route/map-data    | GET  | 路线规划服务 | 获取地图数据   | areaId, type                      | `{"code": 200, "data": {"nodes": [...], "edges": [...]}, "message": "获取成功"}` |
+| /api/route/map-data    | GET  | 路线规划服务 | 获取地图数据   | areaId, type                      | `{"code": 200, "data": {"nodes": [...], "edges": [{"startId":1,"endId":2,"modeCongestion":{"walk":0.61,"bike":0.34}}]}, "message": "获取成功"}` |
 
 ### 5.4 场所查询接口
 
@@ -470,7 +469,10 @@ sequenceDiagram
 | /api/diary/:id          | DELETE | 旅游日记服务 | 删除日记     | id                                           | `{"code": 200, "data": {}, "message": "删除成功"}`           |
 | /api/diary/search       | GET    | 旅游日记服务 | 日记搜索     | keyword, destination                         | `{"code": 200, "data": {"list": [...]}, "message": "查询成功"}` |
 | /api/diary/rate         | POST   | 旅游日记服务 | 日记评分     | diaryId, rating                              | `{"code": 200, "data": {}, "message": "评分成功"}`           |
-| /api/animation/generate | POST   | 旅游日记服务 | 生成旅游动画 | images, text                                 | `{"code": 200, "data": {"animation_url": "..."}, "message": "生成成功"}` |
+| /api/diary/:id/animation/generate | POST   | 旅游日记服务 | 提交动画生成任务 | 可选 JSON：`aspectRatio`、`style`、`durationSec`、`extraPrompt`、`interactive`；未传走默认；服务端共用 `AnimationPromptComposer` 拼装文案调即梦/LibTV | `{"code": 200, "data": {"jobId": "...", "generationParams": {...}}, "message": "已提交生成任务"}` |
+| /api/diary/animation/jobs/:jobId | GET    | 旅游日记服务 | 查询任务状态 | jobId | `data` 含 `stage`、`provider`、`libTvTranscript`、`jimengTranscript`、`awaitingUserInput`、`generationParams`、`eventLog` 等 |
+| /api/diary/animation/jobs/:jobId/message | POST | 旅游日记服务 | 向云端服务商追加用户消息 | JSON：`message` | LibTV：转发会话；即梦：入队后合并提示词并重投（尝试 `CVCancelTask`） |
+| /api/diary/animation/jobs/:jobId/cancel | POST | 旅游日记服务 | 取消进行中的生成任务 | 无 body | `{"code": 200, "data": null, "message": "已请求取消"}`；任务状态变为 `CANCELLED`，并停止本地轮询 |
 
 ### 5.7 数据管理接口
 
@@ -479,7 +481,7 @@ sequenceDiagram
 | /api/admin/scenic-area | POST | 数据管理服务 | 添加景区     | name, description, location, longitude, latitude, type       | `{"code": 200, "data": {"id": 1}, "message": "添加成功"}`    |
 | /api/admin/scenic-area | GET  | 数据管理服务 | 获取景区列表 | page, size, type                                             | `{"code": 200, "data": {"list": [...]}, "message": "获取成功"}` |
 | /api/admin/poi（兼容 /api/admin/building） | POST | 数据管理服务 | 添加POI | name, type, description, location, longitude, latitude, areaId | `{"code": 200, "data": {"id": 1}, "message": "添加成功"}` |
-| /api/admin/road        | POST | 数据管理服务 | 添加道路     | startId, endId, distance, speed, congestion, areaId          | `{"code": 200, "data": {"id": 1}, "message": "添加成功"}`    |
+| /api/admin/road        | POST | 数据管理服务 | 添加道路     | startId, endId, distance, speed, modeProfile, areaId         | `{"code": 200, "data": {"id": 1}, "message": "添加成功"}`    |
 | /api/admin/food        | POST | 数据管理服务 | 添加美食     | name, cuisine, description, price, restaurantId, areaId      | `{"code": 200, "data": {"id": 1}, "message": "添加成功"}`    |
 
 ### 5.8 系统服务接口
@@ -502,10 +504,10 @@ public class Graph {
         adjList = new HashMap<>();
     }
     
-    public void addEdge(long startId, long endId, double distance, double speed, double congestion) {
+    public void addEdge(long startId, long endId, double distance, double speed, Map<String, Double> modeCongestion) {
         // 添加边到邻接表
-        adjList.computeIfAbsent(startId, k -> new ArrayList<>()).add(new Edge(endId, distance, speed, congestion));
-        adjList.computeIfAbsent(endId, k -> new ArrayList<>()).add(new Edge(startId, distance, speed, congestion));
+        adjList.computeIfAbsent(startId, k -> new ArrayList<>()).add(new Edge(endId, distance, speed, modeCongestion));
+        adjList.computeIfAbsent(endId, k -> new ArrayList<>()).add(new Edge(startId, distance, speed, modeCongestion));
     }
     
     // 获取邻接边
@@ -523,14 +525,14 @@ public class Edge {
     private long targetId;
     private double distance;
     private double speed;
-    private double congestion;
+    private Map<String, Double> modeCongestion;
     
     // 构造函数、getter、setter
-    public Edge(long targetId, double distance, double speed, double congestion) {
+    public Edge(long targetId, double distance, double speed, Map<String, Double> modeCongestion) {
         this.targetId = targetId;
         this.distance = distance;
         this.speed = speed;
-        this.congestion = congestion;
+        this.modeCongestion = modeCongestion;
     }
     
     public long getTargetId() {
@@ -545,11 +547,15 @@ public class Edge {
         return speed;
     }
     
-    public double getCongestion() {
-        return congestion;
+    public Map<String, Double> getModeCongestion() {
+        return modeCongestion;
     }
 }
 ```
+
+> 交通工具建模说明：后端代码层使用 `TransportMode` 枚举（`WALK/BIKE/SHUTTLE`）；
+> 道路可通行能力与拥挤度使用 `mode_profile` 统一存储。
+> 例如：`{"walk":0.78,"bike":0.42}` 表示该道路允许步行与自行车通行，且两者拥挤度不同。
 
 
 
@@ -1116,6 +1122,13 @@ backend/
 - **后端部署**：使用Spring Boot内嵌Tomcat服务器，部署Java应用
 - **数据库部署**：使用MySQL数据库，独立部署
 - **缓存部署**：使用Redis作为缓存，提升系统性能（可选）
+
+#### 9.1.1 演示模式（可不连 MySQL、以内存为主）
+- 使用 **`spring.profiles.active=dev`**：`application-dev.yml` 中 `app.debug.ignore-db-connection-failure=true`，数据源不可用时仍可启动，业务以 **`InMemoryStore` + dev-seed** 为主。
+- **FR-009-5 日记动画**等路径：写库失败（连接池不可用等）时**不得**中断成片落盘与内存中 `animation_url` 更新；与 `DiaryServiceImpl` 等模块的 DB 回退策略一致。
+- 即梦/LibTV 密钥：可选本地文件 `src/main/resources/config/jimeng-animation.yml`（由 `jimeng-animation.example.yml` 复制，**勿提交**真实密钥）。
+- **即梦 CV 请求**：使用官方异步接口 **`CVSync2AsyncSubmitTask`** / **`CVSync2AsyncGetResult`**（与控制台文档及 SDK 示例一致）；提交体含 `req_key`、`prompt`、`seed`（默认 -1）、`frames`（按时长映射为文档常见档位如 121/241）、`aspect_ratio`；图生首帧可用 **`image_urls`**（公网可访问 URL）或 **`binary_data_base64`**。轮询时若配置了 `app.animation.jimeng.aigc-meta-json`，则附带 `req_json`（内含 `aigc_meta`）。
+- **LibTV 会话**：首轮指令带用户所选参数（比例/风格/时长/补充说明）与「勿反问」约束；非交互模式下若助手仍索要参数则自动代答（可配置）；**交互模式**（`interactive=true`）下检测到反问则暂停轮询并 `awaitingUserInput=true`，用户经本站 `POST /api/diary/animation/jobs/{jobId}/message` 回复后恢复轮询；任务全程合并会话增量至 `libTvTranscript` 供前端展示。
 
 ### 9.2 部署步骤
 

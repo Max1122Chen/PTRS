@@ -221,7 +221,7 @@ onMounted(() => {
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
           <div style="font-weight: 900">{{ isEdit ? '编辑日记' : '新建日记' }}</div>
-          <el-button @click="$router.back()">返回</el-button>
+          <el-button @click="router.push('/diary')">返回日记列表</el-button>
         </div>
       </template>
 

@@ -1,0 +1,42 @@
+# =============================================================================
+# 即梦 AI（火山引擎）+ LibTV 备用 — 本地配置模板
+#
+# 用法（推荐演示）：
+#   1. 复制本文件为同目录 jimeng-animation.yml（该文件名已加入 .gitignore，勿提交密钥）
+#   2. 在 jimeng-animation.yml 中填写 access-key-id / secret-access-key（及可选 LibTV）
+#   3. 使用 spring.profiles.active=dev 启动（application-dev.yml 会 optional 加载 jimeng-animation.yml）
+#
+# 亦可不设 jimeng-animation.yml，仅通过环境变量 VOLCENGINE_ACCESS_KEY_ID / VOLCENGINE_SECRET_ACCESS_KEY / LIBTV_ACCESS_KEY 注入。
+# =============================================================================
+app:
+  animation:
+    enabled: true
+    # LibTV 备用链需在会话中带「可公网访问」的图片 URL；本机演示若厂商拉不到 localhost 请改为 ngrok/局域网可达地址
+    public-base-url: http://localhost:8080
+    jimeng:
+      enabled: true
+      # 须使用「火山引擎控制台 → IAM/访问控制 → 密钥管理」中的 Access Key ID + Secret Access Key。
+      # 勿把豆包/方舟等场景的 apikey（常见前缀 apikey-、secret 形如 ark-…）当作 AK/SK，否则视觉接口会报认证/权限类错误。
+      access-key-id: YOUR_VOLCENGINE_ACCESS_KEY_ID
+      secret-access-key: YOUR_VOLCENGINE_SECRET_ACCESS_KEY
+      req-key-image-to-video: jimeng_i2v_first_v30
+      # 文生视频：须与控制台/文档当前版本一致；jimeng_t2v_v30 会报 req_key not supported
+      req-key-text-to-video: jimeng_ti2v_v30_pro
+      extra-submit-json: '{"aspect_ratio":"16:9"}'
+      seed: -1
+      # 轮询时附带：{"aigc_meta":{...}}（字符串内需合法 JSON）；1080P 等合规场景可参考控制台说明填写
+      # aigc-meta-json: '{"content_producer":"your_team","producer_id":"xxx","content_propagator":"default","propagate_id":"xxx"}'
+      poll-interval-ms: 3000
+      poll-timeout-ms: 900000
+    libtv:
+      enabled: true
+      access-key: YOUR_LIBTV_ACCESS_KEY
+      base-url: https://im.liblib.tv
+      upload-path: /openapi/upload
+      poll-interval-ms: 8000
+      poll-timeout-ms: 900000
+      # 可选：助手反问比例/风格时自动追加确认（无人值守）
+      # auto-reply-on-clarification: true
+      # max-auto-replies: 3
+      # auto-confirm-text: "……"
+      # first-message-preamble: "……"

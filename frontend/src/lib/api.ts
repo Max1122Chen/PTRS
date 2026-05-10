@@ -81,6 +81,8 @@ export type Diary = {
   content: string
   images?: string
   videos?: string
+  /** AIGC 旅游动画成片（本站 /media 路径） */
+  animationUrl?: string
   heat?: number
   rating?: number
   createTime?: string
@@ -102,6 +104,19 @@ export type DiaryAttachmentUploadResult = {
 
 export type RoutePlanVO = { path: number[]; distance: number; time: number }
 
+export type TransportModeCode = 'walk' | 'bike' | 'shuttle'
+
+export type ModeCongestionProfile = Partial<Record<TransportModeCode, number>>
+
+export type RoadEdge = {
+  startId: number
+  endId: number
+  distance: number
+  speed: number
+  modeCongestion: ModeCongestionProfile
+  allowedModes?: string[]
+}
+
 export type RoutePoiCandidate = {
   nodeId: number
   name: string
@@ -119,6 +134,15 @@ export type PoiTypeDictItem = {
   searchable?: boolean
   routeVisible?: boolean
   deprecated?: boolean
+}
+
+export type AdminRoadPayload = {
+  startId: number
+  endId: number
+  distance: number
+  speed: number
+  modeProfile: string
+  areaId: number
 }
 
 export async function apiRegister(payload: { username: string; password: string; email: string; nickname: string }) {
@@ -227,14 +251,7 @@ export async function apiMapData(params: { areaId?: number }) {
       longitude?: number
       latitude?: number
     }[]
-    edges: {
-      startId: number
-      endId: number
-      distance: number
-      speed: number
-      congestion: number
-      vehicleType?: string
-    }[]
+    edges: RoadEdge[]
   }>
   return res.data
 }
@@ -420,6 +437,82 @@ export async function apiDiaryUploadAttachment(file: File) {
   return res.data
 }
 
+/** 可选；未传字段由后端填默认 */
+export type AnimationGeneratePayload = {
+  aspectRatio?: string
+  /** documentary | cinematic | fresh | anime 或自定义文案 */
+  style?: string
+  durationSec?: number
+  extraPrompt?: string
+  /** 与云端服务商多轮沟通（即梦 / LibTV） */
+  interactive?: boolean
+}
+
+export type AnimationGenerationParamsVO = {
+  aspectRatio: string
+  styleKey: string
+  styleLabel: string
+  durationSec: number
+  extraPrompt: string
+  interactive: boolean
+}
+
+export async function apiDiaryAnimationGenerate(diaryId: number, payload?: AnimationGeneratePayload) {
+  const res = (await http.post(`/api/diary/${diaryId}/animation/generate`, payload ?? {})) as ApiResponse<{
+    jobId: string
+    generationParams?: AnimationGenerationParamsVO
+  }>
+  return res.data
+}
+
+export type LibTvTranscriptEntry = {
+  seq: number
+  role: string
+  content: string
+}
+
+export type DiaryAnimationJobStatus = {
+  jobId: string
+  diaryId: number
+  userId: number
+  status: string
+  /** 机器可读阶段，如 JIMENG_POLL、LIBTV_POLL */
+  stage?: string
+  message?: string
+  /** 即梦 task_id 或 LibTV sessionId */
+  externalRef?: string
+  jimengPollCount?: number
+  libtvPollCount?: number
+  animationUrl?: string
+  provider?: string
+  /** LibTV 反问等待用户回复 */
+  awaitingUserInput?: boolean
+  generationParams?: AnimationGenerationParamsVO
+  libTvTranscript?: LibTvTranscriptEntry[]
+  /** 即梦阶段助手/用户补充轨迹（与 LibTV 条目结构一致） */
+  jimengTranscript?: LibTvTranscriptEntry[]
+  /** 后端按时间追加的完整轨迹（含即梦异常栈） */
+  eventLog?: string[]
+}
+
+export async function apiDiaryAnimationJob(jobId: string) {
+  const res = (await http.get(`/api/diary/animation/jobs/${jobId}`)) as ApiResponse<DiaryAnimationJobStatus>
+  return res.data
+}
+
+/** 向 LibTV 会话追加用户消息 */
+export async function apiDiaryAnimationJobMessage(jobId: string, message: string) {
+  const res = (await http.post(`/api/diary/animation/jobs/${jobId}/message`, {
+    message,
+  })) as ApiResponse<void>
+  return res.data
+}
+
+export async function apiDiaryAnimationCancel(jobId: string) {
+  const res = (await http.post(`/api/diary/animation/jobs/${jobId}/cancel`)) as ApiResponse<void>
+  return res.data
+}
+
 export async function apiAdminAddScenicArea(payload: Partial<ScenicArea>) {
   const res = (await http.post('/api/admin/scenic-area', payload)) as ApiResponse<ScenicArea>
   return res.data
@@ -441,7 +534,7 @@ export async function apiAdminAddBuilding(payload: any) {
   return res.data
 }
 
-export async function apiAdminAddRoad(payload: any) {
+export async function apiAdminAddRoad(payload: AdminRoadPayload) {
   const res = (await http.post('/api/admin/road', payload)) as ApiResponse<any>
   return res.data
 }

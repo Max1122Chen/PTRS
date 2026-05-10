@@ -12,6 +12,7 @@ import heapq
 import json
 import math
 import os
+import random
 import shutil
 import time
 from pathlib import Path
@@ -493,6 +494,78 @@ def classify_facility(tags: Dict[str, object]) -> Optional[str]:
     return None
 
 
+def infer_transport_modes(tags: Dict[str, object]) -> List[str]:
+    """Infer allowed transport modes from OSM tags."""
+    highway = str(tags.get("highway", "")).strip().lower()
+    foot = str(tags.get("foot", "")).strip().lower()
+    bicycle = str(tags.get("bicycle", "")).strip().lower()
+    motor_vehicle = str(tags.get("motor_vehicle", "")).strip().lower()
+    access = str(tags.get("access", "")).strip().lower()
+
+    modes: Set[str] = set()
+
+    if foot not in {"no", "private"}:
+        modes.add("walk")
+
+    bike_highways = {
+        "cycleway",
+        "path",
+        "service",
+        "residential",
+        "living_street",
+        "unclassified",
+        "tertiary",
+    }
+    if highway in bike_highways and bicycle not in {"no", "private"} and access != "private":
+        modes.add("bike")
+    if bicycle in {"yes", "designated", "official", "permissive"} and access != "private":
+        modes.add("bike")
+
+    shuttle_highways = {
+        "service",
+        "residential",
+        "living_street",
+        "unclassified",
+        "tertiary",
+        "secondary",
+        "primary",
+    }
+    if highway in shuttle_highways and motor_vehicle not in {"no", "private"} and access != "private":
+        modes.add("shuttle")
+    if motor_vehicle in {"yes", "designated", "permissive", "destination"} and highway not in {
+        "footway",
+        "path",
+        "steps",
+        "pedestrian",
+        "cycleway",
+    } and access != "private":
+        modes.add("shuttle")
+
+    if not modes:
+        modes.add("walk")
+
+    return sorted(modes)
+
+
+def build_mode_profile(modes: Iterable[str], scenic_id: int, start_node_id: int, end_node_id: int) -> Dict[str, float]:
+    """Build deterministic pseudo-random mode congestion profile in [0,1]."""
+    a, b = (start_node_id, end_node_id) if start_node_id <= end_node_id else (end_node_id, start_node_id)
+    profile: Dict[str, float] = {}
+    for mode in sorted(set(modes)):
+        if mode not in {"walk", "bike", "shuttle"}:
+            continue
+        rng = random.Random(f"{scenic_id}:{a}:{b}:{mode}")
+        profile[mode] = round(rng.uniform(0.0, 1.0), 2)
+    if not profile:
+        rng = random.Random(f"{scenic_id}:{a}:{b}:walk")
+        profile["walk"] = round(rng.uniform(0.0, 1.0), 2)
+    return profile
+
+
+def encode_mode_profile(profile: Dict[str, float]) -> str:
+    return json.dumps(profile, ensure_ascii=False, separators=(",", ":"))
+
+
 def dedup_rows(rows: Iterable[Dict[str, object]]) -> List[Dict[str, object]]:
     seen = set()
     out = []
@@ -722,6 +795,8 @@ def main() -> int:
 
     # Build true-road-network graph from OSM highway way geometry.
     adjacency: Dict[int, List[Tuple[int, float]]] = {}
+    segment_distance_map: Dict[Tuple[int, int], float] = {}
+    segment_mode_map: Dict[Tuple[int, int], Set[str]] = {}
     road_node_ids = set()
     graph_node_coord: Dict[int, Tuple[float, float]] = {}
     graph_node_index: Dict[Tuple[int, int], int] = {}
@@ -747,6 +822,7 @@ def main() -> int:
             continue
         if not str(tags.get("highway", "")).strip():
             continue
+        allowed_modes = infer_transport_modes(tags)
         geometry = el.get("geometry", [])
         if not isinstance(geometry, list) or len(geometry) < 2:
             continue
@@ -771,6 +847,11 @@ def main() -> int:
                 continue
             adjacency.setdefault(a, []).append((b, d))
             adjacency.setdefault(b, []).append((a, d))
+            key = (a, b) if a <= b else (b, a)
+            prev_dist = segment_distance_map.get(key)
+            if prev_dist is None or d < prev_dist:
+                segment_distance_map[key] = d
+            segment_mode_map.setdefault(key, set()).update(allowed_modes)
             road_node_ids.add(a)
             road_node_ids.add(b)
 
@@ -799,31 +880,29 @@ def main() -> int:
         virtual_node_id[nid] = args.virtual_node_base + nid
 
     # 1) Highway graph edges between virtual nodes.
-    for start_node, targets in adjacency.items():
-        for end_node, dist in targets:
-            if start_node >= end_node:
-                continue
-            if dist < 2 or dist > 800:
-                continue
-            vs = virtual_node_id.get(start_node)
-            ve = virtual_node_id.get(end_node)
-            if vs is None or ve is None:
-                continue
-            road_rows.append(
-                {
-                    "id": road_id,
-                    "startId": vs,
-                    "endId": ve,
-                    "distance": round(dist, 1),
-                    "speed": 2.8,
-                    "congestion": 0.8,
-                    "vehicleType": "walk",
-                    "areaId": scenic_id,
-                    "createTime": ts,
-                    "updateTime": ts,
-                }
-            )
-            road_id += 1
+    for (start_node, end_node), dist in segment_distance_map.items():
+        if dist < 2 or dist > 800:
+            continue
+        vs = virtual_node_id.get(start_node)
+        ve = virtual_node_id.get(end_node)
+        if vs is None or ve is None:
+            continue
+        modes = segment_mode_map.get((start_node, end_node), {"walk"})
+        mode_profile = build_mode_profile(modes, scenic_id, start_node, end_node)
+        road_rows.append(
+            {
+                "id": road_id,
+                "startId": vs,
+                "endId": ve,
+                "distance": round(dist, 1),
+                "speed": 2.8,
+                "modeProfile": encode_mode_profile(mode_profile),
+                "areaId": scenic_id,
+                "createTime": ts,
+                "updateTime": ts,
+            }
+        )
+        road_id += 1
 
     # 2) Connector edges between POI and snapped virtual node.
     for row in poi_rows:
@@ -847,8 +926,7 @@ def main() -> int:
                 "endId": ve,
                 "distance": round(max(dist, 2.0), 1),
                 "speed": 2.8,
-                "congestion": 0.8,
-                "vehicleType": "walk",
+                "modeProfile": encode_mode_profile(build_mode_profile(["walk"], scenic_id, pid, ve)),
                 "areaId": scenic_id,
                 "createTime": ts,
                 "updateTime": ts,

@@ -82,6 +82,31 @@ app:
     base-path: data/media
     # 资源公开访问前缀。
     url-prefix: /media
+  animation:
+    # 旅游动画（即梦主力 + LibTV 备用）。密钥建议用环境变量覆盖。
+    enabled: true
+    # 供 LibTV 会话文案中引用可公网访问的图片 URL（勿用 localhost 若厂商无法访问）。
+    public-base-url: http://localhost:8080
+    jimeng:
+      enabled: true
+      access-key-id: ${VOLCENGINE_ACCESS_KEY_ID:}
+      secret-access-key: ${VOLCENGINE_SECRET_ACCESS_KEY:}
+      req-key-image-to-video: jimeng_i2v_first_v30
+      req-key-text-to-video: jimeng_ti2v_v30_pro
+      extra-submit-json: '{"aspect_ratio":"16:9"}'
+      # 随机种子；-1 表示随机（即梦常见写法）
+      seed: -1
+      # 可选：轮询 CVSync2AsyncGetResult 时 req_json.aigc_meta（JSON 对象字符串）；合规场景按需填写
+      aigc-meta-json: ""
+      poll-interval-ms: 3000
+      poll-timeout-ms: 900000
+    libtv:
+      enabled: true
+      access-key: ${LIBTV_ACCESS_KEY:}
+      base-url: https://im.liblib.tv
+      upload-path: /openapi/upload
+      poll-interval-ms: 8000
+      poll-timeout-ms: 900000
   diary:
     content-compression:
       # 开启后：写库使用 RAW:/GZB64: 协议；读取时自动解码为明文。

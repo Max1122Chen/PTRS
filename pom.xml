@@ -102,6 +102,13 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
+        <!-- 火山引擎视觉（即梦视频 CVSync2AsyncSubmitTask / CVSync2AsyncGetResult） -->
+        <dependency>
+            <groupId>com.volcengine</groupId>
+            <artifactId>volc-sdk-java</artifactId>
+            <version>1.0.226</version>
+        </dependency>
+
         <!-- 开发热更新（仅开发期使用） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

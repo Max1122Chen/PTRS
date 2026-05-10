@@ -1,5 +1,9 @@
 package com.travel.algorithm.graph;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * 图边结构（邻接表边）。
  */
@@ -12,17 +16,16 @@ public class Edge
 
     private final double speed;
 
-    private final double congestion;
+    private final Map<String, Double> modeCongestion;
 
-    private final String vehicleType;
-
-    public Edge(long targetId, double distance, double speed, double congestion, String vehicleType)
+    public Edge(long targetId, double distance, double speed, Map<String, Double> modeCongestion)
     {
         this.targetId = targetId;
         this.distance = distance;
         this.speed = speed;
-        this.congestion = congestion;
-        this.vehicleType = vehicleType;
+        this.modeCongestion = modeCongestion == null
+                ? Collections.emptyMap()
+                : Collections.unmodifiableMap(new LinkedHashMap<>(modeCongestion));
     }
 
     public long getTargetId()
@@ -40,14 +43,9 @@ public class Edge
         return speed;
     }
 
-    public double getCongestion()
+    public Map<String, Double> getModeCongestion()
     {
-        return congestion;
-    }
-
-    public String getVehicleType()
-    {
-        return vehicleType;
+        return modeCongestion;
     }
 }
 

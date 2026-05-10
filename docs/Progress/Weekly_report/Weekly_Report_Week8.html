@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个性化旅游推荐系统 - 第八周工作周报</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #34495e;
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        h3 {
+            color: #555;
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        h4 {
+            color: #666;
+            font-size: 14px;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+        
+        p {
+            margin-bottom: 10px;
+        }
+        
+        ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 5px;
+        }
+        
+        .member-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .code {
+            font-family: Consolas, Monaco, monospace;
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        
+        .delimiter {
+            margin: 30px 0;
+            border-top: 1px solid #ddd;
+        }
+        
+        .date {
+            text-align: right;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .highlight {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>个性化旅游推荐系统 - 第八周工作周报</h1>
+        
+        <div class="member-info">
+            成员：陈逸 程小路
+        </div>
+        
+        <div class="section">
+            <h2>1. 第八周（2026-04-20 至 2026-04-26）：路网交通工具枚举化 + 分模式拥堵度落地</h2>
+            
+            <h3>1.1 工作目标</h3>
+            <p>本周重点为：</p>
+            <ul>
+                <li>将道路可通行交通工具从字符串改为结构化模型（modeProfile），并按交通工具维度计算拥堵度与最短时间。</li>
+                <li>先同步需求文档与技术设计文档，再完成后端、脚本、前端联动改造。</li>
+                <li>前端在“选中路径”时展示每段道路可通行交通工具及对应拥堵度。</li>
+                <li>保持代码质量与可维护性，确保编译与构建通过。</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h3>1.2 具体完成工作</h3>
+            
+            <h4>1.2.1 需求与技术口径同步</h4>
+            <ul>
+                <li><span class="highlight">需求文档</span>（<span class="code">docs/Requirements/Requirements Documendation.md</span>）：</li>
+                <ul>
+                    <li>FR-004-2/FR-004-3 调整为“按交通工具维度拥堵度 + 选中路径展示模式与拥堵度”。</li>
+                    <li>明确支持 WALK、BIKE、SHUTTLE 三种交通工具模式。</li>
+                </ul>
+                <li><span class="highlight">技术设计文档</span>（<span class="code">docs/Tech/Technical Design Document.md</span>）：</li>
+                <ul>
+                    <li>roads 表结构字段改为 <span class="code">mode_profile</span>（JSON Map<String, Double>）。</li>
+                    <li><span class="code">/api/admin/road</span> 接口参数改为 <span class="code">modeProfile</span>。</li>
+                    <li>图结构示例更新为 <span class="code">Map<String, Double> modeCongestion</span>。</li>
+                </ul>
+            </ul>
+            
+            <h4>1.2.2 路网交通工具枚举化与编解码</h4>
+            <ul>
+                <li><span class="highlight">新增 TransportMode 枚举</span>（<span class="code">src/main/java/com/travel/model/enums/TransportMode.java</span>）：</li>
+                <ul>
+                    <li>定义 WALK("walk")、BIKE("bike")、SHUTTLE("shuttle") 三种交通工具。</li>
+                    <li>提供 <span class="code">fromCode()</span> 方法支持从字符串解析，增强类型安全。</li>
+                </ul>
+                <li><span class="highlight">新增 ModeProfileCodec</span>（<span class="code">src/main/java/com/travel/util/ModeProfileCodec.java</span>）：</li>
+                <ul>
+                    <li>统一 <span class="code">modeProfile</span> JSON 编解码，支持 <span class="code">encode()</span> / <span class="code">decode()</span> 操作。</li>
+                    <li>自动归一化交通工具代码与拥堵度值 [0,1]，确保数据一致性。</li>
+                </ul>
+            </ul>
+            
+            <h4>1.2.3 后端路网模型重构</h4>
+            <ul>
+                <li><span class="highlight">数据模型</span>：</li>
+                <ul>
+                    <li><span class="code">Road</span> 实体：移除旧字段 <span class="code">congestion</span>、<span class="code">vehicleType</span>，改用 <span class="code">modeProfile</span>。</li>
+                    <li><span class="code">Edge</span> 类：将 <span class="code">congestion/vehicleType</span> 改为 <span class="code">modeCongestion</span>，适配新图结构。</li>
+                    <li><span class="code">Graph</span> 类：同步适配新图结构，支持按模式计算路径。</li>
+                </ul>
+                <li><span class="highlight">业务逻辑</span>：</li>
+                <ul>
+                    <li><span class="code">RouteServiceImpl</span>：改为按交通工具（TransportMode）计算最短路径和时间，支持返回 <span class="code">modeCongestion</span> 和 <span class="code">allowedModes</span>。</li>
+                    <li><span class="code">FacilityServiceImpl</span>：同步适配新图结构，确保附近设施查询正常。</li>
+                </ul>
+            </ul>
+            
+            <h4>1.2.4 数据与脚本同步</h4>
+            <ul>
+                <li><span class="highlight">数据文件</span>：</li>
+                <ul>
+                    <li><span class="code">roads.json</span> 和 <span class="code">roads.append.json</span>（多个数据集）：批量将旧字段迁移到 <span class="code">modeProfile</span>。</li>
+                </ul>
+                <li><span class="highlight">采集脚本</span>：</li>
+                <ul>
+                    <li><span class="code">osm_seed.py</span>：新增 OSM tag 推断交通工具模式，为每条道路生成可重现随机拥堵度 [0,1]，输出 <span class="code">modeProfile</span>。</li>
+                    <li><span class="code">amap_seed.py</span>：道路输出字段改为 <span class="code">modeProfile</span>，保持与新模型一致。</li>
+                </ul>
+            </ul>
+            
+            <h4>1.2.5 前端交互与类型定义</h4>
+            <ul>
+                <li><span class="highlight">类型定义</span>：</li>
+                <ul>
+                    <li><span class="code">api.ts</span>：新增图数据结构类型定义（TransportModeCode、ModeCongestionProfile、RoadEdge），确保 TypeScript 类型安全。</li>
+                </ul>
+                <li><span class="highlight">路线规划页</span>：</li>
+                <ul>
+                    <li><span class="code">RoutePlannerView.vue</span>：tooltip 展示“可通行交通工具+拥堵度”，结果区新增路段明细，展示每段允许模式及拥堵度。</li>
+                </ul>
+                <li><span class="highlight">管理端</span>：</li>
+                <ul>
+                    <li><span class="code">AdminView.vue</span>：道路表单改为选择交通工具并配置各模式拥堵度，提交 <span class="code">modeProfile</span>，提升管理体验。</li>
+                </ul>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h3>1.3 验证与质量门禁</h3>
+            <ul>
+                <li><span class="highlight">后端编译</span>：<span class="code">mvn -DskipTests compile</span>（BUILD SUCCESS）。</li>
+                <li><span class="highlight">前端构建</span>：<span class="code">npm run build</span>（仅有既有 chunk size 提示，无编译错误）。</li>
+                <li><span class="highlight">关键回归项</span>：</li>
+                <ul>
+                    <li>路线规划接口返回按交通工具维度的拥堵度数据。</li>
+                    <li>前端能正确展示可通行交通工具及对应拥堵度。</li>
+                    <li>管理端道路表单能正确提交 <span class="code">modeProfile</span> 数据。</li>
+                </ul>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h3>1.4 风险与应对</h3>
+            <table>
+                <tr>
+                    <th>风险</th>
+                    <th>影响</th>
+                    <th>概率</th>
+                    <th>应对措施</th>
+                </tr>
+                <tr>
+                    <td>旧数据迁移不完整导致运行时异常</td>
+                    <td>中</td>
+                    <td>低</td>
+                    <td>已完成 roads.json 和 roads.append.json 批量迁移，确保数据一致性</td>
+                </tr>
+                <tr>
+                    <td>前端图数据类型的 TS 类型定义可能不完整</td>
+                    <td>中</td>
+                    <td>低</td>
+                    <td>已定义 RoadEdge 等核心类型，后续根据实际使用场景补充</td>
+                </tr>
+                <tr>
+                    <td>多数据集同步更新可能遗漏</td>
+                    <td>中</td>
+                    <td>中</td>
+                    <td>下周验证所有地图数据的 modeProfile 字段一致性，确保无遗漏</td>
+                </tr>
+                <tr>
+                    <td>交通工具模式扩展时需同步修改多处代码</td>
+                    <td>中</td>
+                    <td>中</td>
+                    <td>采用枚举和编解码统一管理，后续扩展只需修改 TransportMode 枚举</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h3>1.5 进度评估</h3>
+            <ul>
+                <li><span class="highlight">完成度</span>：约 90%（路网交通工具枚举化核心功能已完成，前后端联动改造完成）。</li>
+                <li><span class="highlight">里程碑</span>：支持按交通工具计算最短路径和时间，前端展示模式与拥堵度，提升路线规划的准确性和用户体验。</li>
+                <li><span class="highlight">交付物</span>：</li>
+                <ul>
+                    <li>TransportMode 枚举与 ModeProfileCodec 工具类</li>
+                    <li>后端路网模型重构（Edge/Graph/RouteServiceImpl）</li>
+                    <li>前端路线规划页交互升级（模式与拥堵度展示）</li>
+                    <li>数据文件与脚本同步更新</li>
+                    <li>需求与技术文档口径对齐</li>
+                </ul>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h3>1.6 下周计划（2026-04-27 至 2026-05-03）</h3>
+            <ul>
+                <li>验证所有地图数据的 modeProfile 字段一致性，确保无遗漏。</li>
+                <li>补齐路网模块关键服务层单元测试与接口回归脚本。</li>
+                <li>推进 FR-016 数据备份恢复方案的细化与落地。</li>
+                <li>开始准备项目结项材料，包括技术总结和演示文档。</li>
+                <li>优化前端路线规划页的用户体验，提升交互流畅度。</li>
+            </ul>
+        </div>
+        
+        <div class="delimiter"></div>
+        
+        <div class="date">
+            <strong>编写日期</strong>：2026-04-26
+        </div>
+    </div>
+</body>
+</html>

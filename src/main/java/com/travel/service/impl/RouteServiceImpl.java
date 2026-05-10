@@ -11,10 +11,12 @@ import com.travel.model.dto.route.MultiPointRouteRequest;
 import com.travel.model.dto.route.RoutePlanRequest;
 import com.travel.model.entity.Poi;
 import com.travel.model.entity.Road;
+import com.travel.model.enums.TransportMode;
 import com.travel.model.vo.route.RoutePlanVO;
 import com.travel.service.RouteService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import com.travel.util.ModeProfileCodec;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -59,10 +61,11 @@ public class RouteServiceImpl implements RouteService
     public RoutePlanVO plan(RoutePlanRequest request)
     {
         Graph graph = loadGraph(request.getAreaId());
-        EdgeFilter edgeFilter = buildVehicleFilter(request.getVehicle());
+        TransportMode mode = resolveTransportMode(request.getVehicle());
+        EdgeFilter edgeFilter = buildVehicleFilter(mode);
 
         String strategy = StringUtils.defaultIfBlank(request.getStrategy(), "distance");
-        EdgeWeightFunc weightFunc = "time".equalsIgnoreCase(strategy) ? buildTimeWeightFunc(request.getVehicle()) : Edge::getDistance;
+        EdgeWeightFunc weightFunc = "time".equalsIgnoreCase(strategy) ? buildTimeWeightFunc(mode) : Edge::getDistance;
 
         PathResult result = dijkstra.shortestPath(graph, request.getStartId(), request.getEndId(), weightFunc, edgeFilter);
         if (result.getPath().isEmpty())
@@ -81,7 +84,7 @@ public class RouteServiceImpl implements RouteService
         else
         {
             vo.setDistance(result.getTotalWeight());
-            vo.setTime(calcTimeByPath(graph, result.getPath(), request.getVehicle(), edgeFilter));
+            vo.setTime(calcTimeByPath(graph, result.getPath(), mode, edgeFilter));
         }
 
         return vo;
@@ -97,9 +100,10 @@ public class RouteServiceImpl implements RouteService
         }
 
         Graph graph = loadGraph(request.getAreaId());
-        EdgeFilter edgeFilter = buildVehicleFilter(request.getVehicle());
+        TransportMode mode = resolveTransportMode(request.getVehicle());
+        EdgeFilter edgeFilter = buildVehicleFilter(mode);
         String strategy = StringUtils.defaultIfBlank(request.getStrategy(), "distance");
-        EdgeWeightFunc weightFunc = "time".equalsIgnoreCase(strategy) ? buildTimeWeightFunc(request.getVehicle()) : Edge::getDistance;
+        EdgeWeightFunc weightFunc = "time".equalsIgnoreCase(strategy) ? buildTimeWeightFunc(mode) : Edge::getDistance;
         boolean returnToStart = Boolean.TRUE.equals(request.getReturnToStart());
         long start = points.get(0);
         long fixedEnd = returnToStart ? start : points.get(points.size() - 1);
@@ -119,7 +123,7 @@ public class RouteServiceImpl implements RouteService
         else
         {
             vo.setDistance(totalPrimary);
-            vo.setTime(calcTimeByPath(graph, fullPath, request.getVehicle(), edgeFilter));
+            vo.setTime(calcTimeByPath(graph, fullPath, mode, edgeFilter));
         }
         return vo;
     }
@@ -326,8 +330,8 @@ public class RouteServiceImpl implements RouteService
                 e.put("endId", edge.getTargetId());
                 e.put("distance", edge.getDistance());
                 e.put("speed", edge.getSpeed());
-                e.put("congestion", edge.getCongestion());
-                e.put("vehicleType", edge.getVehicleType());
+                e.put("modeCongestion", edge.getModeCongestion());
+                e.put("allowedModes", new ArrayList<>(edge.getModeCongestion().keySet()));
                 edges.add(e);
             }
         }
@@ -379,62 +383,58 @@ public class RouteServiceImpl implements RouteService
         {
             double distance = road.getDistance() == null ? 0.0 : road.getDistance();
             double speed = road.getSpeed() == null ? 0.0 : road.getSpeed();
-            double congestion = road.getCongestion() == null ? 1.0 : road.getCongestion();
-            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed, congestion, road.getVehicleType());
+            Map<String, Double> modeCongestion = ModeProfileCodec.decode(road.getModeProfile());
+            if (modeCongestion.isEmpty())
+            {
+                continue;
+            }
+            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed, modeCongestion);
         }
         return graph;
     }
 
-    private EdgeFilter buildVehicleFilter(String vehicle)
+    private TransportMode resolveTransportMode(String vehicle)
     {
         if (StringUtils.isBlank(vehicle))
         {
-            return null;
+            return TransportMode.WALK;
         }
-        String v = vehicle.trim().toLowerCase();
-        return edge ->
-        {
-            if (StringUtils.isBlank(edge.getVehicleType()))
-            {
-                return true;
-            }
-            // 数据允许保存多种类型，用逗号分隔
-            String[] parts = edge.getVehicleType().toLowerCase().split(",");
-            for (String p : parts)
-            {
-                if (v.equals(p.trim()))
-                {
-                    return true;
-                }
-            }
-            return false;
-        };
+        return TransportMode.fromCode(vehicle)
+                .orElseThrow(() -> new IllegalArgumentException("不支持的交通工具类型: " + vehicle));
     }
 
-    private EdgeWeightFunc buildTimeWeightFunc(String vehicle)
+    private EdgeFilter buildVehicleFilter(TransportMode mode)
     {
-        double vehicleSpeed = vehicleSpeedMps(vehicle);
+        String modeCode = mode.code();
+        return edge -> edge.getModeCongestion().containsKey(modeCode);
+    }
+
+    private EdgeWeightFunc buildTimeWeightFunc(TransportMode mode)
+    {
+        double vehicleSpeed = vehicleSpeedMps(mode);
+        String modeCode = mode.code();
         return edge ->
         {
-            double congestion = edge.getCongestion() == 0 ? 1.0 : edge.getCongestion();
+            Double profileCongestion = edge.getModeCongestion().get(modeCode);
+            if (profileCongestion == null)
+            {
+                profileCongestion = 1.0;
+            }
+            double congestion = Math.max(0.1, Math.min(1.0, profileCongestion));
             double ideal = edge.getSpeed() <= 0 ? vehicleSpeed : edge.getSpeed();
             // 取交通工具速度与道路理想速度的较小值
-            double speed = Math.min(vehicleSpeed, ideal) * Math.max(0.1, congestion);
+            double speed = Math.min(vehicleSpeed, ideal) * congestion;
             return edge.getDistance() / speed;
         };
     }
 
-    private double vehicleSpeedMps(String vehicle)
+    private double vehicleSpeedMps(TransportMode mode)
     {
-        if (StringUtils.isBlank(vehicle))
+        return switch (mode)
         {
-            return WALK_SPEED_MPS;
-        }
-        return switch (vehicle.trim().toLowerCase())
-        {
-            case "bike" -> BIKE_SPEED_MPS;
-            case "shuttle" -> SHUTTLE_SPEED_MPS;
-            default -> WALK_SPEED_MPS;
+            case BIKE -> BIKE_SPEED_MPS;
+            case SHUTTLE -> SHUTTLE_SPEED_MPS;
+            case WALK -> WALK_SPEED_MPS;
         };
     }
 
@@ -448,9 +448,9 @@ public class RouteServiceImpl implements RouteService
         return sum;
     }
 
-    private double calcTimeByPath(Graph graph, List<Long> path, String vehicle, EdgeFilter edgeFilter)
+    private double calcTimeByPath(Graph graph, List<Long> path, TransportMode mode, EdgeFilter edgeFilter)
     {
-        EdgeWeightFunc timeWeight = buildTimeWeightFunc(vehicle);
+        EdgeWeightFunc timeWeight = buildTimeWeightFunc(mode);
         double sum = 0.0;
         for (int i = 0; i < path.size() - 1; i++)
         {

@@ -35,5 +35,8 @@ build/
 .vscode/
 data/media/
 
+# 即梦/LibTV 本地密钥（由 jimeng-animation.example.yml 复制而来，勿提交仓库）
+src/main/resources/config/jimeng-animation.yml
+
 ### Mac OS ###
 .DS_Store

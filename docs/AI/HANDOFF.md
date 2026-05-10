@@ -3,6 +3,306 @@
 > 用途：跨会话、跨 AI 的最小必要交接记录。
 > 规则：每次开发结束后追加，不要覆盖历史；已解决的同类问题应合并为结果导向记录；每条记录需标注负责人（git 用户）。
 
+## 2026-05-10（即梦 URL 解析增强 + 去掉多轮 UI / 精简日志标题）
+### 变更说明
+- 新增 **`JimengVideoUrlExtractor`**：从轮询 JSON 中解析成片地址，支持 **`resp_json`** 嵌套、`video_result[]`、多类 **url** 键、无 `.mp4` 后缀的火山 **volces/tos** 直链；底层仍兼容 **.mp4/.webm/.mov** 正则。
+- **`JimengVisualClient`** 使用上述解析器；若 **`status=done`** 仍无 URL，**仅首次** 写 `[JIMENG_DONE_NO_URL]` 原始片段到 `eventLog`（避免刷屏）。
+- **前端**：删除「与云端服务商多轮沟通」开关、会话气泡与回复框；「完整事件日志」标题去掉括号说明；提交快照去掉「多轮」行。
+- **`AnimationPromptComposer`** 去掉交互模式文案。**测试**：`JimengVideoUrlExtractorTest`、`mvn test`、`npm build` SUCCESS。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-10（动画：共用提示词 + 即梦/LibTV 多轮消息 + 前端快照与 transcript）
+### 变更说明（对应用户选项 1.A / 2.B / 3 共享多轮 / 4.B）
+- **`AnimationPromptComposer`**：`sharedGenerationParamsBlock` + `buildJimengPromptBody`，LibTV 首轮与即梦 `prompt` 共用同一套参数段落。
+- **即梦多轮**：`DiaryAnimationJob` 增加 `jimengFollowUpQueue`、`jimengTranscript`；`POST .../message` 在即梦阶段入队用户说明；`JimengVisualClient` 轮询间隙 drain 后合并 `【用户补充说明】`，调用 `visualCommonRequestForJson(..., "CVCancelTask", "2022-08-31")` 尽力取消旧任务后 **CVSync2AsyncSubmitTask** 重投；`touch` 同步写入 `jimengTranscript`（assistant）。
+- **提交接口**：`submitGenerate` 返回 `{ jobId, generationParams }`；`getJobStatus` 增加 `jimengTranscript`。
+- **前端**：`DiaryDetailView` 展示「本次任务参数（提交快照）」、`el-collapse` 默认展开日志、`vendorChatRows` 统一渲染 LibTV/即梦会话区；开关文案改为即梦/LibTV 共用多轮。
+- **测试**：`AnimationPromptComposerTest`；`mvn test`、`npm run build` SUCCESS。
+
+### 风险
+- `CVCancelTask` 若账号/API 不支持则仅记录 warn，旧云端任务可能仍在跑（耗额度）。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-10（即梦 API：按文档改用 CVSync2Async* + 构建器与单测）
+### 变更说明
+- **接口对齐**：`JimengVisualClient` 由 `cvSubmitTask`/`cvGetResult` 改为 **`cvSync2AsyncSubmitTask`** / **`cvSync2AsyncGetResult`**（与火山视觉 Java SDK 中即梦异步示例一致）。
+- **请求体**：抽取 `JimengVideoSubmitBuilder` —— `prompt` 截断 400 字、`frames` 按时长映射为 121/241、`seed`、先合并 `extra-submit-json` 再写核心字段；图生支持公网 **`image_urls`**（日记附件经 `public-base-url` 拼接）否则 **`binary_data_base64`**。
+- **DiaryAnimationServiceImpl**：增加 `resolvePublicImageUrls`，调用即梦时传入公网 URL 列表。
+- **测试**：`JimengVideoSubmitBuilderTest`（6 例）；`mvn test` 通过。
+
+### 验证
+- `mvn test`、`-Dtest=JimengVideoSubmitBuilderTest`：SUCCESS
+
+### 风险 / 下一步
+- 若历史环境仅支持旧 Action，需对照控制台「接口版本」；公网拉图失败时仍依赖本地二进制路径。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-10（即梦请求对齐博客：seed、frames、req_json.aigc_meta）
+### 变更说明
+- 参考技术栈博客与实践：`cvSubmitTask` 增加 `seed`、`frames`（由 `AnimationGenParams.durationSec` 计算，约束为文档常见 73～289 且形如 24n+1）；先合并 `extra-submit-json` 再写入 `req_key`，避免误覆盖。
+- `cvGetResult` 轮询：可选配置 `app.animation.jimeng.aigc-meta-json`，序列化为 `req_json` 字符串（内含 `aigc_meta`）。
+- `AnimationProperties.Jimeng` 新增 `seed`、`aigcMetaJson`；`application.yml`、`jimeng-animation.example.yml`、`Technical Design Document.md` 同步说明。
+
+### 验证
+- `mvn -DskipTests compile`：SUCCESS
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-10（即梦：文生视频 req_key 默认值修正）
+### 变更说明
+- 火山返回 `req_key <jimeng_t2v_v30> not supported`：服务端已不再接受旧标识；默认文生视频 `req_key` 改为 `jimeng_ti2v_v30_pro`（`AnimationProperties` / `application.yml` / `jimeng-animation.example.yml`）。
+- `JimengVisualClient`：若 SDK 抛错且消息含 `req_key` + `not supported`，包装为带配置项提示的 `IllegalStateException`。
+
+### 验证
+- `mvn -DskipTests compile`：SUCCESS
+
+### 风险 / 下一步
+- 若账号未开通对应产品线或文档再次更名，仍可能报不支持；请以控制台当前文档为准覆盖 `req-key-text-to-video`。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-10（即梦 JimengVisualClient：火山响应解析与成片 URL 提取增强）
+### 变更说明
+- 提交/轮询均校验 `ResponseMetadata.Error`、顶层 `code`（将 `10000`/`1000`/`200` 视作常见成功业务码），失败时用结构化文案抛出而非仅「无 task_id」。
+- `task_id` 支持 JSON 数字类型；成片 URL 除全文正则外在 `data` 内递归查找 `video_url`/`url`/`*_url` 等嵌套字段。
+- `looksFailed` 优先解析 `data.task_status`/`status`，减少误判。
+- `jimeng-animation.example.yml` 注释说明 AK/SK 须来自火山 IAM，勿与方舟 apikey 混用。
+
+### 验证
+- `mvn -DskipTests compile` SUCCESS
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-10（动画任务：eventLog、取消、助手拒绝关键词、日记页导航）
+### 会话目标
+- `GET /jobs/{id}` 返回 `eventLog`；`progress`/异常均写入，即梦失败附带完整堆栈。
+- `POST /jobs/{id}/cancel`：用户停止本地轮询；`awaitingUser` 时立即 `CANCELLED`。
+- LibTV：助手文案命中致歉/无法继续等启发式则抛错失败，结束轮询。
+- 详情页展示可折叠完整日志 +「停止任务」；编辑页「返回日记列表」→ `/diary`。
+
+### 验证
+- `mvn -DskipTests compile`、`npm run build`：SUCCESS。
+
+### 变更文件（主要）
+- DiaryAnimationJob.java、AnimationCancelledException.java、JimengVisualClient.java、LibTvOpenApiClient.java、DiaryAnimationServiceImpl.java、DiaryAnimationController.java
+- frontend/src/lib/api.ts、DiaryDetailView.vue、DiaryEditorView.vue、docs/Tech/Technical Design Document.md
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-10（说明：即梦优先 LibTV 兜底；成片 URL 正则增强）
+### 结论
+- **并非默认 LibTV**：`DiaryAnimationServiceImpl.runJob` 先走即梦（`enabled` 且 AK/SK 非空），只有未拿到成片 URL 时才启用 LibTV；若只见 LibTV，请查日志中「即梦生成失败，尝试 LibTV」或直接暂时 `libtv.enabled: false` 以暴露即梦报错。
+- **MP4 识别**：从助手/即梦响应中提取视频链接的正则改为 **大小写不敏感**，并在 LibTV 侧增加「正文内 https 链接中含 `.mp4`/`.webm`/`.mov`」的备用抽取；若厂商仅提供预览页、无文件后缀或 HLS（`.m3u8`），仍可能无法自动落盘，需在会话里要求 **可直接下载的文件直链**。
+### 变更文件
+- LibTvOpenApiClient.java、JimengVisualClient.java、docs/AI/HANDOFF.md
+### 验证
+- `mvn -DskipTests compile`：SUCCESS
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-10（FR-009-5：生成参数 + LibTV 多轮对话 API 与详情页 UI）
+### 会话目标
+- 生成前可选：画幅、风格、时长、额外提示词、是否「与云端助手多轮」；未传由后端默认。
+- LibTV 轮询中合并会话至 `libTvTranscript`；交互模式下助手反问则暂停并 `awaitingUserInput`；用户 `POST /api/diary/animation/jobs/{jobId}/message` 后继续轮询直至成片。
+- 即梦侧：`aspect_ratio` 可被请求覆盖并写入 prompt 前缀。
+
+### 验证结果
+- `mvn -DskipTests compile`：SUCCESS。
+- `npm run build`（frontend）：SUCCESS。
+
+### 变更文件（主要）
+- AnimationGenerateRequest.java、DiaryAnimationJobMessageRequest.java、AnimationGenParams.java
+- DiaryAnimationJob.java、LibTvOpenApiClient.java、JimengVisualClient.java、DiaryAnimationService*.java、DiaryAnimationController.java
+- frontend/src/lib/api.ts、frontend/src/views/diary/DiaryDetailView.vue
+- docs/Tech/Technical Design Document.md、docs/AI/HANDOFF.md
+
+### 风险 / 下一步
+- 即梦无会话：多轮开关仅对 LibTV 实质生效；Jimeng 路径仍是一次性任务。
+- `assistantSeemsToAskUser` 误判可能导致交互模式过早暂停。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-10（LibTV：助手反问参数导致停滞 — 首轮约束 + 会话追加自动确认）
+### 会话目标
+- 解决 LibTV 云端 Agent 反问横竖版/风格而无人回复时，`LIBTV_POLL` 长期无成片链接的问题。
+
+### 做法
+- `AnimationProperties.Libtv` 增加：`firstMessagePreamble`、`autoReplyOnClarification`、`maxAutoReplies`、`autoConfirmText`（均有 Java 默认值，可按 yml 覆盖）。
+- `LibTvOpenApiClient.appendSessionMessage`：`POST /openapi/session` 携带 `sessionId` + `message`。
+- `waitForVideoUrl`：若本轮增量里最新助手消息仍无 mp4 URL，且启发式判定为「索要参数」，则按助手消息 `seq` 去重后自动追加确认文案（默认 16:9、写实纪实、约 5～8 秒、勿再反问）；阶段记为 `LIBTV_REPLY`。
+- `DiaryAnimationServiceImpl.runLibTv`：首条会话正文前拼接 `firstMessagePreamble`，降低反问概率。
+
+### 验证结果
+- `mvn -DskipTests compile`：SUCCESS（本地执行）。
+
+### 变更文件（主要）
+- AnimationProperties.java、LibTvOpenApiClient.java、DiaryAnimationServiceImpl.java
+- src/main/resources/config/jimeng-animation.example.yml、docs/Tech/Technical Design Document.md、docs/AI/HANDOFF.md
+
+### 风险 / 后续
+- 反问句式多样时启发式可能漏判或误判；可在 yml 关闭 `auto-reply-on-clarification` 或调高 `max-auto-replies`。
+- 若厂商 API 对追加消息的响应字段与假设不一致，需按实际 body 调整成功判定。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-10（日记动画：轮询进度增强 — 阶段 / 任务号 / 厂商摘要）
+### 会话目标
+- 长耗时生成过程中向用户反馈即梦/LibTV 行为：阶段 `stage`、`externalRef`、轮询次数、`message` 含 cvGetResult 状态摘要与 LibTV 助手片段。
+- 前端详情页 `el-alert` 展示多行进度，轮询间隔渐进；提示可离开页面稍后刷新。
+
+### 变更文件（主要）
+- DiaryAnimationJob.java、JimengVisualClient.java、LibTvOpenApiClient.java、DiaryAnimationServiceImpl.java
+- frontend/src/lib/api.ts、frontend/src/views/diary/DiaryDetailView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-05-10（文档：演示无 DB + AIGC 不依赖写库；即梦本地配置文件）
+### 会话目标
+- 约定「内存为主、可不连 MySQL」演示下，AIGC 与其它双写功能不得因 Mapper 失败中断；补充 AGENTS / PROJECT_CONTEXT / WORKFLOW / 技术设计。
+- 提供即梦/LibTV 本地配置：`config/jimeng-animation.example.yml` + dev 可选 import + `.gitignore` `jimeng-animation.yml`；`DiaryAnimationServiceImpl` 扩展 DB 不可用异常识别。
+
+### 负责人
+- Cursor Agent
+
+### 变更文件
+- AGENTS.md、docs/AI/PROJECT_CONTEXT.md、docs/AI/WORKFLOW.md、docs/Tech/Technical Design Document.md
+- application-dev.yml、.gitignore、src/main/resources/config/jimeng-animation.example.yml
+- DiaryAnimationServiceImpl.java、docs/AI/HANDOFF.md
+
+## 2026-05-10（FR-009-5：即梦 + LibTV 后端编排；本地媒体上传厂商；落盘关联）
+### 会话目标
+- 后端实现日记旅游动画：`JimengVisualClient`（火山 volc-sdk `cvSubmitTask`/`cvGetResult`）主力，`LibTvOpenApiClient`（`im.liblib.tv` OpenAPI + multipart 上传）备用。
+- 本地 `/media` 图片读盘为多模态输入；成片下载到 `data/media/video/animation/` 并写入 `diaries.animation_url`。
+- 前端日记详情：所有者可见生成按钮与成片播放器。
+
+### 负责人
+- Cursor Agent
+
+### 新增/完成功能
+- 依赖 `com.volcengine:volc-sdk-java:1.0.226`；配置 `app.animation.*`（AK/SK、`LIBTV_ACCESS_KEY`、公网 base URL、`req-key-*` 等）。
+- API：`POST /api/diary/{id}/animation/generate`、`GET /api/diary/animation/jobs/{jobId}`（内存任务表，进程内）。
+- SQL：`docs/sql/migration_add_animation_url.sql`。
+- 前端 `apiDiaryAnimationGenerate` / `apiDiaryAnimationJob`；`DiaryDetailView` 生成与轮询。
+
+### 验证结果
+- `mvn -DskipTests compile`：SUCCESS。
+- `npm run build`（frontend）：SUCCESS。
+
+### 变更文件（主要）
+- pom.xml、application.yml
+- Diary.java、DiaryServiceImpl.java
+- com.travel.animation/*、com.travel.config/Animation*
+- DiaryAnimationController.java、DiaryAnimationService*.java
+- docs/sql/migration_add_animation_url.sql
+- frontend/src/lib/api.ts、frontend/src/views/diary/DiaryDetailView.vue
+- docs/AI/HANDOFF.md
+
+## 2026-05-10（FR-009-5：云端视频 + 策略 B；免费厂商参考；文档修订）
+### 会话目标
+- 采纳「云端视频生成 API + 服务端下载落盘（策略 B）」；不推荐离线地图、备份恢复、系统通知为本期交付。
+- 更新需求/技术设计/PROJECT_CONTEXT，并给出可免费试用的厂商选型参考（额度以官网为准）。
+
+### 负责人
+- Cursor Agent（文档编辑）
+
+### 新增/完成功能
+- `docs/Requirements/Requirements Documendation.md` **v1.4**：重写 FR-009-5（云端、异步、BYOK、落盘关联）；新增 §2.3.3 持久化策略、§2.3.4 厂商参考表；§6.1 外部接口允许视频 API；§9 裁剪 FR-004-4/FR-015/FR-016，优先 FR-009-5；验收表与风险表同步。
+- `docs/Tech/Technical Design Document.md`：动画模块与 `/api/animation/*` 异步语义对齐。
+- `docs/AI/PROJECT_CONTEXT.md`：差距条目与 FR-009-5 决策对齐。
+
+### 验证结果
+- 文档交叉引用 §2.3.3 已存在。
+
+### 变更文件
+- docs/Requirements/Requirements Documendation.md
+- docs/Tech/Technical Design Document.md
+- docs/AI/PROJECT_CONTEXT.md
+- docs/AI/HANDOFF.md
+
+## 2026-05-10（需求文档：实现状态对齐）
+### 会话目标
+- 将 `docs/Requirements/Requirements Documendation.md` 与当前代码基线对齐，明确 **尚未实现** 与 **部分实现** 的功能需求，便于着手实现。
+
+### 负责人
+- Cursor Agent（文档编辑）
+
+### 新增/完成功能
+- 需求文档升至 **v1.3**，新增 **§9 需求实现状态对齐**：列出 FR-004-4、FR-015、FR-016、FR-009-5 为未实现；若干 FR 为部分实现；FR-009-4、FR-004-2/3、FR-007 等对误判项说明。
+- 修正 **§8 验收标准** 表中 FR-007 表述，与 §2.3.1 手动生成日记一致。
+
+### 验证结果
+- 单文件通读：章节顺序与页脚元数据一致。
+
+### 变更文件
+- docs/Requirements/Requirements Documendation.md
+- docs/AI/HANDOFF.md
+
+## 2026-04-20（路网交通工具枚举化 + 分模式拥堵度落地）
+### 会话目标
+- 将道路可通行交通工具从字符串改为结构化模型（modeProfile），并按交通工具维度计算拥堵度与最短时间。
+- 先同步需求文档与技术设计文档，再完成后端、脚本、前端联动改造。
+- 前端在“选中路径”时展示每段道路可通行交通工具及对应拥堵度。
+
+### 负责人
+- Max1122Chen（max1122chen@126.com）
+
+### 新增/完成功能
+- 文档口径同步：
+  - `docs/Requirements/Requirements Documendation.md`：FR-004-2/FR-004-3 改为“按交通工具维度拥堵度 + 选中路径展示模式与拥堵度”。
+  - `docs/Tech/Technical Design Document.md`：roads 字段改为 `mode_profile`，`/api/admin/road` 参数改为 `modeProfile`，图结构示例改为 `Map<String, Double> modeCongestion`。
+- 后端路网模型重构：
+  - 新增 `TransportMode` 枚举（`walk/bike/shuttle`）。
+  - 新增 `ModeProfileCodec`，统一解析/规范化 `modeProfile` JSON。
+  - `Road` 实体移除旧 `congestion/vehicleType` 字段，改为 `modeProfile`。
+  - `Edge/Graph` 改为承载“交通工具 -> 拥堵度”映射。
+  - `RouteServiceImpl` 改为：按枚举交通工具过滤道路、按该模式拥堵度计算时间权重、`map-data` 返回 `modeCongestion/allowedModes`。
+  - `FacilityServiceImpl` 同步适配新图边结构。
+- 数据与脚本同步：
+  - 批量将 `roads.json` 与各 `roads.append.json` 从旧字段迁移为 `modeProfile`。
+  - `scripts/osm_seed.py`：新增 OSM tag 推断可通行模式；为每条边每种模式生成可复现随机拥堵度（[0,1]）；输出 `modeProfile`。
+  - `scripts/amap_seed.py`：道路输出字段改为 `modeProfile`。
+- 前端联动：
+  - `frontend/src/lib/api.ts` 新增路网模式类型定义（`TransportModeCode/ModeCongestionProfile/RoadEdge`），`apiMapData` 改为新结构。
+  - `frontend/src/views/route/RoutePlannerView.vue`：
+    - 边 tooltip 展示“可通行交通工具 + 拥堵度”；
+    - 结果区新增路径分段明细，展示每段允许模式及拥堵度。
+  - `frontend/src/views/admin/AdminView.vue`：新增道路表单改为勾选交通工具并配置各模式拥堵度，提交 `modeProfile`。
+
+### 验证结果
+- 后端编译通过：`mvn -DskipTests compile`（BUILD SUCCESS）。
+- 前端构建通过：`npm run build`（仅存在既有 chunk size 提示，无编译错误）。
+
+### 变更文件
+- docs/Requirements/Requirements Documendation.md
+- docs/Tech/Technical Design Document.md
+- src/main/java/com/travel/model/enums/TransportMode.java
+- src/main/java/com/travel/util/ModeProfileCodec.java
+- src/main/java/com/travel/model/entity/Road.java
+- src/main/java/com/travel/algorithm/graph/Edge.java
+- src/main/java/com/travel/algorithm/graph/Graph.java
+- src/main/java/com/travel/service/impl/RouteServiceImpl.java
+- src/main/java/com/travel/service/impl/FacilityServiceImpl.java
+- src/main/resources/dev-seed/roads.json
+- src/main/resources/osm-data/*/latest/roads.append.json（4个文件）
+- scripts/osm_seed.py
+- scripts/amap_seed.py
+- frontend/src/lib/api.ts
+- frontend/src/views/route/RoutePlannerView.vue
+- frontend/src/views/admin/AdminView.vue
+- docs/AI/HANDOFF.md
+
 ## 2026-04-19（第七周周报产出：md + html）
 ### 会话目标
 - 基于本周提交与当日工作内容，生成第七周周报，并输出 Markdown 与 HTML 两种格式以支持后续转 Docx。

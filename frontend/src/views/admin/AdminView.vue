@@ -10,6 +10,7 @@ import {
   apiAdminListScenicAreas,
   apiAdminSearchLocalPlace,
   apiAdminSearchOsm,
+  type AdminRoadPayload,
   type ScenicArea,
 } from '../../lib/api'
 
@@ -35,8 +36,10 @@ const roadForm = reactive<any>({
   endId: null,
   distance: undefined,
   speed: undefined,
-  congestion: undefined,
-  vehicleType: '',
+  enabledModes: ['walk'] as string[],
+  walkCongestion: 0.8,
+  bikeCongestion: 0.8,
+  shuttleCongestion: 0.8,
   areaId: null,
 })
 const foodForm = reactive<any>({
@@ -97,12 +100,48 @@ async function addPoi() {
 }
 
 async function addRoad() {
-  if (!roadForm.startId || !roadForm.endId || roadForm.distance == null || roadForm.speed == null || roadForm.congestion == null || !roadForm.areaId) {
-    ElMessage.warning('请补全新增道路所需字段：startId、endId、distance、speed、congestion、areaId')
+  if (!roadForm.startId || !roadForm.endId || roadForm.distance == null || roadForm.speed == null || !roadForm.areaId) {
+    ElMessage.warning('请补全新增道路所需字段：startId、endId、distance、speed、areaId')
     return
   }
-  await apiAdminAddRoad(roadForm)
+
+  const modeProfile = buildRoadModeProfile()
+  if (Object.keys(modeProfile).length === 0) {
+    ElMessage.warning('请至少选择一种可通行交通工具并配置拥堵度')
+    return
+  }
+
+  const payload: AdminRoadPayload = {
+    startId: Number(roadForm.startId),
+    endId: Number(roadForm.endId),
+    distance: Number(roadForm.distance),
+    speed: Number(roadForm.speed),
+    modeProfile: JSON.stringify(modeProfile),
+    areaId: Number(roadForm.areaId),
+  }
+
+  await apiAdminAddRoad(payload)
   ElMessage.success('添加道路成功')
+}
+
+function modeEnabled(mode: string) {
+  return Array.isArray(roadForm.enabledModes) && roadForm.enabledModes.includes(mode)
+}
+
+function clamp01(value: unknown) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return 0
+  if (n < 0) return 0
+  if (n > 1) return 1
+  return n
+}
+
+function buildRoadModeProfile() {
+  const out: Record<string, number> = {}
+  if (modeEnabled('walk')) out.walk = clamp01(roadForm.walkCongestion)
+  if (modeEnabled('bike')) out.bike = clamp01(roadForm.bikeCongestion)
+  if (modeEnabled('shuttle')) out.shuttle = clamp01(roadForm.shuttleCongestion)
+  return out
 }
 
 async function addFood() {
@@ -406,10 +445,24 @@ onMounted(loadScenic)
                 <el-form-item label="speed">
                   <el-input-number v-model="roadForm.speed" :min="0" :controls="false" placeholder="理想速度（speed）" style="width: 100%" />
                 </el-form-item>
-                <el-form-item label="congestion">
-                  <el-input-number v-model="roadForm.congestion" :min="0.1" :step="0.1" :controls="false" placeholder="拥挤度（0~1）" style="width: 100%" />
+                <el-form-item label="可通行交通工具">
+                  <el-checkbox-group v-model="roadForm.enabledModes">
+                    <el-checkbox label="walk">步行</el-checkbox>
+                    <el-checkbox label="bike">自行车</el-checkbox>
+                    <el-checkbox label="shuttle">电瓶车</el-checkbox>
+                  </el-checkbox-group>
                 </el-form-item>
-                <el-form-item label="vehicleType"><el-input v-model="roadForm.vehicleType" placeholder="walk,bike,shuttle" /></el-form-item>
+                <div class="row">
+                  <el-form-item label="步行拥堵度" v-if="modeEnabled('walk')">
+                    <el-input-number v-model="roadForm.walkCongestion" :min="0" :max="1" :step="0.01" :controls="false" placeholder="0~1" style="width: 100%" />
+                  </el-form-item>
+                  <el-form-item label="自行车拥堵度" v-if="modeEnabled('bike')">
+                    <el-input-number v-model="roadForm.bikeCongestion" :min="0" :max="1" :step="0.01" :controls="false" placeholder="0~1" style="width: 100%" />
+                  </el-form-item>
+                  <el-form-item label="电瓶车拥堵度" v-if="modeEnabled('shuttle')">
+                    <el-input-number v-model="roadForm.shuttleCongestion" :min="0" :max="1" :step="0.01" :controls="false" placeholder="0~1" style="width: 100%" />
+                  </el-form-item>
+                </div>
                 <el-form-item label="areaId">
                   <el-input-number v-model="roadForm.areaId" :min="1" :controls="false" placeholder="所属景区/校园 ID（area_id）" style="width: 100%" />
                 </el-form-item>

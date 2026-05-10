@@ -10,11 +10,13 @@ import com.travel.model.entity.Road;
 import com.travel.model.vo.facility.FacilityNearbyVO;
 import com.travel.service.FacilityService;
 import com.travel.util.GeoUtil;
+import com.travel.util.ModeProfileCodec;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 设施查询服务实现。
@@ -128,8 +130,8 @@ public class FacilityServiceImpl implements FacilityService
         {
             double distance = road.getDistance() == null ? 0.0 : road.getDistance();
             double speed = road.getSpeed() == null ? 0.0 : road.getSpeed();
-            double congestion = road.getCongestion() == null ? 1.0 : road.getCongestion();
-            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed, congestion, road.getVehicleType());
+            Map<String, Double> modeCongestion = ModeProfileCodec.decode(road.getModeProfile());
+            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed, modeCongestion);
         }
         return graph;
     }

@@ -139,6 +139,7 @@ public class DiaryServiceImpl implements DiaryService
         update.setCreateTime(existing.getCreateTime());
         update.setHeat(existing.getHeat());
         update.setRating(existing.getRating());
+        update.setAnimationUrl(existing.getAnimationUrl());
 
         // 先尝试落库；若开发模式下数据库不可用，则回退到内存更新。
         runDbWrite("update-diary", () ->
@@ -365,6 +366,7 @@ public class DiaryServiceImpl implements DiaryService
         target.setContent(diaryContentCodec.encodeForStorage(source.getContent()));
         target.setImages(source.getImages());
         target.setVideos(source.getVideos());
+        target.setAnimationUrl(source.getAnimationUrl());
         target.setHeat(source.getHeat());
         target.setRating(source.getRating());
         target.setCreateTime(source.getCreateTime());

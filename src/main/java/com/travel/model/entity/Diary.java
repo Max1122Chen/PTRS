@@ -39,6 +39,12 @@ public class Diary implements Serializable
      */
     private String videos;
 
+    /**
+     * AIGC 旅游动画成片地址（本站 /media 路径，落盘持久化）。
+     */
+    @TableField("animation_url")
+    private String animationUrl;
+
     private Integer heat;
 
     private Double rating;
@@ -107,6 +113,16 @@ public class Diary implements Serializable
     public void setVideos(String videos)
     {
         this.videos = videos;
+    }
+
+    public String getAnimationUrl()
+    {
+        return animationUrl;
+    }
+
+    public void setAnimationUrl(String animationUrl)
+    {
+        this.animationUrl = animationUrl;
     }
 
     public Integer getHeat()

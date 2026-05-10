@@ -1,16 +1,17 @@
 # OSM Data Report
 
-- generatedAt: 2026-03-31T12:57:30
+- generatedAt: 2026-04-20T10:23:45
 - targetNameInput: 北京邮电
 - scenicNameMatched: 北京邮电大学
-- query: 北京邮电大学, 杏坛路, 北太平庄街道, 海淀区, 北京市, 100875, 中国
+- query: 北京邮电大学, 杏坛路, 北太平庄街道, 海淀区, 北京市, 100088, 中国
 - matchedAddressName: 北京邮电大学, 杏坛路, 北太平庄街道, 海淀区, 北京市, 100088, 中国
 - outputDirSlug: 北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国
 - center: 116.351933,39.960227
 - scenicCount: 1
 - poiCount: 656
 - facilityCount: 15
-- roadCount: 739
+- roadCount: 737
+- unmatchedPoiTypeCount: 113
 
 ## Notes
 - Review-only output. Existing seed files remain unchanged.
@@ -21,17 +22,18 @@
 - snappedPoiCount: 20
 - businessPoiAttachCount: 20/20 (100.00%)
 - isolatedVirtualNodeCount: 2
-- degreeOneVirtualNodeCount: 127
-- nodeDegreeHistogram: deg1=147, deg2=258, deg3plus=249
+- degreeOneVirtualNodeCount: 133
+- nodeDegreeHistogram: deg1=153, deg2=250, deg3plus=251
 - Roads are generated from OSM highway network with virtual non-POI nodes as endpoints.
+- unmatchedPoiTypeLog: raw/unmatched_poi_types.json
 - contextSource: nominatim
 
 ## Payload Size
 - scenicAreasBytes: 507
-- poisBytes: 156116
+- poisBytes: 156093
 - facilitiesBytes: 5334
-- roadsBytes: 204430
-- totalBytes: 366387
+- roadsBytes: 207246
+- totalBytes: 369180
 
 ## Map Imports
 - updated: true

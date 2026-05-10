@@ -23,19 +23,19 @@ public class Graph
     /**
      * 添加无向边（道路默认双向）。
      */
-    public void addUndirectedEdge(long startId, long endId, double distance, double speed, double congestion, String vehicleType)
+    public void addUndirectedEdge(long startId, long endId, double distance, double speed, Map<String, Double> modeCongestion)
     {
-        addDirectedEdge(startId, endId, distance, speed, congestion, vehicleType);
-        addDirectedEdge(endId, startId, distance, speed, congestion, vehicleType);
+        addDirectedEdge(startId, endId, distance, speed, modeCongestion);
+        addDirectedEdge(endId, startId, distance, speed, modeCongestion);
     }
 
     /**
      * 添加有向边。
      */
-    public void addDirectedEdge(long startId, long endId, double distance, double speed, double congestion, String vehicleType)
+    public void addDirectedEdge(long startId, long endId, double distance, double speed, Map<String, Double> modeCongestion)
     {
         adjList.computeIfAbsent(startId, k -> new ArrayList<>())
-            .add(new Edge(endId, distance, speed, congestion, vehicleType));
+            .add(new Edge(endId, distance, speed, modeCongestion));
     }
 
     public List<Edge> getEdges(long nodeId)

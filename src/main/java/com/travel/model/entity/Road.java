@@ -33,12 +33,10 @@ public class Road implements Serializable
     private Double speed;
 
     /**
-     * 拥挤度（0-1），真实速度 = 拥挤度 * 理想速度。
+     * 交通工具拥挤度配置（JSON 字符串），键为 walk/bike/shuttle。
      */
-    private Double congestion;
-
-    @TableField("vehicle_type")
-    private String vehicleType;
+    @TableField("mode_profile")
+    private String modeProfile;
 
     /**
      * 所属景区/校园 ID（管理端接口需要）。
@@ -102,24 +100,14 @@ public class Road implements Serializable
         this.speed = speed;
     }
 
-    public Double getCongestion()
+    public String getModeProfile()
     {
-        return congestion;
+        return modeProfile;
     }
 
-    public void setCongestion(Double congestion)
+    public void setModeProfile(String modeProfile)
     {
-        this.congestion = congestion;
-    }
-
-    public String getVehicleType()
-    {
-        return vehicleType;
-    }
-
-    public void setVehicleType(String vehicleType)
-    {
-        this.vehicleType = vehicleType;
+        this.modeProfile = modeProfile;
     }
 
     public Long getAreaId()

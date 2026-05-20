@@ -3,12 +3,19 @@ import { ElMessage } from 'element-plus'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import {
+  apiIndoorFloor,
+  apiIndoorMeta,
+  apiIndoorPlan,
   apiMapData,
   apiPlanRoute,
   apiPlanRouteMulti,
   apiRoutePoiCandidates,
   apiRoutePoiTypes,
   apiScenicSearchByKeyword,
+  type IndoorFloorGraph,
+  type IndoorLevelMeta,
+  type IndoorNodeDto,
+  type IndoorPlanResult,
   type RoadEdge,
   type PoiTypeDictItem,
   type RoutePoiCandidate,
@@ -32,6 +39,7 @@ type RouteNodeDetail = {
   longitude?: number
   latitude?: number
   areaId?: number
+  indoorAvailable?: boolean
 }
 
 type RouteNodeGeo = {
@@ -58,6 +66,18 @@ const form = reactive({
 })
 
 const result = ref<{ path: number[]; distance: number; time: number } | null>(null)
+
+const viewMode = ref<'outdoor' | 'indoor'>('outdoor')
+const indoorBuildingPoiId = ref<number | null>(null)
+const indoorBuildingName = ref('')
+const indoorLevels = ref<IndoorLevelMeta[]>([])
+const indoorCurrentLevel = ref('')
+const indoorFloorGraph = ref<IndoorFloorGraph | null>(null)
+const indoorAllNodes = ref<IndoorNodeDto[]>([])
+const indoorStartId = ref<number | null>(null)
+const indoorEndId = ref<number | null>(null)
+const indoorPlanResult = ref<IndoorPlanResult | null>(null)
+let chartClickBound = false
 
 const areaOpts = ref<ScenicArea[]>([])
 const poiTypeOptions = ref<PoiTypeDictItem[]>([])
@@ -236,6 +256,34 @@ function buildNodePositionMap() {
   return positions
 }
 
+function buildIndoorNodePixelPositions(nodes: IndoorNodeDto[]): Record<number, { x: number; y: number }> | null {
+  const positioned = nodes.filter(
+    (n) =>
+      typeof n.longitude === 'number' &&
+      Number.isFinite(n.longitude) &&
+      typeof n.latitude === 'number' &&
+      Number.isFinite(n.latitude),
+  )
+  if (!positioned.length) return null
+
+  const lngs = positioned.map((n) => Number(n.longitude))
+  const lats = positioned.map((n) => Number(n.latitude))
+  const minLng = Math.min(...lngs)
+  const maxLng = Math.max(...lngs)
+  const minLat = Math.min(...lats)
+  const maxLat = Math.max(...lats)
+  const lngSpan = Math.max(maxLng - minLng, 0.000001)
+  const latSpan = Math.max(maxLat - minLat, 0.000001)
+
+  const positions: Record<number, { x: number; y: number }> = {}
+  positioned.forEach((node) => {
+    const x = ((Number(node.longitude) - minLng) / lngSpan) * 1000
+    const y = ((maxLat - Number(node.latitude)) / latSpan) * 700
+    positions[node.id] = { x, y }
+  })
+  return positions
+}
+
 async function remoteArea(keyword: string) {
   const q = keyword.trim()
   if (!q) {
@@ -252,7 +300,167 @@ async function remoteArea(keyword: string) {
   }
 }
 
+function bindOutdoorChartClick() {
+  if (!chart || chartClickBound) return
+  chart.on('click', (params: any) => {
+    if (viewMode.value !== 'outdoor') return
+    if (params?.dataType !== 'node') return
+    const data = params.data || {}
+    if (!data.indoorAvailable) return
+    const poiId = Number(data.nodeId)
+    if (!Number.isFinite(poiId)) return
+    void enterIndoor(poiId, data.name || `POI ${poiId}`)
+  })
+  chartClickBound = true
+}
+
+async function enterIndoor(buildingPoiId: number, name: string) {
+  loading.value = true
+  try {
+    const meta = await apiIndoorMeta(buildingPoiId)
+    indoorBuildingPoiId.value = buildingPoiId
+    indoorBuildingName.value = meta.name || name
+    indoorLevels.value = meta.levels ?? []
+    indoorCurrentLevel.value = meta.levels?.[0]?.level ?? '0'
+    indoorPlanResult.value = null
+    indoorStartId.value = meta.entranceNodeId ?? null
+    indoorEndId.value = null
+    viewMode.value = 'indoor'
+    await refreshIndoorAllNodes()
+    await loadIndoorFloor(indoorCurrentLevel.value)
+    ElMessage.success(`已进入「${indoorBuildingName.value}」室内导航`)
+  } catch (e: any) {
+    ElMessage.error(e?.message || '无法加载室内图')
+  } finally {
+    loading.value = false
+  }
+}
+
+function exitIndoor() {
+  viewMode.value = 'outdoor'
+  indoorBuildingPoiId.value = null
+  indoorFloorGraph.value = null
+  indoorPlanResult.value = null
+  renderGraph(result.value?.path)
+}
+
+async function refreshIndoorAllNodes() {
+  const buildingId = indoorBuildingPoiId.value
+  if (buildingId == null) return
+  const all: IndoorNodeDto[] = []
+  for (const lv of indoorLevels.value) {
+    const floor = await apiIndoorFloor(buildingId, lv.level)
+    all.push(...(floor.nodes ?? []))
+  }
+  indoorAllNodes.value = all
+}
+
+async function loadIndoorFloor(level: string) {
+  const buildingId = indoorBuildingPoiId.value
+  if (buildingId == null) return
+  loading.value = true
+  try {
+    indoorCurrentLevel.value = level
+    indoorFloorGraph.value = await apiIndoorFloor(buildingId, level)
+    renderIndoorGraph(indoorPlanResult.value?.path)
+  } finally {
+    loading.value = false
+  }
+}
+
+function renderIndoorGraph(highlightPath?: number[]) {
+  if (!chartEl.value || !indoorFloorGraph.value) return
+  if (!chart) chart = echarts.init(chartEl.value)
+
+  const floor = indoorFloorGraph.value
+  const pathSet = new Set<number>(highlightPath ?? [])
+  const geoPos = buildIndoorNodePixelPositions(floor.nodes)
+
+  const nodes = floor.nodes.map((n) => {
+    const highlighted = pathSet.has(n.id)
+    const xy = geoPos?.[n.id] ?? { x: Number(n.x ?? 0), y: Number(n.y ?? 0) }
+    return {
+      id: String(n.id),
+      name: n.name || `${n.nodeKind || '节点'} ${n.id}`,
+      nodeId: n.id,
+      nodeKind: n.nodeKind,
+      x: xy.x,
+      y: xy.y,
+      symbolSize: highlighted ? 18 : n.nodeKind === 'room' ? 12 : 10,
+      itemStyle: {
+        color: highlighted
+          ? 'rgba(204,120,92,0.95)'
+          : n.nodeKind === 'elevator' || n.nodeKind === 'stairs'
+            ? 'rgba(120,180,255,0.85)'
+            : 'rgba(255,255,255,0.7)',
+      },
+    }
+  })
+
+  const linkKeys = new Set<string>()
+  if (highlightPath && highlightPath.length > 1) {
+    for (let i = 0; i < highlightPath.length - 1; i++) {
+      linkKeys.add(`${highlightPath[i]}-${highlightPath[i + 1]}`)
+      linkKeys.add(`${highlightPath[i + 1]}-${highlightPath[i]}`)
+    }
+  }
+
+  const links = floor.edges.map((e) => {
+    const key = `${e.startNodeId}-${e.endNodeId}`
+    const onPath = linkKeys.has(key) || linkKeys.has(`${e.endNodeId}-${e.startNodeId}`)
+    return {
+      source: String(e.startNodeId),
+      target: String(e.endNodeId),
+      lineStyle: onPath
+        ? { width: 3, color: 'rgba(204,120,92,0.95)' }
+        : { width: 1, color: 'rgba(255,255,255,0.2)' },
+    }
+  })
+
+  chart.setOption({
+    tooltip: {
+      trigger: 'item',
+      formatter: (p: any) => {
+        if (p.dataType !== 'node') return ''
+        const d = p.data || {}
+        return `<div><b>${d.name}</b></div><div>ID: ${d.nodeId}</div><div>${d.nodeKind || ''}</div>`
+      },
+    },
+    series: [{ type: 'graph', layout: 'none', roam: true, data: nodes, links }],
+  })
+}
+
+async function planIndoor() {
+  const buildingId = indoorBuildingPoiId.value
+  if (buildingId == null || indoorStartId.value == null || indoorEndId.value == null) {
+    ElMessage.warning('请选择室内起点与终点')
+    return
+  }
+  loading.value = true
+  try {
+    indoorPlanResult.value = await apiIndoorPlan(buildingId, {
+      startNodeId: Number(indoorStartId.value),
+      endNodeId: Number(indoorEndId.value),
+    })
+    if (!indoorPlanResult.value.path?.length) {
+      ElMessage.warning('室内路径不连通')
+      return
+    }
+    const firstLevel = indoorPlanResult.value.segments?.[0]?.level
+    if (firstLevel) {
+      await loadIndoorFloor(firstLevel)
+    }
+    renderIndoorGraph(indoorPlanResult.value.path)
+  } finally {
+    loading.value = false
+  }
+}
+
 function renderGraph(highlightPath?: number[]) {
+  if (viewMode.value === 'indoor') {
+    renderIndoorGraph(highlightPath)
+    return
+  }
   if (!chartEl.value || !map.value) return
   if (!chart) chart = echarts.init(chartEl.value)
 
@@ -264,10 +472,20 @@ function renderGraph(highlightPath?: number[]) {
   const fallbackRadius = 280
   const fallbackCenterX = 500
   const fallbackCenterY = 350
-  const total = Math.max(map.value.nodes.length, 1)
+  let fallbackIdx = 0
+  const fallbackTotal = Math.max(
+    map.value.nodes.filter((id) => !positionMap[id] && Boolean(details[id])).length,
+    1,
+  )
 
-  const nodes = map.value.nodes.map((id, idx) => {
-    const fallbackAngle = (idx / total) * Math.PI * 2
+  const nodes = map.value.nodes
+    .filter((id) => {
+      // 无经纬度的路网虚拟节点不进入图表，避免 ECharts 环形兜底布局连成一圈
+      if (positionMap[id]) return true
+      return Boolean(details[id])
+    })
+    .map((id) => {
+    const fallbackAngle = (fallbackIdx++ / fallbackTotal) * Math.PI * 2
     const fallback = {
       x: fallbackCenterX + Math.cos(fallbackAngle) * fallbackRadius,
       y: fallbackCenterY + Math.sin(fallbackAngle) * fallbackRadius,
@@ -278,6 +496,7 @@ function renderGraph(highlightPath?: number[]) {
     const showRoadNode = form.showRoadNodes || !isVirtual
     const isHighlighted = Boolean(highlightPath?.includes(id))
     const visiblePoi = isPoi && showPoiNodes
+    const indoorAvailable = Boolean(details[id]?.indoorAvailable)
     return {
       id: String(id),
       name: isVirtual && !showRoadNode ? '' : visiblePoi ? labels[id] || String(id) : '',
@@ -286,17 +505,36 @@ function renderGraph(highlightPath?: number[]) {
       nodeLocation: details[id]?.location,
       longitude: details[id]?.longitude,
       latitude: details[id]?.latitude,
+      indoorAvailable,
       x: pos.x,
       y: pos.y,
-      symbolSize: isVirtual && !showRoadNode ? 0 : visiblePoi ? (isHighlighted ? 18 : 10) : isHighlighted ? 8 : 4,
+      symbolSize: isVirtual && !showRoadNode
+        ? 0
+        : visiblePoi
+          ? indoorAvailable
+            ? isHighlighted
+              ? 20
+              : 14
+            : isHighlighted
+              ? 18
+              : 10
+          : isHighlighted
+            ? 8
+            : 4,
       itemStyle: visiblePoi
         ? isHighlighted
           ? { color: 'rgba(204,120,92,0.95)' }
-          : isVirtual
-            ? showRoadNode
-              ? { color: 'rgba(255,255,255,0.1)' }
-              : { color: 'rgba(255,255,255,0.0)' }
-            : { color: 'rgba(255,255,255,0.65)' }
+          : indoorAvailable
+            ? {
+                color: 'rgba(255,220,160,0.9)',
+                borderColor: 'rgba(255,200,80,0.95)',
+                borderWidth: 2,
+              }
+            : isVirtual
+              ? showRoadNode
+                ? { color: 'rgba(255,255,255,0.1)' }
+                : { color: 'rgba(255,255,255,0.0)' }
+              : { color: 'rgba(255,255,255,0.65)' }
         : isHighlighted
           ? { color: 'rgba(204,120,92,0.55)' }
           : { color: 'rgba(255,255,255,0.12)' },
@@ -312,7 +550,10 @@ function renderGraph(highlightPath?: number[]) {
     }
   }
 
-  const links = map.value.edges.map((e) => {
+  const chartNodeIds = new Set(nodes.map((n) => n.id))
+  const links = map.value.edges
+    .filter((e) => chartNodeIds.has(String(e.startId)) && chartNodeIds.has(String(e.endId)))
+    .map((e) => {
     const key = `${e.startId}-${e.endId}`
     const isOnPath = pathSet.has(key)
     const modeCongestion = normalizeModeCongestion(e.modeCongestion)
@@ -395,9 +636,13 @@ function renderGraph(highlightPath?: number[]) {
       },
     ],
   })
+  bindOutdoorChartClick()
 }
 
 async function loadMap() {
+  if (viewMode.value === 'indoor') {
+    exitIndoor()
+  }
   if (form.areaId == null) {
     map.value = null
     poiCandidates.value = []
@@ -406,6 +651,7 @@ async function loadMap() {
     form.endId = null
     form.multiPointIds = []
     chart?.clear()
+    chartClickBound = false
     return
   }
 
@@ -662,11 +908,61 @@ onMounted(() => {
 
       <el-card class="glass" shadow="never">
         <template #header>
-          <div style="display: flex; justify-content: space-between; align-items: center">
-            <div style="font-weight: 900">节点 / 路径</div>
-            <div class="muted" style="font-size: 12px">当前规划会高亮路径</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px">
+            <div style="font-weight: 900">
+              {{ viewMode === 'indoor' ? `室内：${indoorBuildingName}` : '节点 / 路径' }}
+            </div>
+            <div v-if="viewMode === 'indoor'" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+              <el-select
+                v-model="indoorCurrentLevel"
+                placeholder="楼层"
+                style="width: 120px"
+                @change="(lv: string) => loadIndoorFloor(lv)"
+              >
+                <el-option
+                  v-for="lv in indoorLevels"
+                  :key="lv.level"
+                  :label="lv.label || lv.level"
+                  :value="lv.level"
+                />
+              </el-select>
+              <el-button size="small" @click="exitIndoor">返回室外地图</el-button>
+            </div>
+            <div v-else class="muted" style="font-size: 12px">点击带高亮边框 POI 进入室内图</div>
           </div>
         </template>
+        <div v-if="viewMode === 'indoor'" class="indoor-panel">
+          <div class="row">
+            <el-form-item label="室内起点" style="flex: 1; margin-bottom: 8px">
+              <el-select v-model="indoorStartId" filterable clearable placeholder="选择起点" style="width: 100%">
+                <el-option
+                  v-for="n in indoorAllNodes"
+                  :key="`is-${n.id}`"
+                  :label="`${n.name || n.nodeKind}（${n.level}层 / ID ${n.id}）`"
+                  :value="n.id"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="室内终点" style="flex: 1; margin-bottom: 8px">
+              <el-select v-model="indoorEndId" filterable clearable placeholder="选择终点" style="width: 100%">
+                <el-option
+                  v-for="n in indoorAllNodes"
+                  :key="`ie-${n.id}`"
+                  :label="`${n.name || n.nodeKind}（${n.level}层 / ID ${n.id}）`"
+                  :value="n.id"
+                />
+              </el-select>
+            </el-form-item>
+          </div>
+          <el-button type="primary" size="small" :loading="loading" @click="planIndoor">室内最短路径</el-button>
+          <div v-if="indoorPlanResult?.path?.length" class="glass result" style="margin-top: 10px">
+            <div class="muted">path：{{ indoorPlanResult.path.join(' → ') }}</div>
+            <div class="muted">distance：{{ indoorPlanResult.distanceMeters?.toFixed(2) }} m</div>
+            <div v-if="indoorPlanResult.instructions?.length" class="muted">
+              指引：{{ indoorPlanResult.instructions.join(' → ') }}
+            </div>
+          </div>
+        </div>
         <div ref="chartEl" class="chart" />
       </el-card>
     </div>
@@ -749,6 +1045,9 @@ onMounted(() => {
 .order-actions {
   display: inline-flex;
   gap: 4px;
+}
+.indoor-panel {
+  margin-bottom: 12px;
 }
 .chart {
   height: 560px;

@@ -125,6 +125,65 @@ export type RoutePoiCandidate = {
   longitude?: number
   latitude?: number
   areaId?: number
+  indoorAvailable?: boolean
+}
+
+export type IndoorLevelMeta = {
+  level: string
+  label?: string
+  order?: number
+}
+
+export type IndoorNodeDto = {
+  id: number
+  name?: string
+  level?: string
+  nodeKind?: string
+  /** 历史局部坐标；有经纬度时前端用经纬度映射画布 */
+  x?: number
+  y?: number
+  longitude?: number
+  latitude?: number
+}
+
+export type IndoorEdgeDto = {
+  id?: number
+  startNodeId: number
+  endNodeId: number
+  edgeKind?: string
+  distance?: number
+}
+
+export type IndoorFloorGraph = {
+  level: string
+  nodes: IndoorNodeDto[]
+  edges: IndoorEdgeDto[]
+}
+
+export type IndoorMeta = {
+  buildingPoiId: number
+  name?: string
+  areaId?: number
+  levels: IndoorLevelMeta[]
+  entranceNodeId?: number
+  completenessScore?: number
+  source?: string
+}
+
+export type IndoorPlanResult = {
+  path: number[]
+  distanceMeters: number
+  timeSec?: number
+  segments?: { level: string; nodeIds: number[] }[]
+  instructions?: string[]
+}
+
+export type IndoorBuildingSummary = {
+  buildingPoiId: number
+  name?: string
+  areaId?: number
+  levels?: IndoorLevelMeta[]
+  completenessScore?: number
 }
 
 export type PoiTypeDictItem = {
@@ -244,6 +303,7 @@ export async function apiMapData(params: { areaId?: number }) {
       longitude?: number
       latitude?: number
       areaId?: number
+      indoorAvailable?: boolean
     }[]
     nodeGeo?: {
       nodeId: number
@@ -264,6 +324,28 @@ export async function apiRoutePoiCandidates(params: { areaId?: number }) {
 export async function apiRoutePoiTypes() {
   const res = (await http.get('/api/route/poi-types')) as ApiResponse<PoiTypeDictItem[]>
   return res.data ?? []
+}
+
+export async function apiIndoorBuildings(params: { areaId?: number }) {
+  const res = (await http.get('/api/indoor/buildings', { params })) as ApiResponse<IndoorBuildingSummary[]>
+  return res.data ?? []
+}
+
+export async function apiIndoorMeta(buildingPoiId: number) {
+  const res = (await http.get(`/api/indoor/${buildingPoiId}/meta`)) as ApiResponse<IndoorMeta>
+  return res.data
+}
+
+export async function apiIndoorFloor(buildingPoiId: number, level: string) {
+  const res = (await http.get(`/api/indoor/${buildingPoiId}/floor/${encodeURIComponent(level)}`)) as ApiResponse<
+    IndoorFloorGraph
+  >
+  return res.data
+}
+
+export async function apiIndoorPlan(buildingPoiId: number, payload: { startNodeId: number; endNodeId: number }) {
+  const res = (await http.post(`/api/indoor/${buildingPoiId}/plan`, payload)) as ApiResponse<IndoorPlanResult>
+  return res.data
 }
 
 export async function apiPlanRoute(payload: {
@@ -544,18 +626,19 @@ export async function apiAdminAddFood(payload: any) {
   return res.data
 }
 
-export async function apiAdminImportPlace(payload: { placeName: string; force?: boolean }) {
-  const res = (await http.post('/api/admin/dev/import-place', payload)) as ApiResponse<{
-    placeName: string
-    exists: boolean
-    force: boolean
-    status: string
-    message: string
-    seedExitCode?: number
-    seedOutput?: string
-    buildExitCode?: number
-    buildOutput?: string
-  }>
+export type AdminOsmCollectTaskStatus = {
+  taskId: string
+  kind?: string
+  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED' | string
+  phase?: string
+  message?: string
+  startedAt?: string
+  finishedAt?: string
+  result?: Record<string, unknown>
+}
+
+export async function apiAdminImportPlace(payload: { placeName: string; force?: boolean; collectIndoor?: boolean }) {
+  const res = (await http.post('/api/admin/dev/import-place', payload)) as ApiResponse<{ taskId: string; status: string; message?: string }>
   return res.data
 }
 
@@ -581,8 +664,15 @@ export async function apiAdminGenerateFromOsm(payload: {
   }
   force?: boolean
   buildFrontend?: boolean
+  /** 与室外 OSM 采集一并拉取室内图（默认 true） */
+  collectIndoor?: boolean
 }) {
-  const res = (await http.post('/api/admin/dev/generate-from-osm', payload)) as ApiResponse<any>
+  const res = (await http.post('/api/admin/dev/generate-from-osm', payload)) as ApiResponse<{ taskId: string; status: string; message?: string }>
+  return res.data
+}
+
+export async function apiAdminOsmCollectTask(taskId: string) {
+  const res = (await http.get(`/api/admin/dev/osm-collect-task/${encodeURIComponent(taskId)}`)) as ApiResponse<AdminOsmCollectTaskStatus>
   return res.data
 }
 

@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900020884,
+  "name": "北京邮电大学",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

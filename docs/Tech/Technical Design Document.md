@@ -25,6 +25,7 @@ flowchart TD
     Frontend[前端应用] --> Auth[认证服务]
     Frontend --> Recommendation[旅游推荐服务]
     Frontend --> Route[路线规划服务]
+    Frontend --> Indoor[室内导航服务]
     Frontend --> Facility[场所查询服务]
     Frontend --> Food[美食推荐服务]
     Frontend --> Diary[旅游日记服务]
@@ -32,6 +33,8 @@ flowchart TD
     Auth --> UserService[用户服务]
     Recommendation --> UserInterestService[用户兴趣服务]
     Route --> GraphService[图服务]
+    Indoor --> IndoorGraphService[室内图服务]
+    IndoorGraphService --> GraphService
     Facility --> SpatialSearchService[空间搜索服务]
     Food --> SearchService[搜索服务]
     Diary --> AnimationService[动画服务]
@@ -39,6 +42,7 @@ flowchart TD
     UserService --> DataAccess[数据访问层]
     UserInterestService --> DataAccess
     GraphService --> DataAccess
+    IndoorGraphService --> DataAccess
     SpatialSearchService --> DataAccess
     SearchService --> DataAccess
     AnimationService --> DataAccess
@@ -77,6 +81,17 @@ sequenceDiagram
     Route-->>API: 返回路线规划
     API-->>Client: 展示路线
 
+    Client->>API: 点击具备室内图的 POI
+    API->>Route: 获取室内楼层拓扑
+    Route->>DB: 查询 indoor_nodes / indoor_edges
+    DB-->>Route: 返回室内图数据
+    Route-->>API: 返回层内 nodes/edges
+    API-->>Client: ECharts 室内分层展示
+    Client->>API: 室内最短路径规划
+    API->>Route: 多层图 Dijkstra
+    Route-->>API: 路径与高亮边集
+    API-->>Client: 展示室内路径
+
     Client->>API: 保存旅游日记
     API->>Diary: 处理日记数据
     Diary->>DB: 存储日记信息
@@ -97,7 +112,7 @@ sequenceDiagram
 | Axios        | 1.x   | 网络请求           | 处理HTTP请求，与后端API通信                    |
 | Element Plus | 2.x   | UI组件库           | 提供丰富的UI组件，加速开发                     |
 | Leaflet      | 1.9.x | 地图库             | 轻量级开源地图库，支持离线地图                 |
-| ECharts      | 5.x   | 数据可视化（可选） | 用于热度分析、数据统计等可视化展示             |
+| ECharts      | 5.x   | 数据可视化         | **路线规划页**室外/室内拓扑图、路径高亮；亦可用于热度等统计图表 |
 
 ### 2.2 后端技术
 
@@ -114,6 +129,7 @@ sequenceDiagram
 | 数据结构/算法 | 用途         | 选型理由                       |
 | ------------- | ------------ | ------------------------------ |
 | 图结构        | 道路网络建模 | 适合表示景点和道路之间的关系   |
+| 多层图        | 室内导航     | 按楼层分子图，电梯/楼梯为跨层边；与室外路网解耦 |
 | 优先队列      | 路径规划     | 用于Dijkstra算法实现最短路径   |
 | 哈希表        | 快速查询     | 用于用户、景点等信息的快速检索 |
 | 前缀树        | 模糊查询     | 用于美食、景点名称的模糊搜索   |
@@ -194,7 +210,9 @@ sequenceDiagram
 | location    | VARCHAR  | 255  | NOT NULL                                                     | 位置信息                     |
 | longitude   | DOUBLE   |      | NOT NULL                                                     | 经度                         |
 | latitude    | DOUBLE   |      | NOT NULL                                                     | 纬度                         |
-| parent_id   | BIGINT   | 20   |                                                              | 父POI ID（用于室内导航）     |
+| parent_id   | BIGINT   | 20   |                                                              | 父 POI ID；室内房间/门等子点位指向所属建筑 POI |
+| indoor_available | TINYINT | 1 | NOT NULL, DEFAULT 0                                       | 是否具备可用室内图（0/1）    |
+| osm_indoor_ref | VARCHAR | 64 |                                                           | 可选：OSM 建筑 way/relation 引用，便于种子增量更新 |
 | area_id     | BIGINT   | 20   | NOT NULL                                                     | 所属景区ID                   |
 | create_time | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP                          | 创建时间                     |
 | update_time | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间                     |
@@ -306,6 +324,50 @@ sequenceDiagram
 | weight         | DOUBLE   |      | NOT NULL, DEFAULT 1.0               | 权重     |
 | create_time    | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 创建时间 |
 
+#### 3.1.15 室内图表（indoor_maps）
+
+> 与 **单个建筑 POI**（`buildings.id`）一对一；室外景区路网仍用 `roads` 表，室内数据独立存储。
+
+| 字段名             | 数据类型 | 长度 | 约束                                                         | 描述                                   |
+| ------------------ | -------- | ---- | ------------------------------------------------------------ | -------------------------------------- |
+| building_poi_id    | BIGINT   | 20   | PRIMARY KEY                                                  | 所属建筑 POI ID（= buildings.id）      |
+| levels             | TEXT     |      | NOT NULL                                                     | 楼层元数据 JSON                        |
+| source             | VARCHAR  | 32   | NOT NULL, DEFAULT 'osm-overpass'                             | 数据来源                               |
+| completeness_score | DOUBLE   |      | NOT NULL, DEFAULT 0                                          | 种子导入完整度评分                     |
+| entrance_node_id   | BIGINT   | 20   |                                                              | 可选：建筑入口室内节点                 |
+| create_time        | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP                          | 创建时间                               |
+| update_time        | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 更新时间                               |
+
+#### 3.1.16 室内节点表（indoor_nodes）
+
+| 字段名          | 数据类型 | 长度 | 约束                                | 描述                                                         |
+| --------------- | -------- | ---- | ----------------------------------- | ------------------------------------------------------------ |
+| id              | BIGINT   | 20   | PRIMARY KEY, AUTO_INCREMENT         | 室内节点 ID（与室外道路节点 ID 空间独立）                     |
+| building_poi_id | BIGINT   | 20   | NOT NULL                            | 所属建筑 POI                                                 |
+| level           | VARCHAR  | 16   | NOT NULL                            | 楼层键（与 OSM `level` 对齐）                                |
+| name            | VARCHAR  | 100  |                                     | 显示名                                                       |
+| node_kind       | VARCHAR  | 32   | NOT NULL                            | corridor_junction / door / elevator / stairs / room 等       |
+| x               | DOUBLE   |      | NOT NULL                            | 层内平面 X                                                   |
+| y               | DOUBLE   |      | NOT NULL                            | 层内平面 Y                                                   |
+| linked_poi_id   | BIGINT   | 20   |                                     | 可选：关联子 POI（`parent_id=building_poi_id`）              |
+| osm_id          | BIGINT   | 20   |                                     | 可选：来源 OSM 要素 id                                       |
+| create_time     | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 创建时间                                                     |
+
+#### 3.1.17 室内边表（indoor_edges）
+
+| 字段名          | 数据类型 | 长度 | 约束                                | 描述                                           |
+| --------------- | -------- | ---- | ----------------------------------- | ---------------------------------------------- |
+| id              | BIGINT   | 20   | PRIMARY KEY, AUTO_INCREMENT         | 室内边 ID                                      |
+| building_poi_id | BIGINT   | 20   | NOT NULL                            | 所属建筑 POI                                   |
+| start_node_id   | BIGINT   | 20   | NOT NULL                            | 起点室内节点                                   |
+| end_node_id     | BIGINT   | 20   | NOT NULL                            | 终点室内节点                                   |
+| edge_kind       | VARCHAR  | 16   | NOT NULL                            | corridor / elevator / stairs                   |
+| distance        | DOUBLE   |      | NOT NULL                            | 边权（米或竖向固定代价）                       |
+| directed        | TINYINT  | 1    | NOT NULL, DEFAULT 0                 | 0 无向，1 有向                                 |
+| create_time     | DATETIME |      | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 创建时间                                       |
+
+> **dev-seed**：`src/main/resources/dev-seed/indoor/{buildingPoiId}.json`（`levels`、`nodes`、`edges`、`completenessScore`）；启动载入 `InMemoryStore`。SQL 迁移见 `docs/sql/migration_indoor_navigation.sql`（待建）。
+
 ### 3.2 数据库索引设计
 
 | 表名         | 索引名        | 索引类型 | 索引字段               | 用途                         |
@@ -318,6 +380,10 @@ sequenceDiagram
 | scenic_areas | idx_heat      | INDEX    | heat                   | 加速热度排序                 |
 | scenic_areas | idx_type      | INDEX    | type                   | 加速按类型查询景区（如校园） |
 | buildings    | idx_area_id   | INDEX    | area_id                | 加速按景区查询POI            |
+| buildings    | idx_indoor_available | INDEX | indoor_available  | 筛选具备室内图的 POI         |
+| buildings    | idx_parent_id | INDEX    | parent_id              | 查询建筑下子点位             |
+| indoor_nodes | idx_building_level | INDEX | building_poi_id, level | 按建筑+楼层加载拓扑          |
+| indoor_edges | idx_building  | INDEX    | building_poi_id        | 按建筑加载边集               |
 | facilities   | idx_area_id   | INDEX    | area_id                | 加速按景区查询设施           |
 | roads        | idx_start_end | INDEX    | start_id, end_id       | 加速道路查询                 |
 | foods        | idx_name      | INDEX    | name                   | 加速美食名称查询             |
@@ -341,10 +407,16 @@ sequenceDiagram
 - **组件**：Recommendation.vue、InterestSetting.vue
 - **路由**：/recommendation、/interest-setting
 
-#### 4.1.3 路线规划模块
-- **功能**：最优路径规划、导航、交通工具选择
-- **组件**：RoutePlanning.vue、Navigation.vue、MapView.vue
-- **路由**：/route-planning、/navigation
+#### 4.1.3 路线规划模块（含室外 / 室内，FR-004 / FR-004-5）
+- **功能**：
+  - **室外**：景区路网拓扑（ECharts）、两点/多点路径、交通工具与策略选择（现有 `RoutePlannerView.vue`）。
+  - **室内**：在室外图上点击 `indoorAvailable=true` 的建筑 POI，进入**该 POI 专属**室内视图；楼层切换；层内拓扑展示；室内起点/终点选择与最短路径高亮。
+- **组件**：`RoutePlannerView.vue`（室外 ECharts + 室内 ECharts 子状态，无独立路由亦可）、路径结果区、楼层选择器。
+- **路由**：`/route`（与现网一致）；室内为同页 **viewMode** 切换（`outdoor` | `indoor`），不强制新 URL。
+- **交互要点**：
+  - 室外节点样式区分「支持室内导航」；
+  - 室内模式顶部展示建筑名 +「返回室外地图」；
+  - 无室内数据 POI 不进入室内模式。
 
 #### 4.1.4 场所查询模块
 - **功能**：附近设施查找、分类查询、详情查看
@@ -383,10 +455,21 @@ sequenceDiagram
 - **类**：RecommendationController、RecommendationService、UserInterestService
 - **API**：/api/recommendation、/api/recommendation/personalized、/api/recommendation/hot、/api/recommendation/detail/:id
 
-#### 4.2.3 路线规划服务
-- **功能**：最优路径计算、导航数据提供（含道路可通行交通工具及对应拥挤度展示）
-- **类**：RouteController、RouteService、GraphService
-- **API**：/api/route、/api/route/multi-point、/api/route/map-data
+#### 4.2.3 路线规划服务（室外）
+- **功能**：最优路径计算、室外导航数据（含道路可通行交通工具及对应拥挤度展示）
+- **类**：`RouteController`、`RouteServiceImpl`、`Graph` / Dijkstra（`com.travel.algorithm.graph`）
+- **API**：`/api/route`、`/api/route/multi-point`、`/api/route/map-data`
+
+#### 4.2.3a 室内导航服务（FR-004-5）
+- **功能**：按建筑 POI 提供室内分层拓扑、室内多层图最短路径；仅对 `indoor_available=1` 的建筑提供服务。
+- **类**（规划命名，以实现为准）：
+  - `IndoorController` — REST 入口
+  - `IndoorService` / `IndoorServiceImpl` — 业务编排
+  - `IndoorGraphRegistry` — 启动预加载 `Map<Long, IndoorBuildingGraph>`（dev-seed / DB）
+  - `IndoorPathPlanner` — 在 `IndoorBuildingGraph` 上调用 Dijkstra（复用 `com.travel.algorithm.graph.Graph` 与 `MyPriorityQueue` 等课程结构）
+  - `IndoorMapImporter`（或 `scripts/osm_seed.py` 扩展）— OSM Overpass 解析与完整度评分
+- **API**：见 §5.3.1
+- **与室外关系**：室内节点 ID 与室外 `roads.start_id/end_id` **不混用**；室外 `map-data` 的 `nodeDetails` 仅增加布尔字段 `indoorAvailable`，通过 `buildingPoiId`（即该 POI 的 `id`）关联室内 API。
 
 #### 4.2.4 场所查询服务
 - **功能**：附近设施查找、信息查询
@@ -439,7 +522,23 @@ sequenceDiagram
 | ---------------------- | ---- | ------------ | -------------- | --------------------------------- | ------------------------------------------------------------ |
 | /api/route             | POST | 路线规划服务 | 两点间路径规划 | startId, endId, strategy, vehicle | `{"code": 200, "data": {"path": [...], "distance": 1000, "time": 600}, "message": "规划成功"}` |
 | /api/route/multi-point | POST | 路线规划服务 | 多点路径规划   | points: [id1, id2, id3], strategy | `{"code": 200, "data": {"path": [...], "distance": 2000, "time": 1200}, "message": "规划成功"}` |
-| /api/route/map-data    | GET  | 路线规划服务 | 获取地图数据   | areaId, type                      | `{"code": 200, "data": {"nodes": [...], "edges": [{"startId":1,"endId":2,"modeCongestion":{"walk":0.61,"bike":0.34}}]}, "message": "获取成功"}` |
+| /api/route/map-data    | GET  | 路线规划服务 | 获取室外地图数据 | areaId, type                    | `{"code": 200, "data": {"nodes": [...], "nodeDetails": [{"nodeId":1,"name":"…","indoorAvailable":true}], "edges": [...]}, "message": "获取成功"}` |
+
+#### 5.3.1 室内导航接口（FR-004-5）
+
+统一前缀 `/api/indoor`；响应均为 `code` / `data` / `message`。
+
+| API路径 | 方法 | 功能描述 | 请求参数 | 成功响应 `data` 要点 |
+| ------- | ---- | -------- | -------- | -------------------- |
+| `/api/indoor/buildings` | GET | 列出当前景区具备室内图的建筑 POI | `areaId` | `[{"buildingPoiId":101,"name":"…","levels":[...],"completenessScore":0.82}]` |
+| `/api/indoor/{buildingPoiId}/meta` | GET | 室内图元数据（楼层列表等） | 路径 `buildingPoiId` | `{"buildingPoiId":101,"levels":[...],"entranceNodeId":1001}` |
+| `/api/indoor/{buildingPoiId}/floor/{level}` | GET | 单层拓扑（ECharts 用） | 路径 `level`（URL 编码） | `{"level":"1","nodes":[{"id":1001,"name":"大门","x":0,"y":0,"nodeKind":"door"},...],"edges":[{"startId":1001,"endId":1002,"edgeKind":"corridor"}]}` |
+| `/api/indoor/{buildingPoiId}/plan` | POST | 室内最短路径 | JSON：`startNodeId`, `endNodeId` | `{"path":[1001,1005,2003],"distance":42.5,"segments":[{"level":"0","nodeIds":[...]},{"level":"1","nodeIds":[...]}],"instructions":["大门","电梯","3层","301教室"]}` |
+
+**错误约定**：
+- `buildingPoiId` 不存在或未导入室内图 → `404` 或 `code=404`，`message` 说明无室内数据；
+- `startNodeId` / `endNodeId` 不属于该建筑 → `400`；
+- 不连通 → `200` 且 `data.path` 为空数组，或 `code=400`（团队实现时二选一并写清）。
 
 ### 5.4 场所查询接口
 
@@ -915,6 +1014,96 @@ public class Item {
 }
 ```
 
+### 6.8 室内多层图与路径规划（FR-004-5）
+
+#### 6.8.1 概念模型
+
+- **一个建筑 POI = 一套 `IndoorBuildingGraph`**，与室外 `areaId` 下图结构独立。
+- **节点**：`indoor_nodes`；**边**：`indoor_edges`（`corridor` 同层连通；`elevator` / `stairs` 跨层，可不同 `level`）。
+- **统一寻路图**：将同一建筑内所有室内节点并入一张 `Graph`（`com.travel.algorithm.graph`）；在合并图上运行 **Dijkstra**，默认边权 **`Edge::getDistance`（米）**，与室外 `RouteServiceImpl` 的 `strategy=distance` 一致。
+- **竖向边权（定稿）**：电梯/楼梯边在导入时写入固定 **`distance = app.indoor.vertical-edge-distance-meters`**（默认 **10.0** 米等效距离），**不用固定秒数**作为 `distance`，避免与室外「米/秒」语义混用。若需展示时间，在 API 层用 `timeSec = totalDistanceM / WALK_SPEED_MPS`（与室外步行 4 km/h 一致，可选）。
+
+```mermaid
+flowchart LR
+    subgraph Outdoor[室外景区路网]
+        A[景区道路节点] --> B[建筑 POI 节点]
+    end
+    subgraph Indoor[单建筑室内 multilayer]
+        B -.点击 indoorAvailable.-> E0[入口 door]
+        E0 --> C0[走廊]
+        C0 --> EV[电梯]
+        EV --> C1[上层走廊]
+        C1 --> R[房间 room]
+    end
+```
+
+> 本期**不强制**实现室外入口到室内入口的自动拼接路径；验收以**建筑内**「门→电梯→房间」为主。若时间允许，可在室外路径终点为 `indoorAvailable` 建筑时提示「可进入室内导航」。
+
+#### 6.8.2 运行时结构（后端）
+
+| 类型 | 职责 |
+| ---- | ---- |
+| `IndoorBuildingGraph` | 持有 `levels`、`Map<String, FloorView>`（层内 nodes/edges）、合并后的 `Graph` |
+| `IndoorGraphRegistry` | `buildingPoiId → IndoorBuildingGraph`，随 dev-seed / DB 预加载 |
+| `IndoorPathPlanner` | `plan(buildingPoiId, startNodeId, endNodeId)` → `IndoorPathResult`（节点序列、分段、instruction 文案） |
+| `IndoorServiceImpl` | 校验节点归属、调用 planner、组装 API DTO |
+
+**层内坐标**：由 OSM way 几何投影到局部平面（以建筑质心或 bbox 左下角为原点），仅用于 ECharts 布局与走廊边长，不参与 WGS84 室外计算。
+
+#### 6.8.3 路径结果结构
+
+```json
+{
+  "path": [1001, 1005, 2003],
+  "distance": 42.5,
+  "segments": [
+    { "level": "0", "nodeIds": [1001, 1005] },
+    { "level": "2", "nodeIds": [1005, 2003] }
+  ],
+  "instructions": ["大门", "电梯", "2层", "301 教室"]
+}
+```
+
+`instructions` 由 `node_kind` 与 `name` 启发式生成，供前端展示，非语音导航。
+
+### 6.9 OSM 室内数据导入管线（方案 A）
+
+在 `scripts/osm_seed.py` 增加 **室内扩展**（或独立 `scripts/indoor_seed.py` 复用 Overpass 客户端），流程如下：
+
+```mermaid
+flowchart TD
+    A[选定建筑 POI / OSM way id] --> B[Overpass 拉取 bbox 内 indoor 要素]
+    B --> C[解析 level / corridor / elevator / door / room]
+    C --> D[生成 indoor_nodes / indoor_edges]
+    D --> E[完整度评分 completenessScore]
+    E --> F{score >= 阈值?}
+    F -->|是| G[写出 dev-seed/indoor/buildingPoiId.json]
+    F -->|否| H[跳过并记录日志]
+    G --> I[更新 buildings.indoor_available=1]
+```
+
+**Overpass 查询要素（示例标签）**：
+
+- `highway=corridor`、`highway=elevator`、`highway=steps`
+- `indoor=room`、`indoor=door`、`indoor=yes`
+- `level=*` / `level:ref=*`
+
+**完整度规则（已定稿，二进制准入）**：
+
+| 规则 | 门槛 |
+| ---- | ---- |
+| 楼层数 | ≥ **1**（单层平面亦可） |
+| 电梯 / 楼梯 | **不要求**（有则导入竖向边，无则仅层内寻路） |
+| 房间节点（`node_kind=room`） | ≥ **2** |
+| 走廊边（`edge_kind=corridor`） | ≥ **3** |
+| 连通性 | 由走廊边连接的节点（含房间）须处于**同一连通分量** |
+
+全部满足 → 写入 `dev-seed/indoor/{buildingPoiId}.json` 且 `indoor_available=1`；`completeness_score` 可记为 `1.0`（未达标为 `0` 且不导入）。不再使用 0.6 等加权总分门槛。
+
+**覆盖策略（课设）**：脚本对候选建筑列表输出评分排行榜；**演示至少 1 个、建议 ≥3 个** 达标建筑（可为 OSM 室内较完整的地铁厅、博物馆、教学楼等），不要求 200 个景区各自具备室内图。
+
+**原始数据留存**：`map-imports/.../raw/overpass_indoor.json`，与现有室外种子目录结构一致，便于答辩展示数据来源。
+
 ## 7. 前端实现
 
 ### 7.1 前端项目结构
@@ -932,7 +1121,7 @@ frontend/
 │   ├── views/             # 页面
 │   │   ├── Auth/          # 认证相关
 │   │   ├── Recommendation/ # 推荐相关
-│   │   ├── Route/         # 路线规划
+│   │   ├── route/         # 路线规划（RoutePlannerView：室外+室内 ECharts）
 │   │   ├── Facility/      # 场所查询
 │   │   ├── Food/          # 美食推荐
 │   │   └── Diary/         # 旅游日记
@@ -953,7 +1142,42 @@ frontend/
 
 ### 7.2 核心组件实现
 
-#### 7.2.1 地图组件（MapComponent.vue）
+#### 7.2.1 路线规划页室外 / 室内 ECharts（RoutePlannerView.vue）
+
+**状态**（Pinia 或组件内 `ref`）：
+
+| 字段 | 说明 |
+| ---- | ---- |
+| `viewMode` | `'outdoor'` \| `'indoor'` |
+| `buildingPoiId` | 当前室内建筑 POI id |
+| `buildingName` | 展示用 |
+| `currentLevel` | 当前楼层键 |
+| `indoorLevels` | 来自 `/api/indoor/{id}/meta` |
+| `indoorPlanResult` | 室内路径规划结果 |
+
+**室外模式**（现有）：
+
+- `GET /api/route/map-data?areaId=` → `nodes` / `edges` / `nodeDetails[].indoorAvailable`
+- ECharts `graph` 系列：`roam: true`；`indoorAvailable` 节点使用不同 `symbolSize` / `itemStyle`
+
+**室内模式**：
+
+1. 点击 `indoorAvailable` 节点 → `viewMode='indoor'`，`buildingPoiId=nodeId`
+2. `GET /api/indoor/{buildingPoiId}/meta` → 填充楼层列表，默认选首层或 `entrance` 所在层
+3. `GET /api/indoor/{buildingPoiId}/floor/{level}` → 渲染该层 `nodes`/`edges`（与室外相同的 graph series 配置思路）
+4. 楼层 `el-select` / `el-tabs` 切换 → 重新拉取或缓存各层数据
+5. 起点/终点：`el-select` 过滤当前层节点，或允许选任意层节点（跨层规划由后端合并图完成）
+6. `POST /api/indoor/{buildingPoiId}/plan` → 高亮 `path` 中边；侧栏展示 `instructions`
+7. 「返回室外地图」→ 清空室内状态，`viewMode='outdoor'`
+
+**类型**（`frontend/src/lib/api.ts` 规划）：
+
+- `IndoorFloorGraph`, `IndoorMeta`, `IndoorPlanRequest`, `IndoorPlanResult`
+- `apiIndoorMeta`, `apiIndoorFloor`, `apiIndoorPlan`, `apiIndoorBuildings`
+
+#### 7.2.2 地图组件（MapComponent.vue，Leaflet，可选用）
+
+> 路线规划主链路以 **ECharts 拓扑** 为准；Leaflet 组件保留于文档示例，可用于其他页面或二期离线底图，**非 FR-004-5 必用**。
 
 ```vue
 <template>
@@ -1071,6 +1295,7 @@ backend/
 │   │   │           │   ├── AuthController.java
 │   │   │           │   ├── RecommendationController.java
 │   │   │           │   ├── RouteController.java
+│   │   │           │   ├── IndoorController.java
 │   │   │           │   ├── FacilityController.java
 │   │   │           │   ├── FoodController.java
 │   │   │           │   ├── DiaryController.java
@@ -1079,14 +1304,20 @@ backend/
 │   │   │           │   ├── UserService.java
 │   │   │           │   ├── RecommendationService.java
 │   │   │           │   ├── RouteService.java
+│   │   │           │   ├── IndoorService.java
 │   │   │           │   ├── FacilityService.java
 │   │   │           │   ├── FoodService.java
 │   │   │           │   ├── DiaryService.java
 │   │   │           │   └── AdminService.java
+│   │   │           ├── indoor/         # 室内图（可选包名）
+│   │   │           │   ├── IndoorGraphRegistry.java
+│   │   │           │   └── IndoorPathPlanner.java
 │   │   │           ├── mapper/         # 数据访问层
 │   │   │           │   ├── UserMapper.java
 │   │   │           │   ├── ScenicAreaMapper.java
 │   │   │           │   ├── PoiMapper.java
+│   │   │           │   ├── IndoorNodeMapper.java
+│   │   │           │   ├── IndoorEdgeMapper.java
 │   │   │           │   ├── RoadMapper.java
 │   │   │           │   ├── FacilityMapper.java
 │   │   │           │   ├── FoodMapper.java
@@ -1126,6 +1357,16 @@ backend/
 #### 9.1.1 演示模式（可不连 MySQL、以内存为主）
 - 使用 **`spring.profiles.active=dev`**：`application-dev.yml` 中 `app.debug.ignore-db-connection-failure=true`，数据源不可用时仍可启动，业务以 **`InMemoryStore` + dev-seed** 为主。
 - **FR-009-5 日记动画**等路径：写库失败（连接池不可用等）时**不得**中断成片落盘与内存中 `animation_url` 更新；与 `DiaryServiceImpl` 等模块的 DB 回退策略一致。
+- **FR-004-5 室内导航**：室内图随 dev-seed 预加载进 `InMemoryStore` / `IndoorGraphRegistry`；DB 不可用时室内路径仍可在演示环境计算（与室外路网一致）。
+- **室内配置（定稿，写入 `application.yml`）**：
+
+```yaml
+app:
+  indoor:
+    # 完整度规则见 §6.9（由 indoor_seed 脚本常量实现，非 YAML 列表）
+    vertical-edge-distance-meters: 10.0   # 电梯/楼梯边等效距离（米），Dijkstra 边权
+```
+
 - 即梦/LibTV 密钥：可选本地文件 `src/main/resources/config/jimeng-animation.yml`（由 `jimeng-animation.example.yml` 复制，**勿提交**真实密钥）。
 - **即梦 CV 请求**：使用官方异步接口 **`CVSync2AsyncSubmitTask`** / **`CVSync2AsyncGetResult`**（与控制台文档及 SDK 示例一致）；提交体含 `req_key`、`prompt`、`seed`（默认 -1）、`frames`（按时长映射为文档常见档位如 121/241）、`aspect_ratio`；图生首帧可用 **`image_urls`**（公网可访问 URL）或 **`binary_data_base64`**。轮询时若配置了 `app.animation.jimeng.aigc-meta-json`，则附带 `req_json`（内含 `aigc_meta`）。
 - **LibTV 会话**：首轮指令带用户所选参数（比例/风格/时长/补充说明）与「勿反问」约束；非交互模式下若助手仍索要参数则自动代答（可配置）；**交互模式**（`interactive=true`）下检测到反问则暂停轮询并 `awaitingUserInput=true`，用户经本站 `POST /api/diary/animation/jobs/{jobId}/message` 回复后恢复轮询；任务全程合并会话增量至 `libTvTranscript` 供前端展示。
@@ -1203,14 +1444,20 @@ backend/
 | 风险 | 影响程度 | 发生概率 | 应对策略 |
 |------|----------|----------|----------|
 | 路线规划算法性能问题 | 高 | 中 | 优化算法实现，使用缓存减少计算量 |
+| OSM 室内数据缺失或结构不一（FR-004-5） | 高 | 中 | 完整度评分 + 仅对 `indoor_available` POI 开放；演示建筑由种子脚本排行榜选定 |
+| 室内/室外节点 ID 混用导致错误路径 | 中 | 低 | 室内独立表与 API 前缀；代码 review 禁止室内 planner 引用 `roads` |
 | 数据量增长导致性能下降 | 高 | 中 | 优化数据库索引，使用Redis缓存热点数据 |
-| 前端地图加载缓慢 | 中 | 高 | 使用离线地图包，优化地图数据加载 |
+| 前端地图加载缓慢 | 中 | 高 | 路线页以 ECharts 拓扑为主；Leaflet/离线包为可选用 |
 | AIGC动画生成时间过长 | 低 | 高 | 异步处理动画生成任务，提供进度反馈 |
 | 系统安全性问题 | 高 | 低 | 实施数据加密，防止SQL注入和XSS攻击 |
 
 ---
 
 **文档作者**：架构师
-**文档版本**：1.1
+**文档版本**：1.2
 **创建日期**：2026-03-09
-**最后更新**：2026-03-09
+**最后更新**：2026-05-17
+
+**变更摘要（1.2）**：新增 FR-004-5 室内导航技术方案——`indoor_maps` / `indoor_nodes` / `indoor_edges` 表结构，OSM Overpass 导入管线（§6.9），`/api/indoor/*` 接口（§5.3.1），`RoutePlannerView` 室外/室内 ECharts 切换（§7.2.1）；与需求规格书 v1.5 对齐。
+
+**变更摘要（1.2.1）**：完整度改为二进制规则（≥1 层、≥2 房间、≥3 走廊、连通、不要求电梯）；竖向边权定为**固定等效距离（米）**，默认 10.0。

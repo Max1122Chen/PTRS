@@ -37,6 +37,12 @@ public class Poi implements Serializable
     @TableField("parent_id")
     private Long parentId;
 
+    @TableField("indoor_available")
+    private Boolean indoorAvailable;
+
+    @TableField("osm_indoor_ref")
+    private String osmIndoorRef;
+
     @TableField("area_id")
     private Long areaId;
 
@@ -124,6 +130,31 @@ public class Poi implements Serializable
     public void setParentId(Long parentId)
     {
         this.parentId = parentId;
+    }
+
+    public Boolean getIndoorAvailable()
+    {
+        return indoorAvailable;
+    }
+
+    public void setIndoorAvailable(Boolean indoorAvailable)
+    {
+        this.indoorAvailable = indoorAvailable;
+    }
+
+    public String getOsmIndoorRef()
+    {
+        return osmIndoorRef;
+    }
+
+    public void setOsmIndoorRef(String osmIndoorRef)
+    {
+        this.osmIndoorRef = osmIndoorRef;
+    }
+
+    public boolean isIndoorAvailable()
+    {
+        return Boolean.TRUE.equals(indoorAvailable);
     }
 
     public Long getAreaId()

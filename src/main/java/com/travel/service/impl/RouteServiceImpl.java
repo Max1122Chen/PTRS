@@ -309,6 +309,11 @@ public class RouteServiceImpl implements RouteService
             {
                 continue;
             }
+            // 路网虚拟节点需要经纬度供前端布局；仅排除 osm-* 兜底名 POI。
+            if (isOsmFallbackPoiName(poi))
+            {
+                continue;
+            }
             if (poi.getLongitude() == null || poi.getLatitude() == null)
             {
                 continue;
@@ -355,8 +360,7 @@ public class RouteServiceImpl implements RouteService
             {
                 continue;
             }
-            String type = poi.getType();
-            if (type != null && "virtual_node".equalsIgnoreCase(type.trim()))
+            if (isVirtualRoadNode(poi) || isOsmFallbackPoiName(poi))
             {
                 continue;
             }
@@ -369,6 +373,7 @@ public class RouteServiceImpl implements RouteService
             node.put("longitude", poi.getLongitude());
             node.put("latitude", poi.getLatitude());
             node.put("areaId", poi.getAreaId());
+            node.put("indoorAvailable", poi.isIndoorAvailable());
             nodeDetails.add(node);
         }
         nodeDetails.sort(Comparator.comparing(o -> String.valueOf(o.get("name")), String.CASE_INSENSITIVE_ORDER));
@@ -479,6 +484,31 @@ public class RouteServiceImpl implements RouteService
             }
         }
         return null;
+    }
+
+    private static boolean isVirtualRoadNode(Poi poi)
+    {
+        if (poi == null)
+        {
+            return false;
+        }
+        String type = poi.getType();
+        return type != null && "virtual_node".equalsIgnoreCase(type.trim());
+    }
+
+    /** OSM 脚本无真实 name 时的兜底名，不入库展示、不参与路网布局。 */
+    private static boolean isOsmFallbackPoiName(Poi poi)
+    {
+        if (poi == null)
+        {
+            return true;
+        }
+        String name = poi.getName();
+        if (name == null)
+        {
+            return false;
+        }
+        return name.trim().matches("(?i)osm-(node|way|relation|obj)-\\d+");
     }
 }
 

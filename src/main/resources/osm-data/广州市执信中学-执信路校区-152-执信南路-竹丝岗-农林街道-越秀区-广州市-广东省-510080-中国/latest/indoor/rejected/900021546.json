@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900021546,
+  "name": "奉恩堂",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

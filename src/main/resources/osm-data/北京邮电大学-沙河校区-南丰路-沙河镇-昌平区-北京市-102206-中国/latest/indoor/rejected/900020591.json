@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900020591,
+  "name": "图书馆",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

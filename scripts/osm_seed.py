@@ -13,6 +13,7 @@ import json
 import math
 import os
 import random
+import re
 import shutil
 import time
 from pathlib import Path
@@ -21,13 +22,31 @@ from urllib.parse import quote_plus, urlencode
 from urllib.request import Request, urlopen
 
 
-NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search"
+NOMINATIM_API = "https://nominatim.openstreetmap.org"
 OVERPASS_BASE = "https://overpass-api.de/api/interpreter"
 SEED_DIR = Path("src/main/resources/dev-seed")
 DEFAULT_OUTPUT_DIR = Path("src/main/resources/osm-data")
 DEFAULT_MAP_IMPORTS = Path("src/main/resources/dev-seed/map-imports.json")
 DEFAULT_ID_REGISTRY = Path("src/main/resources/dev-seed/id-registry.json")
 DEFAULT_POI_TYPES_CONFIG = Path("src/main/resources/config/poi-types.json")
+
+
+def resolve_indoor_out_dir(
+    repo_root: Path,
+    indoor_out_arg: str,
+    *,
+    scenic_root: Optional[Path] = None,
+    latest_dir: Optional[Path] = None,
+) -> Path:
+    """室内图与地图包同目录：默认写入 scenic_root/latest/indoor。"""
+    if indoor_out_arg:
+        p = Path(indoor_out_arg)
+        return p if p.is_absolute() else repo_root / p
+    if latest_dir is not None:
+        return latest_dir / "indoor"
+    if scenic_root is not None:
+        return scenic_root / "latest" / "indoor"
+    return repo_root / Path("src/main/resources/dev-seed/indoor")
 
 
 def load_known_poi_type_codes(repo_root: Path) -> Set[str]:
@@ -284,7 +303,7 @@ def nominatim_search(query: str, user_agent: str) -> Dict[str, object]:
         "limit": 5,
         "addressdetails": 1,
     }
-    url = f"{NOMINATIM_BASE}?{urlencode(params)}"
+    url = f"{NOMINATIM_API}/search?{urlencode(params)}"
     data = request_json(url, user_agent)
     if not isinstance(data, list) or not data:
         raise RuntimeError("Nominatim search returned empty result.")
@@ -294,12 +313,116 @@ def nominatim_search(query: str, user_agent: str) -> Dict[str, object]:
     return top
 
 
-def overpass_query(query: str, user_agent: str) -> Dict[str, object]:
-    url = f"{OVERPASS_BASE}?data={quote_plus(query)}"
+def nominatim_lookup_place_id(place_id: str, user_agent: str) -> Optional[Dict[str, object]]:
+    pid = str(place_id or "").strip()
+    if not pid:
+        return None
+    url = f"{NOMINATIM_API}/lookup?{urlencode({'place_ids': pid, 'format': 'jsonv2'})}"
     data = request_json(url, user_agent)
-    if not isinstance(data, dict):
-        raise RuntimeError("Overpass returned invalid result.")
-    return data
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return data[0]
+    return None
+
+
+def nominatim_lookup_osm(osm_type: str, osm_id: str, user_agent: str) -> Optional[Dict[str, object]]:
+    otype = str(osm_type or "").strip().lower()
+    oid_raw = str(osm_id or "").strip()
+    if not otype or not oid_raw:
+        return None
+    try:
+        oid = int(float(oid_raw))
+    except ValueError:
+        return None
+    prefix = {"node": "N", "way": "W", "relation": "R"}.get(otype)
+    if not prefix:
+        return None
+    url = f"{NOMINATIM_API}/lookup?{urlencode({'osm_ids': f'{prefix}{oid}', 'format': 'jsonv2'})}"
+    data = request_json(url, user_agent)
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return data[0]
+    return None
+
+
+def resolve_nominatim_top(
+    *,
+    query: str,
+    user_agent: str,
+    place_id: str = "",
+    osm_type: str = "",
+    osm_id: str = "",
+) -> Dict[str, object]:
+    """管理端已选 OSM 候选时优先 lookup，避免用 display_name 重新 search 命中另一条。"""
+    top = nominatim_lookup_osm(osm_type, osm_id, user_agent)
+    if top is not None:
+        return top
+    top = nominatim_lookup_place_id(place_id, user_agent)
+    if top is not None:
+        return top
+    if query and query.strip():
+        return nominatim_search(query, user_agent)
+    raise RuntimeError("Nominatim resolve failed: need osm_type+osm_id, place_id, or query")
+
+
+def overpass_query(query: str, user_agent: str, *, retries: int = 4, timeout: int = 180) -> Dict[str, object]:
+    url = f"{OVERPASS_BASE}?data={quote_plus(query)}"
+    last_err: Optional[Exception] = None
+    for attempt in range(retries):
+        try:
+            data = request_json(url, user_agent, timeout=timeout)
+            if not isinstance(data, dict):
+                raise RuntimeError("Overpass returned invalid result.")
+            return data
+        except Exception as ex:
+            last_err = ex
+            code = getattr(ex, "code", None)
+            if code in (429, 502, 503, 504) and attempt + 1 < retries:
+                time.sleep(min(10.0, 1.5 * (2**attempt)))
+                continue
+            raise
+    if last_err is not None:
+        raise last_err
+    raise RuntimeError("Overpass query failed")
+
+
+def build_overpass_around_query(center_lat: float, center_lng: float, radius: int) -> str:
+    """Radius fallback when campus polygon Overpass times out (504)."""
+    return f"""
+[out:json][timeout:120];
+(
+  node(around:{radius},{center_lat},{center_lng})[name];
+  way(around:{radius},{center_lat},{center_lng})[name];
+  node(around:{radius},{center_lat},{center_lng})[amenity];
+  way(around:{radius},{center_lat},{center_lng})[amenity];
+  way(around:{radius},{center_lat},{center_lng})[highway~"footway|path|pedestrian|service|residential|tertiary|secondary|unclassified"];
+);
+out geom tags;
+""".strip()
+
+
+def fetch_overpass_elements(
+    osm_type: str,
+    osm_id: int,
+    center_lat: float,
+    center_lng: float,
+    radius: int,
+    user_agent: str,
+) -> Tuple[List[Dict[str, object]], str]:
+    """Try polygon/area query first; on empty or HTTP error use around fallback."""
+    primary = build_overpass_query(osm_type, osm_id, center_lat, center_lng, radius)
+    try:
+        raw = overpass_query(primary, user_agent)
+        elements = raw.get("elements", []) if isinstance(raw, dict) else []
+        if isinstance(elements, list) and elements:
+            mode = "area" if (osm_type or "").strip().lower() in {"way", "relation"} else "around"
+            return elements, mode
+    except Exception:
+        pass
+    fallback_q = build_overpass_around_query(center_lat, center_lng, radius)
+    raw = overpass_query(fallback_q, user_agent)
+    elements = raw.get("elements", []) if isinstance(raw, dict) else []
+    if not isinstance(elements, list):
+        elements = []
+    return elements, "around_fallback"
 
 
 def build_overpass_query(
@@ -322,7 +445,7 @@ def build_overpass_query(
 
     if selector == "area.searchArea":
         body = f"""
-    [out:json][timeout:60];
+    [out:json][timeout:120];
     {area_head}
     (
       node({selector})[name];
@@ -335,7 +458,7 @@ def build_overpass_query(
     """
     else:
         body = f"""
-    [out:json][timeout:60];
+    [out:json][timeout:120];
     (
       node({selector})[name];
       way({selector})[name];
@@ -343,7 +466,7 @@ def build_overpass_query(
       way({selector})[amenity];
       way({selector})[highway~\"footway|path|pedestrian|service|residential\"];
     );
-        out geom tags;
+    out geom tags;
     """
     return body
 
@@ -387,6 +510,11 @@ def dijkstra_distance(adjacency: Dict[int, List[Tuple[int, float]]], source: int
                 best[nxt] = nd
                 heapq.heappush(heap, (nd, nxt))
     return None
+
+
+def is_osm_fallback_poi_name(name: str) -> bool:
+    """脚本 pick_name 无真实 name 时的兜底名，不作为室外业务 POI 入库。"""
+    return bool(re.match(r"^osm-(node|way|relation|obj)-\d+$", (name or "").strip(), re.IGNORECASE))
 
 
 def pick_name(tags: Dict[str, object], fallback: str) -> str:
@@ -446,6 +574,46 @@ def classify_poi(tags: Dict[str, object]) -> Optional[str]:
     if "体育" in name_lower or "运动" in name_lower or " gym" in name_lower:
         return "sports"
     return None
+
+
+MICRO_INDOOR_VALUES = frozenset(
+    {
+        "room",
+        "door",
+        "corridor",
+        "area",
+        "column",
+        "wall",
+        "pillar",
+        "elevator",
+        "stairs",
+        "hot_desk",
+        "class",
+        "wc",
+        "kitchen",
+        "office",
+        "server",
+        "bed",
+    }
+)
+
+
+def is_indoor_micro_feature(tags: Dict[str, object]) -> bool:
+    """室内微观要素：不作为室外业务 POI 写入 buildings（由 indoor_seed 单独建图）。"""
+    indoor = str(tags.get("indoor", "") or "").strip().lower()
+    if indoor and indoor in MICRO_INDOOR_VALUES:
+        return True
+    if indoor == "yes" and str(tags.get("highway", "") or "").strip().lower() in {
+        "footway",
+        "path",
+        "steps",
+        "corridor",
+    }:
+        return True
+    hw = str(tags.get("highway", "") or "").strip().lower()
+    if hw in {"corridor", "elevator", "steps"}:
+        return True
+    return False
 
 
 def is_poi_candidate(tags: Dict[str, object]) -> bool:
@@ -624,6 +792,12 @@ def main() -> int:
     parser.add_argument("--target-name", default="广州市执信中学（执信南路校区）")
     parser.add_argument("--query", default="广州市执信中学 执信路校区")
     parser.add_argument("--radius", type=int, default=700)
+    parser.add_argument(
+        "--business-poi-cap",
+        type=int,
+        default=60,
+        help="Max OSM-derived business POIs (non-virtual) before road snapping; higher improves indoor anchor coverage",
+    )
     parser.add_argument("--user-agent", default="BUPT-TravelSeedBot/1.0 (student-project)")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
     parser.add_argument("--sleep", type=float, default=1.0)
@@ -635,11 +809,75 @@ def main() -> int:
     parser.add_argument("--id-registry", default=str(DEFAULT_ID_REGISTRY))
     parser.add_argument("--update-map-imports", action="store_true", default=True)
     parser.add_argument("--virtual-node-base", type=int, default=900000000)
+    parser.add_argument(
+        "--collect-indoor",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="After outdoor POI seed, try Overpass indoor graphs for building-like POI types",
+    )
+    parser.add_argument("--indoor-radius", type=int, default=80, help="Overpass around radius (m) per building POI")
+    parser.add_argument(
+        "--indoor-out-dir",
+        default="",
+        help="Indoor JSON output dir; default: <scenic-root>/latest/indoor when scenic data is written",
+    )
+    parser.add_argument("--place-id", default="", help="Nominatim place_id from admin OSM candidate selection")
+    parser.add_argument("--osm-type", default="", help="node|way|relation from admin selection")
+    parser.add_argument("--osm-id", default="", help="OSM id from admin selection")
+    parser.add_argument(
+        "--indoor-only",
+        action="store_true",
+        help="Only run indoor collect using existing scenic-root/latest (outdoor must exist)",
+    )
+    parser.add_argument("--scenic-root", default="", help="Scenic data directory for --indoor-only")
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[1]
     os.chdir(repo_root)
     known_poi_type_codes = load_known_poi_type_codes(repo_root)
+
+    if args.indoor_only:
+        scenic_root = Path(args.scenic_root)
+        if not scenic_root.is_absolute():
+            scenic_root = repo_root / scenic_root
+        latest = scenic_root / str(args.run_name)
+        overpass_path = latest / "raw" / "overpass.json"
+        pois_path = latest / "pois.append.json"
+        if not overpass_path.exists() or not pois_path.exists():
+            print("Indoor-only failed: missing overpass or pois under scenic-root/latest", flush=True)
+            return 2
+        overpass_raw = json.loads(overpass_path.read_text(encoding="utf-8"))
+        elements = overpass_raw.get("elements", []) if isinstance(overpass_raw, dict) else []
+        poi_rows = json.loads(pois_path.read_text(encoding="utf-8"))
+        if not isinstance(poi_rows, list):
+            poi_rows = []
+        from indoor_seed import collect_indoor_for_pois
+
+        indoor_out = resolve_indoor_out_dir(
+            repo_root, args.indoor_out_dir, scenic_root=scenic_root, latest_dir=latest
+        )
+        business_pois = [row for row in poi_rows if str(row.get("type") or "").lower() != "virtual_node"]
+        results = collect_indoor_for_pois(
+            business_pois,
+            out_dir=indoor_out,
+            user_agent=args.user_agent,
+            radius=int(args.indoor_radius),
+            sleep_s=max(2.0, float(args.sleep)),
+            overpass_elements=elements if isinstance(elements, list) else None,
+        )
+        summary_path = latest / "indoor_collect.json"
+        summary = {
+            "enabled": True,
+            "candidates": len(results),
+            "ok": sum(1 for r in results if r.get("status") == "ok"),
+            "reject": sum(1 for r in results if r.get("status") == "reject"),
+            "error": sum(1 for r in results if r.get("status") == "error"),
+            "results": results,
+        }
+        summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"SCENIC_ROOT={scenic_root.resolve().as_posix()}", flush=True)
+        print(f"INDOOR_OK={summary['ok']}", flush=True)
+        return 0
 
     cfg_path = Path(args.config)
     if not cfg_path.is_absolute():
@@ -662,7 +900,13 @@ def main() -> int:
 
     ts = now_iso()
 
-    top: Dict[str, object] = nominatim_search(args.query, args.user_agent)
+    top: Dict[str, object] = resolve_nominatim_top(
+        query=args.query,
+        user_agent=args.user_agent,
+        place_id=str(args.place_id or ""),
+        osm_type=str(args.osm_type or ""),
+        osm_id=str(args.osm_id or ""),
+    )
     context_from_cache = False
 
     out_root = Path(args.output_dir)
@@ -678,13 +922,16 @@ def main() -> int:
 
     osm_type = str(top.get("osm_type", ""))
     osm_id = int(top.get("osm_id", 0) or 0)
-    overpass_q = build_overpass_query(osm_type, osm_id, center_lat, center_lng, args.radius)
-
     time.sleep(max(0.0, args.sleep))
-    overpass_raw = overpass_query(overpass_q, args.user_agent)
-    elements = overpass_raw.get("elements", []) if isinstance(overpass_raw, dict) else []
-    if not isinstance(elements, list):
-        elements = []
+    elements, overpass_mode = fetch_overpass_elements(
+        osm_type, osm_id, center_lat, center_lng, int(args.radius), args.user_agent
+    )
+    if not elements:
+        raise RuntimeError(
+            f"Overpass returned no elements (mode tried: primary + around_fallback). "
+            f"Last query hint: osm={osm_type}/{osm_id} center=({center_lat},{center_lng}) r={args.radius}"
+        )
+    overpass_raw: Dict[str, object] = {"version": 0.6, "elements": elements, "generator": f"osm_seed/{overpass_mode}"}
 
     # Temporary IDs are used during graph construction and are remapped to global IDs later.
     scenic_id = 1
@@ -731,10 +978,12 @@ def main() -> int:
             continue
 
         name = pick_name(tags, f"osm-{el.get('type', 'obj')}-{el.get('id', 'x')}")
+        if is_osm_fallback_poi_name(name):
+            continue
         loc_text = str(tags.get("addr:full", "") or tags.get("addr:street", "") or name)[:255]
 
         poi_type = classify_poi(tags)
-        if poi_type and poi_type in known_poi_type_codes:
+        if not is_indoor_micro_feature(tags) and poi_type and poi_type in known_poi_type_codes:
             poi_rows.append(
                 {
                     "id": poi_id,
@@ -751,7 +1000,7 @@ def main() -> int:
                 }
             )
             poi_id += 1
-        elif is_poi_candidate(tags):
+        elif not is_indoor_micro_feature(tags) and is_poi_candidate(tags):
             # Keep candidate POI with explicit null type for later taxonomy expansion.
             poi_rows.append(
                 {
@@ -789,7 +1038,7 @@ def main() -> int:
             )
             fac_id += 1
 
-    poi_rows = dedup_rows(poi_rows)[:20]
+    poi_rows = dedup_rows(poi_rows)[: max(1, int(args.business_poi_cap))]
     fac_rows = dedup_rows(fac_rows)[:15]
     business_poi_ids = [int(row["id"]) for row in poi_rows]
 
@@ -1037,6 +1286,7 @@ def main() -> int:
 
     (raw_dir / "nominatim_top.json").write_text(json.dumps(top, ensure_ascii=False, indent=2), encoding="utf-8")
     (raw_dir / "overpass.json").write_text(json.dumps(overpass_raw, ensure_ascii=False, indent=2), encoding="utf-8")
+    (out_dir / ".scenic_root.txt").write_text(str(scenic_root.resolve()), encoding="utf-8")
     (raw_dir / "unmatched_poi_types.json").write_text(json.dumps(unmatched_poi_items, ensure_ascii=False, indent=2), encoding="utf-8")
 
     file_size_stats = {
@@ -1057,6 +1307,9 @@ def main() -> int:
         f"- matchedAddressName: {matched_dir_key}",
         f"- outputDirSlug: {scenic_slug}",
         f"- center: {center_lng:.6f},{center_lat:.6f}",
+        f"- overpassMode: {overpass_mode}",
+        f"- placeId: {args.place_id or '-'}",
+        f"- osmAnchor: {osm_type}/{osm_id}",
         f"- scenicCount: 1",
         f"- poiCount: {len(poi_rows)}",
         f"- facilityCount: {len(fac_rows)}",
@@ -1127,12 +1380,82 @@ def main() -> int:
                 "- reason: output directory is outside src/main/resources",
             ])
 
+    indoor_summary: Dict[str, object] = {
+        "enabled": bool(args.collect_indoor),
+        "candidates": 0,
+        "ok": 0,
+        "reject": 0,
+        "error": 0,
+        "results": [],
+    }
+    if args.collect_indoor:
+        from indoor_seed import collect_indoor_for_pois
+
+        indoor_out = resolve_indoor_out_dir(
+            repo_root, args.indoor_out_dir, scenic_root=scenic_root, latest_dir=out_dir
+        )
+        business_pois = [
+            row
+            for row in poi_rows
+            if str(row.get("type") or "").lower() != "virtual_node"
+        ]
+        indoor_results = collect_indoor_for_pois(
+            business_pois,
+            out_dir=indoor_out,
+            user_agent=args.user_agent,
+            radius=int(args.indoor_radius),
+            sleep_s=max(0.0, float(args.sleep)),
+            overpass_elements=elements if isinstance(elements, list) else None,
+        )
+        indoor_summary["candidates"] = len(indoor_results)
+        indoor_summary["results"] = indoor_results
+        for row in indoor_results:
+            status = str(row.get("status", "error"))
+            if status == "ok":
+                indoor_summary["ok"] = int(indoor_summary["ok"]) + 1
+            elif status == "reject":
+                indoor_summary["reject"] = int(indoor_summary["reject"]) + 1
+            else:
+                indoor_summary["error"] = int(indoor_summary["error"]) + 1
+        (out_dir / "indoor_collect.json").write_text(
+            json.dumps(indoor_summary, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        report.extend(
+            [
+                "",
+                "## Indoor Collection",
+                f"- enabled: true",
+                f"- candidates: {indoor_summary['candidates']}",
+                f"- ok: {indoor_summary['ok']}",
+                f"- reject: {indoor_summary['reject']}",
+                f"- error: {indoor_summary['error']}",
+                f"- manifest: {indoor_out / 'manifest.json'}",
+                f"- detailLog: indoor_collect.json",
+            ]
+        )
+        for row in indoor_results:
+            bid = row.get("buildingPoiId")
+            name = row.get("name")
+            status = row.get("status")
+            failures = row.get("failures") or []
+            report.append(f"- building {bid} ({name}): {status}" + (f" {failures}" if failures else ""))
+    else:
+        report.extend(["", "## Indoor Collection", "- enabled: false"])
+
     (out_dir / "report.md").write_text("\n".join(report), encoding="utf-8")
 
     print(f"Output written to: {out_dir}")
     print(f"POI={len(poi_rows)}, Facilities={len(fac_rows)}, Roads={len(road_rows)}")
     if unmatched_poi_items:
         print(f"Unmatched POI types: {len(unmatched_poi_items)} (see {raw_dir / 'unmatched_poi_types.json'})")
+    if args.collect_indoor:
+        print(
+            "Indoor collect: candidates={candidates}, ok={ok}, reject={reject}, error={error}".format(
+                **indoor_summary
+            )
+        )
+    print(f"SCENIC_ROOT={scenic_root.resolve().as_posix()}", flush=True)
     return 0
 
 

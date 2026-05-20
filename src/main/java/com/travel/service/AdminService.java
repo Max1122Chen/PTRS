@@ -8,6 +8,7 @@ import com.travel.model.entity.ScenicArea;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
  * 管理端数据管理服务。
@@ -25,7 +26,7 @@ public interface AdminService
 
     Food addFood(Food food);
 
-    Map<String, Object> runPlaceSeedTask(String placeName, boolean force);
+    Map<String, Object> runPlaceSeedTask(String placeName, boolean force, boolean collectIndoor);
 
     List<Map<String, Object>> searchLocalPlaceMatches(String keyword);
 
@@ -37,6 +38,8 @@ public interface AdminService
                                                 String selectedOsmType,
                                                 String selectedOsmId,
                                                 boolean force,
-                                                boolean buildFrontend);
+                                                boolean buildFrontend,
+                                                boolean collectIndoor,
+                                                BiConsumer<String, String> progress);
 }
 

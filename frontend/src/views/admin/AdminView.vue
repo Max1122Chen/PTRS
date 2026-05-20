@@ -4,6 +4,8 @@ import { ElMessage } from 'element-plus'
 import {
   apiAdminAddFood,
   apiAdminGenerateFromOsm,
+  apiAdminOsmCollectTask,
+  type AdminOsmCollectTaskStatus,
   apiAdminAddPoi,
   apiAdminAddRoad,
   apiAdminAddScenicArea,
@@ -54,10 +56,13 @@ const devForm = reactive({
   placeName: '',
   force: false,
   buildFrontend: true,
+  collectIndoor: true,
 })
 const devRunning = ref(false)
 const localSearching = ref(false)
 const devResult = ref<any>(null)
+const collectTask = ref<AdminOsmCollectTaskStatus | null>(null)
+let collectPollTimer: number | null = null
 const localMatches = ref<any[]>([])
 const osmCandidates = ref<any[]>([])
 const selectedOsm = ref<any | null>(null)
@@ -183,6 +188,48 @@ async function searchOsmCandidates() {
   }
 }
 
+function stopCollectPoll() {
+  if (collectPollTimer != null) {
+    window.clearInterval(collectPollTimer)
+    collectPollTimer = null
+  }
+}
+
+function applyCollectTaskDone(task: AdminOsmCollectTaskStatus) {
+  const inner = (task.result ?? {}) as Record<string, unknown>
+  devResult.value = { ...inner, taskStatus: task.status, taskMessage: task.message }
+  const seedStatus = String(inner.status ?? '')
+  if (task.status === 'SUCCESS' || seedStatus === 'success') {
+    ElMessage.success(devForm.buildFrontend ? '数据生成与前端构建完成' : '数据生成完成（已跳过构建）')
+  } else if (task.status === 'SKIPPED' || seedStatus === 'skipped') {
+    ElMessage.info('已存在数据，任务跳过')
+  } else {
+    ElMessage.warning(String(task.message || inner.message || '采集失败'))
+  }
+}
+
+async function pollOsmCollectTask(taskId: string) {
+  stopCollectPoll()
+  return new Promise<void>((resolve, reject) => {
+    const tick = async () => {
+      try {
+        const task = await apiAdminOsmCollectTask(taskId)
+        collectTask.value = task
+        if (task.status === 'SUCCESS' || task.status === 'FAILED' || task.status === 'SKIPPED') {
+          stopCollectPoll()
+          applyCollectTaskDone(task)
+          resolve()
+        }
+      } catch (e) {
+        stopCollectPoll()
+        reject(e)
+      }
+    }
+    void tick()
+    collectPollTimer = window.setInterval(() => void tick(), 2000)
+  })
+}
+
 async function runImportPlace() {
   if (!devForm.placeName.trim()) {
     ElMessage.warning('请输入地名')
@@ -194,10 +241,11 @@ async function runImportPlace() {
   }
 
   devRunning.value = true
+  collectTask.value = null
   try {
-    devResult.value = await apiAdminGenerateFromOsm({
-      placeName: devForm.placeName.trim(),
-      query: String(selectedOsm.value.displayName || '').trim(),
+    const submitted = await apiAdminGenerateFromOsm({
+      placeName: String(selectedOsm.value.name || devForm.placeName).trim(),
+      query: String(selectedOsm.value.displayName || selectedOsm.value.name || devForm.placeName).trim(),
       selectedOsm: {
         placeId: selectedOsm.value.placeId,
         osmType: selectedOsm.value.osmType,
@@ -207,14 +255,10 @@ async function runImportPlace() {
       },
       force: devForm.force,
       buildFrontend: devForm.buildFrontend,
+      collectIndoor: devForm.collectIndoor,
     })
-    if (devResult.value?.status === 'success') {
-      ElMessage.success(devForm.buildFrontend ? '数据生成与前端构建完成' : '数据生成完成（已跳过构建）')
-    } else if (devResult.value?.status === 'skipped') {
-      ElMessage.info('已存在数据，任务跳过')
-    } else {
-      ElMessage.warning(devResult.value?.message || '执行完成，但状态异常')
-    }
+    ElMessage.info('采集任务已提交，正在后台执行…')
+    await pollOsmCollectTask(submitted.taskId)
   } finally {
     devRunning.value = false
   }
@@ -244,6 +288,7 @@ onBeforeUnmount(() => {
   if (localSearchTimer != null) {
     window.clearTimeout(localSearchTimer)
   }
+  stopCollectPoll()
 })
 
 onMounted(loadScenic)
@@ -273,6 +318,9 @@ onMounted(loadScenic)
                 </el-form-item>
                 <el-form-item>
                   <el-checkbox v-model="devForm.buildFrontend">生成后自动执行前端 build</el-checkbox>
+                </el-form-item>
+                <el-form-item>
+                  <el-checkbox v-model="devForm.collectIndoor">同时采集室内图（图书馆/教学楼等 POI，Overpass）</el-checkbox>
                 </el-form-item>
                 <div class="muted" style="margin-bottom: 10px">输入地名后会自动进行本地匹配（防抖 350ms）</div>
                 <div class="formRow">
@@ -311,11 +359,16 @@ onMounted(loadScenic)
 
             <div class="glass block">
               <div style="font-weight: 900; margin-bottom: 10px">执行结果</div>
-              <div v-if="!devResult" class="muted">尚未执行任务</div>
-              <div v-else>
+              <div v-if="collectTask && devRunning" class="muted" style="margin-bottom: 8px">
+                任务 {{ collectTask.taskId?.slice(0, 8) }}… · {{ collectTask.status }} · {{ collectTask.message }}
+              </div>
+              <div v-if="!devResult && !collectTask" class="muted">尚未执行任务</div>
+              <div v-else-if="devResult">
+                <div v-if="devResult.taskStatus" class="muted">taskStatus：{{ devResult.taskStatus }}</div>
                 <div class="muted">status：{{ devResult.status }}</div>
-                <div class="muted">message：{{ devResult.message }}</div>
+                <div class="muted">message：{{ devResult.message ?? devResult.taskMessage }}</div>
                 <div class="muted">exists：{{ devResult.exists }}</div>
+                <div class="muted">collectIndoor：{{ devResult.collectIndoor ?? '-' }}</div>
                 <div class="muted">seedExitCode：{{ devResult.seedExitCode ?? '-' }}</div>
                 <div class="muted">buildExitCode：{{ devResult.buildExitCode ?? '-' }}</div>
                 <el-divider />

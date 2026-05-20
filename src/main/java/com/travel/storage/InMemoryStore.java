@@ -14,6 +14,7 @@ import com.travel.model.entity.Tag;
 import com.travel.model.entity.User;
 import com.travel.model.entity.UserBehavior;
 import com.travel.model.entity.UserInterest;
+import com.travel.indoor.IndoorBuildingBundle;
 import org.springframework.stereotype.Component;
 import com.travel.storage.search.NGramInvertedIndex;
 import com.travel.storage.search.PrefixTrieIdIndex;
@@ -76,6 +77,10 @@ public class InMemoryStore
     private final Map<Long, List<Long>> poiIdsByAreaId = new HashMap<>();
 
     private long nextPoiId = 1;
+
+    // ------------------- Indoor maps (per building POI) -------------------
+
+    private final Map<Long, IndoorBuildingBundle> indoorBundleByBuildingPoiId = new HashMap<>();
 
     // Tag
     private final Map<Long, Tag> tagsById = new HashMap<>();
@@ -348,6 +353,76 @@ public class InMemoryStore
     public synchronized Poi insertBuilding(Poi poi)
     {
         return insertPoi(poi);
+    }
+
+    public synchronized void putIndoorBundle(IndoorBuildingBundle bundle)
+    {
+        if (bundle == null || bundle.getBuildingPoiId() <= 0)
+        {
+            return;
+        }
+        indoorBundleByBuildingPoiId.put(bundle.getBuildingPoiId(), bundle);
+        Poi poi = findPoiById(bundle.getBuildingPoiId());
+        if (poi != null)
+        {
+            poi.setIndoorAvailable(true);
+        }
+    }
+
+    /** 重载室内图前清空 bundle 与 POI 上的 indoorAvailable 标记。 */
+    public synchronized void clearIndoorState()
+    {
+        indoorBundleByBuildingPoiId.clear();
+        for (Poi poi : poisById.values())
+        {
+            if (poi != null)
+            {
+                poi.setIndoorAvailable(false);
+            }
+        }
+    }
+
+    /** 按已加载 bundle 回写 POI.indoorAvailable（防止加载顺序导致标记丢失）。 */
+    public synchronized void reconcileIndoorAvailableFromBundles()
+    {
+        for (Poi poi : poisById.values())
+        {
+            if (poi != null)
+            {
+                poi.setIndoorAvailable(false);
+            }
+        }
+        for (IndoorBuildingBundle bundle : indoorBundleByBuildingPoiId.values())
+        {
+            Poi poi = findPoiById(bundle.getBuildingPoiId());
+            if (poi != null)
+            {
+                poi.setIndoorAvailable(true);
+            }
+        }
+    }
+
+    public IndoorBuildingBundle findIndoorBundle(long buildingPoiId)
+    {
+        return indoorBundleByBuildingPoiId.get(buildingPoiId);
+    }
+
+    public List<IndoorBuildingBundle> findAllIndoorBundles()
+    {
+        return new ArrayList<>(indoorBundleByBuildingPoiId.values());
+    }
+
+    public List<IndoorBuildingBundle> findIndoorBundlesByAreaId(long areaId)
+    {
+        List<IndoorBuildingBundle> out = new ArrayList<>();
+        for (IndoorBuildingBundle bundle : indoorBundleByBuildingPoiId.values())
+        {
+            if (bundle.getAreaId() != null && bundle.getAreaId() == areaId)
+            {
+                out.add(bundle);
+            }
+        }
+        return out;
     }
 
     public List<ScenicArea> findScenicAreasByType(String type)

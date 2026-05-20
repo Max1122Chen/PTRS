@@ -1,0 +1,169 @@
+{
+  "enabled": true,
+  "candidates": 12,
+  "ok": 0,
+  "reject": 8,
+  "error": 4,
+  "results": [
+    {
+      "buildingPoiId": 900021592,
+      "areaId": 251,
+      "name": "图书馆",
+      "type": "library",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021634,
+      "areaId": 251,
+      "name": "华东师范大学附属贵阳学校",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021604,
+      "areaId": 251,
+      "name": "国际部",
+      "type": "teaching",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 429: Too Many Requests"
+      ],
+      "outputPath": null,
+      "strategy": null
+    },
+    {
+      "buildingPoiId": 900021601,
+      "areaId": 251,
+      "name": "国际部食堂",
+      "type": "teaching",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 504: Gateway Timeout"
+      ],
+      "outputPath": null,
+      "strategy": null
+    },
+    {
+      "buildingPoiId": 900021591,
+      "areaId": 251,
+      "name": "学生食堂",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021605,
+      "areaId": 251,
+      "name": "宿管中心",
+      "type": "teaching",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 504: Gateway Timeout"
+      ],
+      "outputPath": null,
+      "strategy": null
+    },
+    {
+      "buildingPoiId": 900021600,
+      "areaId": 251,
+      "name": "科技艺术馆",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021595,
+      "areaId": 251,
+      "name": "综合楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021617,
+      "areaId": 251,
+      "name": "贵阳一中",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021599,
+      "areaId": 251,
+      "name": "音乐厅",
+      "type": "teaching",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 429: Too Many Requests"
+      ],
+      "outputPath": null,
+      "strategy": null
+    },
+    {
+      "buildingPoiId": 900021598,
+      "areaId": 251,
+      "name": "高一组团",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021594,
+      "areaId": 251,
+      "name": "高三组团",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    }
+  ]
+}

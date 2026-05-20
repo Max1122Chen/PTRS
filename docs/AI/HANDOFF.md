@@ -3,6 +3,202 @@
 > 用途：跨会话、跨 AI 的最小必要交接记录。
 > 规则：每次开发结束后追加，不要覆盖历史；已解决的同类问题应合并为结果导向记录；每条记录需标注负责人（git 用户）。
 
+## 2026-05-20（清理旧 indoor/osm-data + 重采带室内图 + 服务重启）
+### 清理
+- 删除 `dev-seed/indoor/` 下全部旧 bundle，仅保留演示 `502.json`。
+- `map-imports.json` 去掉无磁盘数据的幽灵条目（鸿雁路/国脉路/Stanford 等）；删除重复/过期目录（旧杏坛路包、短 slug 执信包）。
+- 新增 `scripts/sync_map_imports.py`、`scripts/refresh_map_packs_with_indoor.py`（按 `_context.json` 重采室外+室内）。
+
+### 重采结果（4 包）
+| 地图包 | 室内 ok |
+|--------|---------|
+| 北邮沙河-南丰路 | **1**（学术报告厅 `900020599`，areaId **248**） |
+| 北邮海淀-师大北路 | 0 |
+| 执信中学（长 slug） | 0 |
+| 贵阳一中 | 0 |
+
+### 验收
+- 后端 `http://localhost:8080`，前端 `http://localhost:5173`。
+- 路线规划选景区 **248（沙河-南丰路）** → 学术报告厅金色节点可点进室内。
+- `GET /api/indoor/buildings?areaId=248` 返回 1 栋；`900020599` 的 `indoorAvailable=true`。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-20（室内图与地图包同目录 + 前端 indoorAvailable 回归修复）
+### 根因
+- 室内 JSON 写在全局 `dev-seed/indoor/`，与 `osm-data/<景区>/latest/` 室外包分离；南丰路新 POI（如 `900020327` 学术报告厅）的室内图未进入运行态内存。
+- `application-dev.yml` 中 `spring.devtools.restart.additional-exclude: dev-seed/indoor/**` → 采集后热重启不加载新室内文件；`indoorAvailable` 全为 false。
+
+### 修复
+- **数据布局**：`osm_seed.py` 默认输出 `scenic_root/latest/indoor/{buildingPoiId}.json`；已迁移示例 `900020327.json` 至南丰路包 `latest/indoor/`。
+- **加载**：`IndoorDevSeedLoader` 按 `map-imports.json` 的 `pois.append.json` 推导 `.../latest/indoor/*.json`；保留 `dev-seed/indoor` 作 legacy（502 演示）；`reconcileIndoorAvailableFromBundles()`。
+- **采集后**：`IndoorSeedReloader.reloadAfterCollect(scenicRoot)`（Admin 室内阶段成功后调用，读 FS + classpath）。
+
+### 验证
+- `mvn -q "-Dtest=IndoorMapPackPathsTest,Indoor900020327CompletenessTest,IndoorDevSeedBundleTest" test` SUCCESS
+- 需 **重启后端** 或重新管理端采集（带室内）后：`GET /api/indoor/buildings?areaId=247` 应含 `900020327`；`map-data.nodeDetails[].indoorAvailable=true`。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-20（室外采集修复：Nominatim lookup + Overpass 回退）
+### 根因
+- `NOMINATIM_BASE` 误设为 `/search`，lookup 拼成 `/search/lookup` → **404**，管理端带 `--place-id` 时解析失败。
+- `place_id` 的 Nominatim lookup 常返回空；应 **优先 `--osm-type` + `--osm-id` lookup**。
+- 重构后未保留 `overpass_raw` 变量 → `UnboundLocalError`。
+- 校园 `way` 面 Overpass 偶发 **504** → 增加重试 + `around` 半径回退。
+
+### 修复与自测
+- `NOMINATIM_API` + lookup 顺序（osm → place_id → search）。
+- `fetch_overpass_elements()`：area 失败则 `around_fallback`。
+- 输出 `SCENIC_ROOT=` 与 `latest/.scenic_root.txt`。
+- 自测脚本：`python scripts/verify_osm_outdoor.py`（锚点 way/685054417，约 272 POI / 288 路）。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-20（采集错配 + 502：OSM lookup + 室内外分阶段）
+### 问题与修复
+- **错配**：`osm_seed.py` 仅用 `query` 重新 Nominatim search 取第一条，与用户表格所选候选不一致 → 增加 `--place-id` / `--osm-type` / `--osm-id`，优先 `lookup`。
+- **502**：室外+室内同进程过久 → Java 先 `--no-collect-indoor` 室外，再 `--indoor-only --scenic-root` 室内；异步任务 phase 显示 outdoor/indoor；Vite `/api` proxy `timeout: 0`。
+- 前端提交：`placeName` 用选中行的 `name`，`query` 用 `displayName`。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-20（室外 POI 收紧 + 室内连通兜底 + 楼层展示）
+### 变更（按用户收敛边界）
+- **室外**：`osm_seed.py` 仅跳过 `osm-(node|way|relation|obj)-数字` 兜底名；`type=null` 有意义 POI 保留。`RouteServiceImpl` 室外 `nodeGeo`/`nodeDetails` 排除 `virtual_node` 与同上兜底名。
+- **室内采集**：`indoor_seed.bridge_walkable_components` — 可走图多连通分量时，最近节点对补 `corridor` 边；`level` 展示 `0→1层`（`IndoorLevelLabel` / `level_display_label`）。
+- **未做**：P2 室内覆盖策略调整、unmatched 全量剔除。
+
+### 验证
+- `mvn -q "-Dtest=IndoorLevelLabelTest,IndoorDevSeedBundleTest,IndoorSeedCompletenessTest,IndoorPathPlannerTest" test` SUCCESS
+- 重采后 `pois.append` 应无 `osm-node-*`；学术报告厅等需重跑 indoor 才带 bridge 边。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-20（管理端 OSM 采集异步任务）
+### 本次目标
+- 完成管理端 **异步 OSM/室内采集**，避免长耗时 HTTP 502；重启前后端。
+
+### 变更说明
+- **`AdminOsmCollectService`** + **`AdminOsmCollectServiceImpl`**：内存任务表 + `adminOsmCollectExecutor` 线程池；`generate-from-osm` / `import-place` 立即返回 `taskId`。
+- **`GET /api/admin/dev/osm-collect-task/{taskId}`**：轮询 `PENDING`/`RUNNING`/`SUCCESS`/`FAILED`/`SKIPPED` 及 `result`（原同步结果 Map）。
+- **前端 `AdminView.vue`**：提交后每 2s 轮询，展示任务状态与脚本日志。
+
+### 验证
+- `mvn -q -DskipTests compile`：SUCCESS
+- 重启 dev 后端 + `npm run dev` 前端
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-20（室内节点 WGS84：种子脚本 + 演示 502 + 前端）
+### 本次目标
+- 室内节点以 **经纬度** 为主（与室外一致），局部 x/y 仅兼容旧数据；用户确认不再依赖平面 Local 坐标系。
+
+### 变更说明
+- **`scripts/indoor_seed.py`**：`build_graph_from_osm_elements` 节点写入 `longitude`/`latitude`（x/y 置 0）；走廊折线边长用 Haversine；房间裁剪 / 合成 MST / 跨层最近对 / 入口选择均用球面距离；`flat_distance_m` 仅用于 Overpass 子集半径裁剪。
+- **`scripts/osm_seed.py`**：`is_indoor_micro_feature` — 写入业务 POI 前跳过 `indoor=room|door|corridor|…` 及 `highway=corridor|elevator|steps` 等微观要素（室内由 `indoor_seed` 单独建图）。
+- **`dev-seed/indoor/502.json`**：演示图书馆四点一线，与 POI 502 锚点同纬度，经度每段约 12 m。
+- **`IndoorDevSeedBundleTest`**：期望路径距离改为 Haversine 叠加约 **35.96 m**（容差 0.05）。
+- **前端**：`IndoorNodeDto` 增加可选 `longitude`/`latitude`；`RoutePlannerView` 室内图用与室外相同的 min/max 映射到画布像素，无经纬度时回退 x/y。
+
+### 验证
+- `python -m py_compile scripts/indoor_seed.py scripts/osm_seed.py`
+- `mvn -q "-Dtest=IndoorDevSeedBundleTest,IndoorPathPlannerTest,IndoorSeedCompletenessTest" test`：SUCCESS
+- `npm run build`（frontend）：SUCCESS
+
+### 风险 / 下一步
+- 已生成的 `dev-seed/indoor/9000*.json` 若仍为纯 x/y，需重跑 `indoor_seed` 或手工补经纬度后 Java 走廊边权才会用 Haversine。
+- 管理端长任务 502 / 异步采集：本期未做。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-20（室内采集 v2：对齐 OSM raw 特征）
+### 设计要点
+- **数据源**：优先复用同次 `osm_seed` 的 `raw/overpass.json`（含 `out geom`），不再仅依赖二次 Overpass 的 `node[indoor=room]`。
+- **房间**：`indoor=room` 多为 **way** → 取几何质心为 `room` 节点；`highway=elevator` 的 room-way 解析为竖向折线。
+- **走廊**：OSM 常无 `highway=corridor` → 同层 room 质心 **MST 合成 corridor 边**（`source=osm-raw+heuristic-corridors`）。
+- **跨层**：相邻楼层最近 room 对补 **elevator** 边（10m）；Java `IndoorSeedCompleteness` 连通判定含 corridor/elevator/steps。
+- **候选**：`business-poi-cap` 默认 60；室内仍仅 `library/teaching/...` 类型 POI，传入 `overpass_elements`。
+
+### 验证
+- `python -m py_compile scripts/indoor_seed.py scripts/osm_seed.py`
+- 北邮图书馆锚点 120m：`try_build_bundle_from_elements` → ok，rooms=13，corridors=11，elev=1
+- `mvn test -Dtest=Indoor*` SUCCESS
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-20（采集失败排查：BUPT 重抓 + DevTools 打断）
+### 结论
+- 沙河校区室外采集 **20:12 已成功**（新目录 `国脉路`，POI=247）；旧目录 `南丰路` 为 3 月快照，Nominatim 地址字段变更导致 **重复景区目录**。
+- 未勾选 **强制重抓** 且 OSM way 相同 → 接口返回 `skipped`。
+- 写入 `osm-data` 触发 **DevTools 热重启**，前端易显示失败/断连（已加 `spring.devtools.restart.additional-exclude`）。
+- 沙河 **室内 candidates=0**（OSM 无 library/teaching 等可采室内 POI），非室外失败。
+
+### 变更
+- `application-dev.yml`：排除 `osm-data/**`、`dev-seed/indoor/**` 触发热重启。
+- `map-imports.json`：去掉沙河旧 `南丰路` 条目，仅保留 `国脉路` 最新采集。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-20（室外 OSM 采集合并室内采集）
+### 变更说明
+- `scripts/osm_seed.py` 新增 `--collect-indoor` / `--no-collect-indoor`（默认开启）：室外 POI 写入后，对 `library/teaching/lab/...` 等类型 POI 自动调用 `indoor_seed.collect_indoor_for_pois`，产出 `dev-seed/indoor/{poiId}.json` 与 `manifest.json`，并在 `osm-data/.../latest/indoor_collect.json`、`report.md` 记录摘要。
+- `scripts/indoor_seed.py` 重构为可复用模块（与 Java `IndoorSeedCompleteness` 一致的 room 连通规则）。
+- 管理端 `generate-from-osm` / `import-place` 增加 `collectIndoor`（默认 true）；前端开发工具页增加「同时采集室内图」勾选项。
+
+### 验证
+- `python -m py_compile scripts/osm_seed.py scripts/indoor_seed.py`
+- 管理端勾选采集 → 日志末尾应出现 `Indoor collect: candidates=...`
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-20（FR-004-5 室内导航全阶段落地 + 自设计测试）
+### 本次目标
+- 完成室内导航阶段 0～6（种子、内存图、Dijkstra、API、路线页室内视图）；自设计单元测试驱动迭代至全绿。
+
+### 变更说明
+- **后端**：`com.travel.indoor.*`（`IndoorGraphRegistry`、`IndoorPathPlanner`、`IndoorSeedCompleteness`）、`IndoorController` / `IndoorServiceImpl`、`IndoorDevSeedLoader`、`IndoorProperties`；`Poi.indoorAvailable`；`RouteServiceImpl` 的 `nodeDetails[].indoorAvailable`。
+- **种子**：`dev-seed/indoor/502.json`（图书馆 POI 502，areaId 201）；`scripts/indoor_seed.py`（Overpass 骨架）。
+- **前端**：`RoutePlannerView.vue` 室外/室内模式、楼层切换、室内起终点与路径高亮；`api.ts` indoor 类型与接口。
+- **完整度**：≥1 层、≥2 room、≥3 corridor、**所有 room 经走廊边同一连通分量**（多层允许 L0/L1 走廊分量分离）；竖向边权 `app.indoor.vertical-edge-distance-meters` 默认 10.0 m。
+- **测试**：`IndoorSeedCompletenessTest`、`IndoorPathPlannerTest`、`IndoorDevSeedBundleTest`（502 种子 9001→9004，36 m）。
+
+### 验证
+- `mvn test`：SUCCESS
+- `npm run build`（frontend）：SUCCESS
+- 演示：`dev` profile 启动后 areaId **201**，室外点 **图书馆（502）** → 室内 → 规划 大门→自习室。
+
+### 风险 / 下一步
+- `indoor_seed.py` 尚未对真实 OSM 批量产出；答辩前可再跑 Overpass 增补建筑。
+- 室外—室内路径**未**自动拼接（需求已明确本期不做）。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-17（室内导航完整开发方案规划）
+### 变更说明
+- 新增 `docs/Tech/Indoor Navigation Implementation Plan.md`：分阶段 0～7（种子→内存→Dijkstra→API→前端→验收）、文件清单、已定稿完整度/竖向边权、演示检查表。
+
+### 负责人
+- Cursor Agent
+
+## 2026-05-17（第十一周周报产出）
+### 变更说明
+- 依据提交 `48ba5c7` 与第 6–8 周周报体例，新增第十一周周报 Markdown / HTML：`docs/Progress/Weekly_report/Weekly_Report_Week11.md`、`Weekly_Report_Week11.html`。
+
+### 负责人
+- Cursor Agent
+
 ## 2026-05-10（即梦 URL 解析增强 + 去掉多轮 UI / 精简日志标题）
 ### 变更说明
 - 新增 **`JimengVideoUrlExtractor`**：从轮询 JSON 中解析成片地址，支持 **`resp_json`** 嵌套、`video_result[]`、多类 **url** 键、无 `.mp4` 后缀的火山 **volces/tos** 直链；底层仍兼容 **.mp4/.webm/.mov** 正则。

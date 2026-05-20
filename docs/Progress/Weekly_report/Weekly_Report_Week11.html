@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个性化旅游推荐系统 - 第十一周工作周报</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 4px solid #3498db;
+        }
+        h3 { color: #555; font-size: 16px; margin-top: 20px; margin-bottom: 10px; }
+        h4 { color: #666; font-size: 14px; margin-top: 15px; margin-bottom: 8px; }
+        p { margin-bottom: 10px; }
+        ul { margin-left: 20px; margin-bottom: 15px; }
+        li { margin-bottom: 5px; }
+        .member-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .code {
+            font-family: Consolas, Monaco, monospace;
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .delimiter { margin: 30px 0; border-top: 1px solid #ddd; }
+        .date { text-align: right; margin-top: 30px; color: #666; font-size: 14px; }
+        .section { margin-bottom: 25px; }
+        .highlight { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>个性化旅游推荐系统 - 第十一周工作周报</h1>
+        <div class="member-info">成员：陈逸 程小路</div>
+
+        <div class="section">
+            <h2>1. 第十一周（2026-05-11 至 2026-05-17）：FR-009-5 日记 AIGC 旅游动画落地 + 答疑前稳定性收敛</h2>
+            <h3>1.1 工作目标</h3>
+            <p>本周对照《项目计划书》第 11 周「稳定 1」与教学节点「答疑（5 月 14 日）」安排，重点为：</p>
+            <ul>
+                <li>落实 <span class="highlight">FR-009-5 旅游动画生成</span>：基于日记文字与图片，服务端异步调用第三方云端视频能力，成片下载落盘并与日记关联。</li>
+                <li>对齐火山即梦官方 <span class="code">CVSync2AsyncSubmitTask</span> / <span class="code">CVSync2AsyncGetResult</span> 接口，修复历史 <span class="code">req_key</span> 不支持、轮询 <span class="code">done</span> 但无 URL 等阻断问题。</li>
+                <li>前端完成日记详情页「提交参数快照 → 任务轮询 → 事件日志 / 停止任务」闭环；密钥由合作方按模板自备，不入库。</li>
+                <li>同批次巩固路线规划、OSM 种子与 dev-seed 数据一致性，并同步需求/技术设计/交接文档。</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>1.2 具体完成工作</h3>
+            <h4>1.2.1 本周主干提交</h4>
+            <ul>
+                <li><span class="highlight">提交</span>：<span class="code">48ba5c7</span>（2026-05-10）</li>
+                <li><span class="highlight">主题</span>：日记 AIGC 旅游动画（即梦/LibTV）、共用提示词与前端任务流；路线/地图/OSM 种子与文档同步</li>
+                <li><span class="highlight">规模</span>：67 个文件（后端动画模块、前端日记页、配置模板、单测、地图种子与文档）</li>
+            </ul>
+
+            <h4>1.2.2 需求与技术口径同步</h4>
+            <ul>
+                <li>需求文档：FR-009-5、§2.3.3 持久化策略、创新点 AIGC 表述更新。</li>
+                <li>技术设计：动画 REST、任务状态机、配置项与 dev 可选 <span class="code">jimeng-animation.yml</span>。</li>
+                <li>SQL：<span class="code">migration_add_animation_url.sql</span>；密钥模板 <span class="code">jimeng-animation.example.yml</span>（本地 yml 已 gitignore）。</li>
+            </ul>
+
+            <h4>1.2.3 后端：日记 AIGC 动画任务链路</h4>
+            <ul>
+                <li><span class="code">DiaryAnimationJob</span> / <span class="code">DiaryAnimationServiceImpl</span> / <span class="code">DiaryAnimationController</span>：内存任务、eventLog、取消；即梦优先、LibTV 备用。</li>
+                <li><span class="code">JimengVisualClient</span> + <span class="code">JimengVideoSubmitBuilder</span> + <span class="code">JimengVideoUrlExtractor</span>：CVSync2Async*、req_key 修正、成片 URL 多层解析。</li>
+                <li><span class="code">LibTvOpenApiClient</span>、<span class="code">AnimationPromptComposer</span>、<span class="code">AnimationProperties</span>、<span class="code">volc-sdk-java</span>。</li>
+            </ul>
+
+            <h4>1.2.4 前端：日记详情动画任务流</h4>
+            <ul>
+                <li><span class="code">api.ts</span>：动画任务类型与 API。</li>
+                <li><span class="code">DiaryDetailView.vue</span>：参数快照、轮询、完整事件日志、停止任务；已精简多轮沟通独立 UI。</li>
+            </ul>
+
+            <h4>1.2.5 数据、脚本与 dev 演示</h4>
+            <ul>
+                <li><span class="code">osm_seed.py</span> / <span class="code">amap_seed.py</span> 与多份 dev-seed 增量数据同步。</li>
+                <li>dev profile 下内存任务为主，写库失败不阻断演示链路。</li>
+            </ul>
+
+            <h4>1.2.6 单元测试与协作说明</h4>
+            <ul>
+                <li><span class="code">AnimationPromptComposerTest</span>、<span class="code">JimengVideoSubmitBuilderTest</span>、<span class="code">JimengVideoUrlExtractorTest</span></li>
+                <li>commit 说明：合作方复制 example 配置或注入环境变量，禁止提交真实密钥。</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>1.3 验证与质量门禁</h3>
+            <ul>
+                <li><span class="highlight">后端</span>：<span class="code">mvn test</span> — BUILD SUCCESS。</li>
+                <li><span class="highlight">前端</span>：<span class="code">npm run build</span> — SUCCESS。</li>
+                <li>未配置密钥时不拖垮日记主链路；配置有效时可提交并轮询；详情页可查看日志并取消任务。</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>1.4 风险与应对</h3>
+            <table>
+                <tr><th>风险</th><th>影响</th><th>概率</th><th>应对措施</th></tr>
+                <tr><td>火山 req_key 产品线变更</td><td>高</td><td>中</td><td>按控制台文档覆盖配置；客户端给出明确提示</td></tr>
+                <tr><td>done 无 URL / JSON 结构变化</td><td>高</td><td>中</td><td>JimengVideoUrlExtractor + [JIMENG_DONE_NO_URL] 日志</td></tr>
+                <tr><td>密钥类型错误或未开通产品线</td><td>中</td><td>中</td><td>example 模板强调 IAM AK/SK</td></tr>
+                <tr><td>LibTV 额度与审核</td><td>中</td><td>中</td><td>即梦优先；演示前确认额度</td></tr>
+                <tr><td>公网拉图失败</td><td>中</td><td>低</td><td>binary_data_base64 回退</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h3>1.5 进度评估</h3>
+            <ul>
+                <li><span class="highlight">完成度</span>：约 88%（FR-009-5 主链路已贯通，答辩环境需端到端实机验证）。</li>
+                <li><span class="highlight">里程碑</span>：日记 + AIGC 创新演示能力；稳定 1 项下 API 对齐、日志可观测与单测补齐。</li>
+                <li><span class="highlight">交付物</span>：动画后端模块、前端任务 UI、文档与迁移脚本、单测与 HANDOFF。</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>1.6 下周计划（2026-05-18 至 2026-05-24）</h3>
+            <ul>
+                <li>统一错误码与校验文案，执行全链路回归并输出缺陷清单（第 12 周稳定 2）。</li>
+                <li>答辩环境即梦/LibTV 实机出片与落盘回放验证。</li>
+                <li>补齐动画集成/回归测试；整理预验收与 NFR-006 创新性材料。</li>
+            </ul>
+        </div>
+
+        <div class="delimiter"></div>
+        <div class="date">
+            <strong>编写日期</strong>：2026-05-17<br>
+            <strong>依据提交</strong>：<span class="code">48ba5c72d9f8246e09c572b53a2c7b0c6b53f81b</span>
+        </div>
+    </div>
+</body>
+</html>

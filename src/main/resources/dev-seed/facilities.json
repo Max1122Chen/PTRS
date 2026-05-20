@@ -94,5 +94,53 @@
     "areaId": 217,
     "createTime": "2026-03-31T10:28:03",
     "updateTime": "2026-03-31T10:28:03"
+  },
+  {
+    "id": 795,
+    "name": "沙河校医院",
+    "type": "hospital",
+    "description": "OSM source=way:947735342, review required",
+    "location": "沙河校医院",
+    "longitude": 116.28355,
+    "latitude": 40.158722,
+    "areaId": 248,
+    "createTime": "2026-05-20T23:36:46",
+    "updateTime": "2026-05-20T23:36:46"
+  },
+  {
+    "id": 796,
+    "name": "校医院（北京邮电大学社区卫生服务中心）",
+    "type": "hospital",
+    "description": "OSM source=way:344373140, review required",
+    "location": "校医院（北京邮电大学社区卫生服务中心）",
+    "longitude": 116.350649,
+    "latitude": 39.958589,
+    "areaId": 249,
+    "createTime": "2026-05-20T23:38:13",
+    "updateTime": "2026-05-20T23:38:13"
+  },
+  {
+    "id": 797,
+    "name": "北京中仁中医医院",
+    "type": "hospital",
+    "description": "OSM source=way:959801254, review required",
+    "location": "北京中仁中医医院",
+    "longitude": 116.354406,
+    "latitude": 39.956866,
+    "areaId": 249,
+    "createTime": "2026-05-20T23:38:13",
+    "updateTime": "2026-05-20T23:38:13"
+  },
+  {
+    "id": 798,
+    "name": "中山大学附属眼科医院",
+    "type": "hospital",
+    "description": "OSM source=way:699348650, review required",
+    "location": "先烈南路",
+    "longitude": 113.287534,
+    "latitude": 23.135765,
+    "areaId": 250,
+    "createTime": "2026-05-20T23:40:36",
+    "updateTime": "2026-05-20T23:40:36"
   }
 ]

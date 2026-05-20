@@ -25,7 +25,11 @@ http.interceptors.request.use((config) => {
   // 管理端开发工具会执行脚本/构建，可能持续数十秒以上；
   // 全局 axios timeout 20s 会导致“无法连接后端”（超时）误报。
   const url = config.url ?? ''
-  if (url.includes('/api/admin/dev/generate-from-osm') || url.includes('/api/admin/dev/import-place')) {
+  if (
+    url.includes('/api/admin/dev/generate-from-osm') ||
+    url.includes('/api/admin/dev/import-place') ||
+    url.includes('/api/admin/dev/osm-collect-task')
+  ) {
     // 后端 generateFromSelectedOsm 内部 exec 等待最长 timeoutSec=900（15分钟）
     // 前端 timeout 必须更大，否则还没等后端返回就会触发 axios timeout。
     // 对这些“长任务”禁用 axios timeout，避免客户端在后端 exec 尚未返回时提前 abort。

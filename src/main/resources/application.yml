@@ -60,6 +60,9 @@ app:
   security:
     # 生产/默认环境开启鉴权；开发环境可在 application-dev.yml 覆盖为 false。
     auth-enabled: true
+  indoor:
+    vertical-edge-distance-meters: 10.0
+    seed-subdir: indoor
   dev-seed:
     # 全局默认关闭开发种子数据，仅在 dev 配置中开启。
     enabled: true

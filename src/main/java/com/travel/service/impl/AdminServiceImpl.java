@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.travel.common.PageData;
 import com.travel.storage.InMemoryStore;
+import com.travel.storage.IndoorSeedReloader;
 import com.travel.model.entity.Food;
 import com.travel.model.entity.Poi;
 import com.travel.model.entity.Road;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +50,13 @@ public class AdminServiceImpl implements AdminService
     private final InMemoryStore store;
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
+    private final IndoorSeedReloader indoorSeedReloader;
 
-    public AdminServiceImpl(InMemoryStore store, ObjectMapper objectMapper)
+    public AdminServiceImpl(InMemoryStore store, ObjectMapper objectMapper, IndoorSeedReloader indoorSeedReloader)
     {
         this.store = store;
         this.objectMapper = objectMapper;
+        this.indoorSeedReloader = indoorSeedReloader;
         this.httpClient = HttpClient.newHttpClient();
     }
 
@@ -135,9 +139,9 @@ public class AdminServiceImpl implements AdminService
     }
 
     @Override
-    public Map<String, Object> runPlaceSeedTask(String placeName, boolean force)
+    public Map<String, Object> runPlaceSeedTask(String placeName, boolean force, boolean collectIndoor)
     {
-        return generateFromSelectedOsm(placeName, placeName, null, null, null, force, true);
+        return generateFromSelectedOsm(placeName, placeName, null, null, null, force, true, collectIndoor, null);
     }
 
     @Override
@@ -273,7 +277,9 @@ public class AdminServiceImpl implements AdminService
                                                        String selectedOsmType,
                                                        String selectedOsmId,
                                                        boolean force,
-                                                       boolean buildFrontend)
+                                                       boolean buildFrontend,
+                                                       boolean collectIndoor,
+                                                       BiConsumer<String, String> progress)
     {
         String keyword = placeName == null ? "" : placeName.trim();
         String queryText = query == null ? keyword : query.trim();
@@ -304,6 +310,7 @@ public class AdminServiceImpl implements AdminService
         result.put("recycledIncompletePaths", recycled);
         result.put("force", force);
         result.put("buildFrontend", buildFrontend);
+        result.put("collectIndoor", collectIndoor);
 
         if (exactDuplicate && !force)
         {
@@ -313,17 +320,16 @@ public class AdminServiceImpl implements AdminService
         }
 
         String pythonCmd = isWindows() ? "python" : "python3";
-        List<String> seedCmd = List.of(
-            pythonCmd,
-            "scripts/osm_seed.py",
-            "--skip-config",
-            "--target-name", keyword,
-            "--query", queryText,
-            "--output-dir", "src/main/resources/osm-data",
-            "--run-name", "latest",
-            "--map-imports", "src/main/resources/dev-seed/map-imports.json"
-        );
         String projectRoot = resolveProjectRoot();
+        boolean splitIndoor = collectIndoor;
+
+        if (progress != null)
+        {
+            progress.accept("outdoor", "正在采集室外 OSM 数据…");
+        }
+
+        List<String> seedCmd = buildOsmSeedCommand(pythonCmd, keyword, queryText, selectedPlaceId, selectedOsmType,
+            selectedOsmId, true);
         ExecResult seedRes = exec(seedCmd, projectRoot, 900);
         result.put("seedExitCode", seedRes.exitCode());
         result.put("seedOutput", seedRes.output());
@@ -331,8 +337,55 @@ public class AdminServiceImpl implements AdminService
         {
             result.put("recycledIncompletePaths", cleanupIncompleteMatchedArtifacts(selectedPlaceId, selectedOsmType, selectedOsmId));
             result.put("status", "seed_failed");
-            result.put("message", "采集脚本执行失败");
+            result.put("message", "室外采集脚本执行失败");
             return result;
+        }
+
+        String scenicRoot = parseScenicRootFromOutput(seedRes.output());
+        result.put("scenicRoot", scenicRoot);
+
+        if (splitIndoor)
+        {
+            if (progress != null)
+            {
+                progress.accept("indoor", "室外完成，正在采集室内图（独立阶段，避免长时间阻塞）…");
+            }
+            if (scenicRoot == null || scenicRoot.isBlank())
+            {
+                result.put("status", "seed_failed");
+                result.put("message", "室外采集完成但未解析到 SCENIC_ROOT，无法继续室内采集");
+                return result;
+            }
+            List<String> indoorCmd = List.of(
+                pythonCmd,
+                "scripts/osm_seed.py",
+                "--skip-config",
+                "--indoor-only",
+                "--scenic-root", scenicRoot,
+                "--run-name", "latest",
+                "--user-agent", "BUPT-TravelSeedBot/1.0 (student-project)"
+            );
+            ExecResult indoorRes = exec(indoorCmd, projectRoot, 1800);
+            result.put("indoorExitCode", indoorRes.exitCode());
+            result.put("indoorOutput", indoorRes.output());
+            String mergedOutput = seedRes.output() + "\n--- indoor ---\n" + indoorRes.output();
+            result.put("seedOutput", mergedOutput);
+            if (indoorRes.exitCode() != 0)
+            {
+                result.put("status", "seed_failed");
+                result.put("message", "室内采集失败（室外数据已写入，可查看 seedOutput）");
+                return result;
+            }
+            try
+            {
+                int reloaded = indoorSeedReloader.reloadAfterCollect(scenicRoot);
+                result.put("indoorReloaded", reloaded);
+            }
+            catch (Exception ex)
+            {
+                log.warn("Indoor reload after collect failed: {}", ex.getMessage());
+                result.put("indoorReloadWarning", ex.getMessage());
+            }
         }
 
         if (buildFrontend)
@@ -598,6 +651,63 @@ public class AdminServiceImpl implements AdminService
         return current.getAbsolutePath();
     }
 
+    private List<String> buildOsmSeedCommand(String pythonCmd,
+                                             String keyword,
+                                             String queryText,
+                                             String selectedPlaceId,
+                                             String selectedOsmType,
+                                             String selectedOsmId,
+                                             boolean outdoorOnly)
+    {
+        List<String> cmd = new java.util.ArrayList<>(List.of(
+            pythonCmd,
+            "scripts/osm_seed.py",
+            "--skip-config",
+            "--target-name", keyword,
+            "--query", queryText,
+            "--output-dir", "src/main/resources/osm-data",
+            "--run-name", "latest",
+            "--map-imports", "src/main/resources/dev-seed/map-imports.json"
+        ));
+        String placeId = safeTrim(selectedPlaceId);
+        String osmType = safeTrim(selectedOsmType);
+        String osmId = safeTrim(selectedOsmId);
+        if (placeId != null && !placeId.isBlank())
+        {
+            cmd.add("--place-id");
+            cmd.add(placeId);
+        }
+        if (osmType != null && !osmType.isBlank() && osmId != null && !osmId.isBlank())
+        {
+            cmd.add("--osm-type");
+            cmd.add(osmType);
+            cmd.add("--osm-id");
+            cmd.add(osmId);
+        }
+        if (outdoorOnly)
+        {
+            cmd.add("--no-collect-indoor");
+        }
+        return cmd;
+    }
+
+    private static String parseScenicRootFromOutput(String output)
+    {
+        if (output == null || output.isBlank())
+        {
+            return null;
+        }
+        for (String line : output.split("\n"))
+        {
+            String trimmed = line.trim();
+            if (trimmed.startsWith("SCENIC_ROOT="))
+            {
+                return trimmed.substring("SCENIC_ROOT=".length()).trim();
+            }
+        }
+        return null;
+    }
+
     private ExecResult exec(List<String> command, String workingDir, long timeoutSec)
     {
         try
@@ -614,14 +724,16 @@ public class AdminServiceImpl implements AdminService
             Process process = pb.start();
 
             StringBuilder out = new StringBuilder();
+            final int maxChars = 50000;
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
             {
                 String line;
                 while ((line = reader.readLine()) != null)
                 {
-                    if (out.length() < 12000)
+                    out.append(line).append('\n');
+                    if (out.length() > maxChars)
                     {
-                        out.append(line).append('\n');
+                        out.delete(0, out.length() - maxChars);
                     }
                 }
             }

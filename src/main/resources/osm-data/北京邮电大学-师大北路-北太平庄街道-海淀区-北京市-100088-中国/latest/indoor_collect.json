@@ -1,0 +1,167 @@
+{
+  "enabled": true,
+  "candidates": 12,
+  "ok": 0,
+  "reject": 7,
+  "error": 5,
+  "results": [
+    {
+      "buildingPoiId": 900020851,
+      "areaId": 249,
+      "name": "档案馆",
+      "type": "library",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900020884,
+      "areaId": 249,
+      "name": "北京邮电大学",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900020844,
+      "areaId": 249,
+      "name": "北京邮电大学出版社",
+      "type": "teaching",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 504: Gateway Timeout"
+      ],
+      "outputPath": null,
+      "strategy": null
+    },
+    {
+      "buildingPoiId": 900020887,
+      "areaId": 249,
+      "name": "南区教学楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900020886,
+      "areaId": 249,
+      "name": "宏途书店",
+      "type": "teaching",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 429: Too Many Requests"
+      ],
+      "outputPath": null,
+      "strategy": null
+    },
+    {
+      "buildingPoiId": 900020873,
+      "areaId": 249,
+      "name": "教二楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900020842,
+      "areaId": 249,
+      "name": "游泳馆",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900020843,
+      "areaId": 249,
+      "name": "球类馆",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900020890,
+      "areaId": 249,
+      "name": "14号楼",
+      "type": "dormitory",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900020891,
+      "areaId": 249,
+      "name": "2号楼",
+      "type": "dormitory",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 429: Too Many Requests"
+      ],
+      "outputPath": null,
+      "strategy": null
+    },
+    {
+      "buildingPoiId": 900020894,
+      "areaId": 249,
+      "name": "4号楼",
+      "type": "dormitory",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 429: Too Many Requests"
+      ],
+      "outputPath": null,
+      "strategy": null
+    },
+    {
+      "buildingPoiId": 900020888,
+      "areaId": 249,
+      "name": "7号楼",
+      "type": "dormitory",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 504: Gateway Timeout"
+      ],
+      "outputPath": null,
+      "strategy": null
+    }
+  ]
+}

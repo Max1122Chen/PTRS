@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900021600,
+  "name": "科技艺术馆",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

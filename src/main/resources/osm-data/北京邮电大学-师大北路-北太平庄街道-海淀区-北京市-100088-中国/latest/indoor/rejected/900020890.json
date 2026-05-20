@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900020890,
+  "name": "14号楼",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

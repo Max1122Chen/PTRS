@@ -49,6 +49,12 @@ public class DevSeedDataLoader
 
     private final PasswordEncoder passwordEncoder;
 
+    private final IndoorDevSeedLoader indoorDevSeedLoader;
+
+    private final com.travel.indoor.IndoorGraphRegistry indoorGraphRegistry;
+
+    private final MapImportConfigReader mapImportConfigReader;
+
     private volatile boolean loaded;
 
     @Value("${app.dev-seed.enabled:false}")
@@ -63,12 +69,18 @@ public class DevSeedDataLoader
     public DevSeedDataLoader(InMemoryStore store,
                              ObjectMapper objectMapper,
                              ResourceLoader resourceLoader,
-                             PasswordEncoder passwordEncoder)
+                             PasswordEncoder passwordEncoder,
+                             IndoorDevSeedLoader indoorDevSeedLoader,
+                             com.travel.indoor.IndoorGraphRegistry indoorGraphRegistry,
+                             MapImportConfigReader mapImportConfigReader)
     {
         this.store = store;
         this.objectMapper = objectMapper;
         this.resourceLoader = resourceLoader;
         this.passwordEncoder = passwordEncoder;
+        this.indoorDevSeedLoader = indoorDevSeedLoader;
+        this.indoorGraphRegistry = indoorGraphRegistry;
+        this.mapImportConfigReader = mapImportConfigReader;
     }
 
     public synchronized void loadSeedIfEnabled(String reason)
@@ -158,8 +170,12 @@ public class DevSeedDataLoader
             store.insertComment(c);
         }
 
+        int indoorCount = indoorDevSeedLoader.loadIndoorSeeds();
+        indoorGraphRegistry.reloadFromStore(store);
+        // loadIndoorSeeds 内已 reconcile；registry 与 store 保持一致
+
         loaded = true;
-        log.info("Dev seed data loaded from JSON path {} successfully (users={}, scenicAreas={}, facilities={}, foods={}, diaries={}, comments={}), reason={}",
+        log.info("Dev seed data loaded from JSON path {} successfully (users={}, scenicAreas={}, facilities={}, foods={}, diaries={}, comments={}, indoorBuildings={}), reason={}",
                 devSeedPath,
                 bundle.users.size(),
                 bundle.scenicAreas.size(),
@@ -167,6 +183,7 @@ public class DevSeedDataLoader
                 bundle.foods.size(),
                 bundle.diaries.size(),
                 bundle.comments.size(),
+                indoorCount,
                 reason);
     }
 
@@ -199,7 +216,7 @@ public class DevSeedDataLoader
             {
             });
 
-            MapImportConfig mapImportConfig = readMapImportConfig();
+            MapImportConfigReader.MapImportConfig mapImportConfig = readMapImportConfig();
             if (mapImportConfig != null)
             {
                 List<ScenicArea> importedScenicAreas = readOptionalMultiList(
@@ -300,24 +317,9 @@ public class DevSeedDataLoader
         }
     }
 
-    private MapImportConfig readMapImportConfig() throws IOException
+    private MapImportConfigReader.MapImportConfig readMapImportConfig()
     {
-        if (mapImportConfigPath == null || mapImportConfigPath.isBlank())
-        {
-            return null;
-        }
-
-        Resource resource = resourceLoader.getResource(resolveConfigResourcePath(mapImportConfigPath));
-        if (!resource.exists())
-        {
-            log.warn("Dev seed map import config not found, skip map imports: {}", mapImportConfigPath);
-            return null;
-        }
-
-        try (InputStream inputStream = resource.getInputStream())
-        {
-            return objectMapper.readValue(inputStream, MapImportConfig.class);
-        }
+        return mapImportConfigReader.read(mapImportConfigPath);
     }
 
     private String resolveConfigResourcePath(String path)
@@ -433,21 +435,4 @@ public class DevSeedDataLoader
     {
     }
 
-    private record MapImportConfig(
-        List<String> scenicAreas,
-        List<String> pois,
-        List<String> buildings,
-        List<String> roads,
-        List<String> facilities
-    )
-    {
-        private MapImportConfig
-        {
-            scenicAreas = scenicAreas == null ? Collections.emptyList() : scenicAreas;
-            pois = pois == null ? Collections.emptyList() : pois;
-            buildings = buildings == null ? Collections.emptyList() : buildings;
-            roads = roads == null ? Collections.emptyList() : roads;
-            facilities = facilities == null ? Collections.emptyList() : facilities;
-        }
-    }
 }

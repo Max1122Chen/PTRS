@@ -8,10 +8,12 @@ import com.travel.model.entity.Road;
 import com.travel.model.entity.ScenicArea;
 import com.travel.security.AuthUser;
 import com.travel.security.SecurityUtil;
+import com.travel.service.AdminOsmCollectService;
 import com.travel.service.AdminService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,14 +35,17 @@ public class AdminController
 {
 
     private final AdminService adminService;
+    private final AdminOsmCollectService adminOsmCollectService;
     private final boolean devToolsEnabled;
     private final boolean authEnabled;
 
     public AdminController(AdminService adminService,
+                           AdminOsmCollectService adminOsmCollectService,
                            @Value("${app.admin.dev-tools.enabled:true}") boolean devToolsEnabled,
                            @Value("${app.security.auth-enabled:true}") boolean authEnabled)
     {
         this.adminService = adminService;
+        this.adminOsmCollectService = adminOsmCollectService;
         this.devToolsEnabled = devToolsEnabled;
         this.authEnabled = authEnabled;
     }
@@ -116,7 +121,29 @@ public class AdminController
         }
         String placeName = payload == null ? null : String.valueOf(payload.getOrDefault("placeName", ""));
         boolean force = payload != null && Boolean.TRUE.equals(payload.get("force"));
-        return ApiResponse.success(adminService.runPlaceSeedTask(placeName, force), "执行完成");
+        boolean collectIndoor = payload == null || !payload.containsKey("collectIndoor") || Boolean.TRUE.equals(payload.get("collectIndoor"));
+        return ApiResponse.success(adminOsmCollectService.submitImportTask(placeName, force, collectIndoor), "任务已提交");
+    }
+
+    @GetMapping("/dev/osm-collect-task/{taskId}")
+    public ApiResponse<Map<String, Object>> osmCollectTask(@PathVariable("taskId") String taskId)
+    {
+        if (!devToolsEnabled)
+        {
+            return ApiResponse.failure(403, "开发工具接口未启用");
+        }
+        if (!isAdmin())
+        {
+            return ApiResponse.failure(403, "无权限");
+        }
+        try
+        {
+            return ApiResponse.success(adminOsmCollectService.getTask(taskId), "获取成功");
+        }
+        catch (IllegalArgumentException ex)
+        {
+            return ApiResponse.failure(404, ex.getMessage());
+        }
     }
 
     @GetMapping("/dev/local-place-search")
@@ -175,9 +202,11 @@ public class AdminController
         String selectedOsmId = selectedOsm == null ? null : String.valueOf(selectedOsm.getOrDefault("osmId", ""));
         boolean force = payload != null && Boolean.TRUE.equals(payload.get("force"));
         boolean buildFrontend = payload == null || !payload.containsKey("buildFrontend") || Boolean.TRUE.equals(payload.get("buildFrontend"));
+        boolean collectIndoor = payload == null || !payload.containsKey("collectIndoor") || Boolean.TRUE.equals(payload.get("collectIndoor"));
         return ApiResponse.success(
-            adminService.generateFromSelectedOsm(placeName, query, selectedPlaceId, selectedOsmType, selectedOsmId, force, buildFrontend),
-            "执行完成"
+            adminOsmCollectService.submitGenerateTask(placeName, query, selectedPlaceId, selectedOsmType, selectedOsmId, force,
+                buildFrontend, collectIndoor),
+            "任务已提交"
         );
     }
 

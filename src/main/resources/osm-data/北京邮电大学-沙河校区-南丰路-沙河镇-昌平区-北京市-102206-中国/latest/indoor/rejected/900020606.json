@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900020606,
+  "name": "理学院楼",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900021536,
+  "name": "元培楼",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

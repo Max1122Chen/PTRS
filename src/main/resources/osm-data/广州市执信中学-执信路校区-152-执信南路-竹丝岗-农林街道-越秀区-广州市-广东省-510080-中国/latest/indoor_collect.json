@@ -1,0 +1,171 @@
+{
+  "enabled": true,
+  "candidates": 12,
+  "ok": 0,
+  "reject": 9,
+  "error": 3,
+  "results": [
+    {
+      "buildingPoiId": 900021534,
+      "areaId": 250,
+      "name": "仁爱楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021547,
+      "areaId": 250,
+      "name": "以升楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021536,
+      "areaId": 250,
+      "name": "元培楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021535,
+      "areaId": 250,
+      "name": "厚德楼",
+      "type": "teaching",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 429: Too Many Requests"
+      ],
+      "outputPath": null,
+      "strategy": null
+    },
+    {
+      "buildingPoiId": 900021546,
+      "areaId": 250,
+      "name": "奉恩堂",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021532,
+      "areaId": 250,
+      "name": "广州市执信中学(执信路校区)",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021533,
+      "areaId": 250,
+      "name": "执信楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021540,
+      "areaId": 250,
+      "name": "承志楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021538,
+      "areaId": 250,
+      "name": "执信女生宿舍",
+      "type": "dormitory",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021539,
+      "areaId": 250,
+      "name": "执信男生宿舍",
+      "type": "dormitory",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    },
+    {
+      "buildingPoiId": 900021537,
+      "areaId": 250,
+      "name": "中山大学附属眼科医院",
+      "type": "medical",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 504: Gateway Timeout"
+      ],
+      "outputPath": null,
+      "strategy": null
+    },
+    {
+      "buildingPoiId": 900021545,
+      "areaId": 250,
+      "name": "厚望广场",
+      "type": "scenic_spot",
+      "status": "error",
+      "failures": [
+        "OVERPASS:HTTP Error 504: Gateway Timeout"
+      ],
+      "outputPath": null,
+      "strategy": null
+    }
+  ]
+}

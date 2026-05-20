@@ -1,4 +1,8 @@
 spring:
+  devtools:
+    restart:
+      # 管理端采集会写入 osm-data / indoor，避免热重启打断长耗时 generate-from-osm 请求
+      additional-exclude: osm-data/**,dev-seed/indoor/**
   config:
     activate:
       on-profile: dev

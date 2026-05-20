@@ -1,6 +1,6 @@
 [
   {
-    "id": 219,
+    "id": 248,
     "name": "北京邮电大学（沙河校区）",
     "description": "Generated from OpenStreetMap (review required).",
     "location": "北京邮电大学（沙河校区）, 南丰路, 沙河镇, 昌平区, 北京市, 102206, 中国",
@@ -11,7 +11,7 @@
     "heat": 0,
     "openTime": "待核实",
     "ticketPrice": "待核实",
-    "createTime": "2026-03-31T12:48:07",
-    "updateTime": "2026-03-31T12:48:07"
+    "createTime": "2026-05-20T23:36:46",
+    "updateTime": "2026-05-20T23:36:46"
   }
 ]

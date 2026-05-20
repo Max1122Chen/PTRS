@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900021534,
+  "name": "仁爱楼",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

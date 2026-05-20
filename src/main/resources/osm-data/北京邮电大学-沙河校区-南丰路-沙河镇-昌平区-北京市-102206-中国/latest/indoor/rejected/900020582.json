@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900020582,
+  "name": "图书馆自习室",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

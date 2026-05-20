@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900020887,
+  "name": "南区教学楼",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

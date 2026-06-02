@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+import { useRoute, useRouter } from 'vue-router'
 import {
-  apiDiaryDelete,
   apiDiaryDetail,
   apiDiaryList,
   apiDiarySearch,
@@ -16,6 +14,7 @@ import { interestLabelZh, isExcludedTagPickerKey, normalizeInterestKey } from '.
 import { useAuthStore } from '../../stores/auth'
 
 const auth = useAuthStore()
+const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 
@@ -24,6 +23,7 @@ const list = ref<Diary[]>([])
 const diaryDestMap = ref<Record<number, number[]>>({})
 const diaryCreatorNicknameMap = ref<Record<number, string>>({})
 const scenicTagMap = ref<Record<number, string[]>>({})
+const scenicNameMap = ref<Record<number, string>>({})
 
 /** 用户兴趣（规范键 + 权重），用于顶部标签顺序与内容 */
 const interestRows = ref<{ type: string; weight: number }[]>([])
@@ -197,9 +197,40 @@ function onSearchClear() {
   suggestionLoading.value = false
 }
 
-function applySuggestion(item: SearchSuggestion) {
+async function applySuggestion(item: SearchSuggestion) {
   suggestionOpen.value = false
-  void router.push(`/diary/${item.diaryId}`)
+  const q: Record<string, string> = {
+    lm: 'b',
+    chip: activeChipId.value,
+    sort: sortBy.value,
+  }
+  const inp = searchInput.value.trim()
+  if (inp) q.inp = inp
+  await router.replace({ path: '/diary', query: q })
+  await router.push(`/diary/${item.diaryId}`)
+}
+
+function buildDiaryListReturnQuery(): Record<string, string> {
+  const q: Record<string, string> = {
+    chip: activeChipId.value,
+    sort: sortBy.value,
+    inp: searchInput.value.trim(),
+  }
+  if (fromSearch.value) {
+    q.lm = 's'
+    if (searchQuery.keyword.trim()) q.kw = searchQuery.keyword.trim()
+    if (searchQuery.destination != null) q.dst = String(searchQuery.destination)
+    if (confirmedSearchLabel.value) q.lbl = confirmedSearchLabel.value
+  } else {
+    q.lm = 'b'
+  }
+  return q
+}
+
+async function openDiaryDetail(row: Diary) {
+  const q = buildDiaryListReturnQuery()
+  await router.replace({ path: '/diary', query: q })
+  await router.push(`/diary/${row.id}`)
 }
 
 async function confirmSearch() {
@@ -313,6 +344,49 @@ function firstImage(d: Diary): string | null {
   }
 }
 
+/** 关联景区 tags（去重，中文展示） */
+function diaryScenicTags(row: Diary): string[] {
+  const destIds = diaryDestMap.value[row.id] || []
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const destId of destIds) {
+    for (const tag of scenicTagMap.value[destId] || []) {
+      const label = interestLabelZh(normalizeInterestKey(tag || ''))
+      if (!label || seen.has(label)) continue
+      seen.add(label)
+      out.push(label)
+    }
+  }
+  return out
+}
+
+function diaryScenicLabel(row: Diary): string {
+  const destIds = diaryDestMap.value[row.id] || []
+  const names = destIds
+    .map((id) => scenicNameMap.value[id])
+    .filter((n): n is string => Boolean(n))
+  if (names.length) return names.join(' · ')
+  return diaryCreatorNicknameMap.value[row.id] || '—'
+}
+
+function formatDiaryDate(row: Diary): string {
+  const raw = row.createTime
+  if (!raw) return ''
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return raw.slice(0, 7).replace(/-/g, '.')
+  const y = d.getFullYear()
+  const m = `${d.getMonth() + 1}`.padStart(2, '0')
+  return `${y}.${m}`
+}
+
+function diaryHeatBadge(row: Diary): string {
+  if (sortBy.value === 'rating' && row.rating != null) {
+    return `★${Number(row.rating).toFixed(1)}`
+  }
+  const heat = Number(row.heat ?? 0)
+  return `热 ${Number.isFinite(heat) ? heat : 0}`
+}
+
 async function showAll() {
   fromSearch.value = false
   searchQuery.keyword = ''
@@ -329,11 +403,14 @@ async function showAll() {
 async function ensureScenicTagMap() {
   if (Object.keys(scenicTagMap.value).length > 0) return
   const res = await apiRecommendationList({ page: 1, size: 300, sortBy: 'heat' })
-  const map: Record<number, string[]> = {}
+  const tagMap: Record<number, string[]> = {}
+  const nameMap: Record<number, string> = {}
   for (const item of res.list || []) {
-    map[item.id] = Array.isArray(item.tags) ? item.tags : []
+    tagMap[item.id] = Array.isArray(item.tags) ? item.tags : []
+    if (item.name) nameMap[item.id] = item.name
   }
-  scenicTagMap.value = map
+  scenicTagMap.value = tagMap
+  scenicNameMap.value = nameMap
 }
 
 async function hydrateDiaryDestinations(diaries: Diary[]) {
@@ -396,21 +473,37 @@ async function loadInterestChips() {
   }
 }
 
-function canManage(row: Diary) {
-  return auth.isAuthed && auth.user?.id === row.userId
-}
-
-async function del(row: Diary, e: Event) {
-  e.stopPropagation()
-  await ElMessageBox.confirm('确认删除该日记？此操作不可恢复。', '警告', { type: 'warning' })
-  await apiDiaryDelete(row.id)
-  if (fromSearch.value) await runSearch()
-  else await load()
-}
-
 onMounted(async () => {
   await loadInterestChips()
-  await load()
+  const rq = route.query
+  if (rq.lm === 's') {
+    activeChipId.value =
+      typeof rq.chip === 'string' && rq.chip ? rq.chip : RECOMMEND_CHIP_ID
+    sortBy.value = rq.sort === 'rating' ? 'rating' : 'heat'
+    searchQuery.keyword = typeof rq.kw === 'string' ? rq.kw : ''
+    if (typeof rq.dst === 'string' && rq.dst) {
+      const d = Number(rq.dst)
+      searchQuery.destination = Number.isFinite(d) ? d : undefined
+    } else {
+      searchQuery.destination = undefined
+    }
+    confirmedSearchLabel.value = typeof rq.lbl === 'string' ? rq.lbl : ''
+    searchInput.value =
+      typeof rq.inp === 'string' && rq.inp
+        ? rq.inp
+        : searchQuery.keyword || (confirmedSearchLabel.value.startsWith('目的地：') ? confirmedSearchLabel.value.slice(5) : '')
+    fromSearch.value = true
+    await runSearch()
+  } else if (rq.lm === 'b' || typeof rq.chip === 'string' || rq.sort === 'rating' || rq.sort === 'heat') {
+    if (typeof rq.chip === 'string' && rq.chip) activeChipId.value = rq.chip
+    sortBy.value = rq.sort === 'rating' ? 'rating' : 'heat'
+    await load()
+  } else {
+    await load()
+  }
+  if (Object.keys(rq).length) {
+    await router.replace({ path: '/diary' })
+  }
 })
 
 watch(
@@ -530,28 +623,35 @@ watch(searchInput, (value) => {
         <el-button text type="primary" @click="showAll">查看全部</el-button>
       </div>
 
-      <div class="feed" v-loading="loading">
-        <div
-          v-for="row in displayItems"
+      <div class="feed lookbook-grid" v-loading="loading">
+        <article
+          v-for="(row, index) in displayItems"
           :key="row.id"
-          class="diary-card"
-          @click="$router.push(`/diary/${row.id}`)"
+          class="lookbook-card diary-card ui-interactive-card animate-fade-in-up"
+          :style="{ animationDelay: `${index * 0.08}s` }"
+          @click="openDiaryDetail(row)"
         >
-          <div class="cover">
-            <img v-if="firstImage(row)" :src="firstImage(row)!" alt="" />
+          <div class="lookbook-media ui-card-media">
+            <img v-if="firstImage(row)" :src="firstImage(row)!" :alt="row.title" class="lookbook-img" />
             <div v-else class="cover-placeholder">无图</div>
-          </div>
-          <div class="card-title">
-            <div class="card-title-row">
-              <div class="card-title-text">{{ row.title }}</div>
-              <div v-if="diaryCreatorNicknameMap[row.id]" class="card-nickname">{{ diaryCreatorNicknameMap[row.id] }}</div>
+            <div class="lookbook-overlay" aria-hidden="true" />
+            <div class="lookbook-caption">
+              <span class="lookbook-title">{{ row.title }}</span>
+              <span class="lookbook-badge">{{ diaryHeatBadge(row) }}</span>
             </div>
           </div>
-          <div v-if="canManage(row)" class="card-actions" @click.stop>
-            <el-button size="small" @click="$router.push(`/diary/${row.id}/edit`)">编辑</el-button>
-            <el-button size="small" type="danger" @click="del(row, $event)">删除</el-button>
+          <div class="lookbook-body">
+            <div class="lookbook-meta">
+              <span class="lookbook-dest">{{ diaryScenicLabel(row) }}</span>
+              <span v-if="formatDiaryDate(row)" class="lookbook-date">{{ formatDiaryDate(row) }}</span>
+            </div>
+            <div v-if="diaryScenicTags(row).length" class="lookbook-tags">
+              <span v-for="tag in diaryScenicTags(row)" :key="`${row.id}-${tag}`" class="lookbook-tag">
+                {{ tag }}
+              </span>
+            </div>
           </div>
-        </div>
+        </article>
 
         <div v-if="!displayItems.length && !loading" class="empty muted">暂无日记</div>
       </div>
@@ -603,20 +703,27 @@ watch(searchInput, (value) => {
 .tag-btn {
   border: none;
   background: transparent;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
   color: var(--text-secondary, #756b59);
   font-size: 14px;
   cursor: pointer;
   white-space: nowrap;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.tag-btn:hover:not(.active) {
+  background: var(--glass-subtle);
 }
 
 .tag-btn.active {
-  background: var(--glass-subtle);
-  color: var(--text-primary, #2d2618);
+  background: var(--accent);
+  color: #fff;
   font-weight: 700;
-  backdrop-filter: blur(var(--glass-subtle-blur));
-  -webkit-backdrop-filter: blur(var(--glass-subtle-blur));
+  box-shadow: 0 2px 10px rgba(22, 66, 60, 0.25);
 }
 
 .hdr-actions {
@@ -740,40 +847,22 @@ watch(searchInput, (value) => {
   font-size: 13px;
 }
 
-.feed {
+.feed.lookbook-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
   max-width: none;
   margin: 0;
   min-height: 120px;
 }
 
-@media (max-width: 1200px) {
-  .feed {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+@media (max-width: 560px) {
+  .feed.lookbook-grid {
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 980px) {
-  .feed {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 720px) {
-  .feed {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 480px) {
-  .feed {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-  }
-}
-
-.diary-card {
+.lookbook-card.diary-card {
   cursor: pointer;
   border-radius: 16px;
   overflow: hidden;
@@ -781,22 +870,17 @@ watch(searchInput, (value) => {
   border: 1px solid var(--glass-border-soft);
   backdrop-filter: blur(var(--glass-card-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-card-blur)) saturate(var(--glass-saturate));
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.diary-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-}
-
-.cover {
+.lookbook-media {
+  position: relative;
   width: 100%;
   aspect-ratio: 3 / 4;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.18);
   overflow: hidden;
 }
 
-.cover img {
+.lookbook-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -810,27 +894,38 @@ watch(searchInput, (value) => {
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(22, 66, 60, 0.25);
 }
 
-.card-title {
-  padding: 14px 16px 12px;
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 1.45;
-  color: var(--text-primary, #1a1a18);
+.lookbook-overlay {
+  position: absolute;
+  inset: auto 0 0;
+  height: 5rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.38), transparent);
+  pointer-events: none;
 }
 
-.card-title-row {
+.lookbook-caption {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
   display: flex;
+  align-items: flex-end;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
+  z-index: 1;
 }
 
-.card-title-text {
+.lookbook-title {
   flex: 1;
   min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.35;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -838,23 +933,62 @@ watch(searchInput, (value) => {
   -webkit-box-orient: vertical;
 }
 
-.card-nickname {
+.lookbook-badge {
   flex-shrink: 0;
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 400;
-  color: rgba(58, 51, 40, 0.65);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 45%;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a18);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 4px 8px;
+  border-radius: 999px;
 }
 
-.card-actions {
-  padding: 0 16px 14px;
+.lookbook-body {
+  padding: 14px 16px 12px;
   display: flex;
+  flex-direction: column;
   gap: 8px;
+}
+
+.lookbook-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.lookbook-dest {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a18);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lookbook-date {
+  flex-shrink: 0;
+  color: var(--text-secondary, rgba(58, 51, 40, 0.65));
+  font-size: 11px;
+}
+
+.lookbook-tags {
+  display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lookbook-tag {
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--text-secondary, #6b6860);
+  background: rgba(22, 66, 60, 0.08);
+  padding: 3px 8px;
+  border-radius: 999px;
 }
 
 .empty {

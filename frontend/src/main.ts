@@ -9,6 +9,8 @@ import router from './router'
 
 import './styles/global.css'
 import './styles/premium.css'
+import './styles/ui-enhancements.css'
+import './styles/form-row.css'
 import './styles/explorescape.css'
 
 const app = createApp(App)

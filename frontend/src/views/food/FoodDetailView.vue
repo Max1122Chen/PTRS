@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { apiFoodDetailView, apiFoodRate, apiTrackEngagement, type FoodDetailVO } from '../../lib/api'
 import { useAuthStore } from '../../stores/auth'
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 const loading = ref(false)
 const food = ref<FoodDetailVO | null>(null)
@@ -47,15 +48,26 @@ async function engage(actionType: 'LIKE' | 'FAVORITE') {
 }
 
 onMounted(load)
+
+function goFoodList() {
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
+  router.push('/food')
+}
 </script>
 
 <template>
   <div class="page" v-loading="loading">
     <el-card class="glass" shadow="never">
       <template #header>
-        <div style="display: flex; justify-content: space-between; align-items: center">
-          <div style="font-weight: 900">{{ food?.name || '美食详情' }}</div>
-          <el-tag effect="plain">{{ food?.cuisine || '—' }}</el-tag>
+        <div class="food-detail-header">
+          <el-button link type="primary" class="back-nav" @click="goFoodList">← 美食</el-button>
+          <div class="food-detail-header-main">
+            <div style="font-weight: 900">{{ food?.name || '美食详情' }}</div>
+            <el-tag effect="plain">{{ food?.cuisine || '—' }}</el-tag>
+          </div>
         </div>
       </template>
 
@@ -112,6 +124,24 @@ onMounted(load)
 </template>
 
 <style scoped>
+.food-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.back-nav {
+  flex-shrink: 0;
+  padding: 0;
+  font-weight: 700;
+}
+.food-detail-header-main {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

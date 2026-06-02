@@ -43,11 +43,6 @@ function exploreMore() {
           <i class="fa-solid fa-arrow-right" aria-hidden="true" />
         </button>
       </div>
-
-      <div class="es-slider" aria-hidden="true">
-        <i class="fa-solid fa-chevron-left" />
-        <i class="fa-solid fa-chevron-right" />
-      </div>
     </div>
   </div>
 </template>

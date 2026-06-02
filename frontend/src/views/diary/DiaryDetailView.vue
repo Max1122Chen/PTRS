@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   apiDiaryAnimationCancel,
   apiDiaryAnimationGenerate,
   apiDiaryAnimationJob,
+  apiDiaryDelete,
   apiDiaryDetail,
   apiDiaryRate,
   apiScenicDetail,
@@ -48,6 +49,11 @@ const animOpts = reactive({
 const animAbortPoll = ref(false)
 
 function goDiaryList() {
+  // 与列表页 replace+push 配合：返回上一历史项即带筛选/搜索状态的 /diary?...
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
   router.push('/diary')
 }
 
@@ -133,6 +139,14 @@ async function load() {
 
 function isDiaryOwner() {
   return auth.isAuthed && auth.user?.id != null && diary.value?.userId === auth.user.id
+}
+
+async function deleteDiary() {
+  if (!diary.value?.id) return
+  await ElMessageBox.confirm('确认删除该日记？此操作不可恢复。', '警告', { type: 'warning' })
+  await apiDiaryDelete(diary.value.id)
+  ElMessage.success('已删除')
+  goDiaryList()
 }
 
 async function generateAnimation() {
@@ -231,6 +245,10 @@ onMounted(load)
             <div class="muted" style="font-size: 13px">
               热度 {{ diary?.heat ?? 0 }} · 评分 {{ diary?.rating ?? 0 }}
             </div>
+          </div>
+          <div v-if="isDiaryOwner()" class="detail-header-actions">
+            <el-button size="small" @click="router.push(`/diary/${diary?.id}/edit`)">编辑</el-button>
+            <el-button size="small" type="danger" @click="deleteDiary">删除</el-button>
           </div>
         </div>
       </template>
@@ -369,6 +387,12 @@ onMounted(load)
 .detail-header-main {
   flex: 1;
   min-width: 0;
+}
+.detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 .back-nav {
   flex-shrink: 0;

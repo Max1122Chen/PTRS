@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
+import { useAiConfigStore } from '../stores/aiConfig'
+import { useAuthStore } from '../stores/auth'
 
 type ChatRole = 'user' | 'assistant'
 
@@ -19,9 +21,8 @@ type LocalChatResponse = {
   }
 }
 
-const endpoint = ref('https://api.openai.com/v1/chat/completions')
-const model = ref('gpt-4o-mini')
-const apiKey = ref('')
+const auth = useAuthStore()
+const aiConfig = useAiConfigStore()
 const input = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
@@ -36,7 +37,7 @@ const messages = ref<ChatMessage[]>([
 ])
 
 const canSend = computed(() => {
-  return !loading.value && input.value.trim().length > 0 && apiKey.value.trim().length > 0
+  return !loading.value && input.value.trim().length > 0 && aiConfig.isComplete
 })
 
 function formatTime(date: Date) {
@@ -85,9 +86,9 @@ async function sendMessage() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        endpoint: endpoint.value.trim(),
-        apiKey: apiKey.value.trim(),
-        model: model.value.trim() || 'gpt-4o-mini',
+        endpoint: aiConfig.endpoint.trim(),
+        apiKey: aiConfig.apiKey.trim(),
+        model: aiConfig.model.trim() || 'gpt-4o-mini',
         temperature: 0.7,
         messages: messages.value.map((item) => ({
           role: item.role,
@@ -110,30 +111,24 @@ async function sendMessage() {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  if (auth.user?.id) {
+    aiConfig.ensureLoaded(auth.user.id)
+  }
+})
 </script>
 
 <template>
   <div class="page about">
-    <h1 class="h1">About ExploreScape</h1>
-    <p class="lead muted">
-      旅游助手 Agent（会话不保存，仅当前页面有效）
-    </p>
-    <div class="chat-card">
-      <div class="config-row">
-        <input v-model="endpoint" class="cfg-input" placeholder="模型接口地址" />
-        <input v-model="model" class="cfg-input model-input" placeholder="模型名称，如 gpt-4o-mini" />
-      </div>
-      <div class="config-row">
-        <input
-          v-model="apiKey"
-          type="password"
-          class="cfg-input"
-          placeholder="输入 API Key（仅本页内存使用）"
-        />
+    <h1 class="h1 animate-fade-in-up">About ExploreScape</h1>
+    <div class="chat-card animate-fade-in-up delay-100">
+      <div class="chat-toolbar">
+        <span class="muted chat-toolbar-hint">API 配置请在个人中心录入并保存</span>
         <button class="ghost-btn" type="button" @click="clearChat">清空会话</button>
       </div>
 
-      <div ref="listEl" class="chat-list">
+      <div ref="listEl" class="chat-list ui-scroll-thin">
         <div v-for="msg in messages" :key="msg.id" class="chat-item" :class="msg.role">
           <div class="avatar">{{ msg.role === 'user' ? '我' : '旅' }}</div>
           <div class="bubble-wrap">
@@ -172,10 +167,17 @@ async function sendMessage() {
   margin: 0 0 12px;
   color: #16423c;
 }
-.lead {
-  font-size: 15px;
-  line-height: 1.75;
-  margin: 0 0 14px;
+.chat-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.chat-toolbar-hint {
+  font-size: 13px;
 }
 
 .chat-card {
@@ -185,26 +187,15 @@ async function sendMessage() {
   border-radius: 16px;
   padding: 14px;
   background: rgba(255, 255, 255, 0.52);
-  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border-soft, rgba(255, 255, 255, 0.3));
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow: 0 12px 40px rgba(10, 21, 19, 0.1);
+  transition: box-shadow 0.25s ease;
 }
 
-.config-row {
-  display: flex;
-  gap: 8px;
-}
-
-.cfg-input {
-  flex: 1;
-  border: 1px solid rgba(22, 66, 60, 0.2);
-  border-radius: 10px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.78);
-  color: #1f2d2b;
-  outline: none;
-}
-
-.model-input {
-  max-width: 240px;
+.chat-card:hover {
+  box-shadow: 0 14px 44px rgba(10, 21, 19, 0.12);
 }
 
 .ghost-btn {
@@ -214,6 +205,15 @@ async function sendMessage() {
   background: rgba(255, 255, 255, 0.7);
   color: #16423c;
   cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.ghost-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(22, 66, 60, 0.45);
 }
 
 .chat-list {
@@ -305,6 +305,16 @@ async function sendMessage() {
   background: #16423c;
   color: #fff;
   cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.send-btn:not(:disabled):hover {
+  background: #12372f;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(22, 66, 60, 0.28);
 }
 
 .send-btn:disabled {

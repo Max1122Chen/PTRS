@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { apiScenicDetail, apiTrackEngagement, type ScenicArea } from '../../lib/api'
 import ScenicNearbyDialog from '../../components/map/ScenicNearbyDialog.vue'
 import { useAuthStore } from '../../stores/auth'
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 const loading = ref(false)
 const scenic = ref<ScenicArea | null>(null)
@@ -25,6 +26,14 @@ async function load() {
 }
 
 onMounted(load)
+
+function goExploreList() {
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
+  router.push('/recommend')
+}
 
 function openNearbyDialog() {
   if (!hasLocationDisplay.value) return
@@ -50,11 +59,14 @@ async function engage(actionType: 'LIKE' | 'FAVORITE') {
   <div class="page" v-loading="loading">
     <el-card class="glass" shadow="never">
       <template #header>
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
-          <div style="font-weight: 900; font-size: 18px">{{ scenic?.name || '景区详情' }}</div>
-          <div class="tagWrap">
+        <div class="scenic-detail-header">
+          <el-button link type="primary" class="back-nav" @click="goExploreList">← 探索景区</el-button>
+          <div class="scenic-detail-header-main">
+            <div style="font-weight: 900; font-size: 18px">{{ scenic?.name || '景区详情' }}</div>
+            <div class="tagWrap">
             <div class="muted tagLabel">标签</div>
             <el-tag effect="plain">{{ scenic?.type || '—' }}</el-tag>
+          </div>
           </div>
         </div>
       </template>
@@ -118,6 +130,24 @@ async function engage(actionType: 'LIKE' | 'FAVORITE') {
 </template>
 
 <style scoped>
+.scenic-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.back-nav {
+  flex-shrink: 0;
+  padding: 0;
+  font-weight: 700;
+}
+.scenic-detail-header-main {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .tagWrap {
   display: flex;
   align-items: center;

@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
-import { ElMessage } from 'element-plus'
-import { apiGetInterest, apiRefresh, apiTagsList, apiUpdateInterest } from '../../lib/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { UploadInstance, UploadRequestOptions } from 'element-plus'
+import { Setting } from '@element-plus/icons-vue'
+import { apiGetInterest, apiGetProfile, apiRefresh, apiTagsList, apiUpdateInterest, apiUploadAvatar } from '../../lib/api'
+import { useAiConfigStore } from '../../stores/aiConfig'
+import UserAvatar from '../../components/UserAvatar.vue'
 import {
   COMMON_INTEREST_KEYS,
   interestLabelZh,
@@ -13,7 +18,13 @@ import {
 import { useAuthStore } from '../../stores/auth'
 
 const auth = useAuthStore()
+const aiConfig = useAiConfigStore()
+const router = useRouter()
 const loading = ref(false)
+const avatarUploading = ref(false)
+const aiSaving = ref(false)
+const avatarUploadRef = ref<UploadInstance>()
+
 const interestItems = ref<InterestInput[]>([])
 const chartEl = ref<HTMLDivElement | null>(null)
 let interestChart: echarts.ECharts | null = null
@@ -187,7 +198,94 @@ async function loadTagCatalog() {
   }
 }
 
+function beforeAvatarUpload(file: File) {
+  const lower = file.name.toLowerCase()
+  if (!/\.(jpg|jpeg|png)$/.test(lower)) {
+    ElMessage.warning('头像仅支持 JPG/PNG')
+    return false
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    ElMessage.warning('头像大小不能超过 2MB')
+    return false
+  }
+  return true
+}
+
+async function customAvatarUpload(options: UploadRequestOptions) {
+  avatarUploading.value = true
+  try {
+    const file = options.file as File
+    const user = await apiUploadAvatar(file)
+    auth.patchUser({ avatar: user.avatar })
+    ElMessage.success('头像已更新')
+    options.onSuccess?.(user)
+  } catch (err) {
+    options.onError?.(err as any)
+  } finally {
+    avatarUploading.value = false
+  }
+}
+
+async function loadProfile() {
+  if (!auth.isAuthed) return
+  try {
+    const user = await apiGetProfile()
+    if (user) auth.patchUser(user)
+  } catch {
+    // 使用本地缓存即可
+  }
+}
+
+function saveAiForm() {
+  if (!auth.user?.id) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  if (!aiConfig.isComplete) {
+    ElMessage.warning('请填写完整的 API 信息')
+    return
+  }
+  aiSaving.value = true
+  try {
+    aiConfig.persistForUser(auth.user.id)
+    ElMessage.success('API 配置已保存，About 页旅游助手将自动使用')
+  } finally {
+    aiSaving.value = false
+  }
+}
+
+async function logout() {
+  await ElMessageBox.confirm('确认退出登录？', '提示', { type: 'warning' })
+  aiConfig.resetSession()
+  auth.clear()
+  router.push('/home')
+}
+
+function triggerAvatarUpload() {
+  const input = avatarUploadRef.value?.$el.querySelector('input[type="file"]') as HTMLInputElement | null
+  input?.click()
+}
+
+function onAvatarMenu(command: string | number | object) {
+  if (command === 'upload') {
+    triggerAvatarUpload()
+    return
+  }
+  if (command === 'logout') {
+    void logout()
+  }
+}
+
+watch(
+  () => auth.user?.id,
+  (id) => {
+    if (id) aiConfig.ensureLoaded(id)
+  },
+  { immediate: true },
+)
+
 onMounted(() => {
+  void loadProfile()
   loadInterests()
   void loadTagCatalog()
 })
@@ -203,15 +301,41 @@ onMounted(() => {
         </div>
       </template>
 
-      <div class="grid">
-        <div class="glass block">
-          <div class="k">用户名</div>
-          <div class="v">{{ auth.user?.username }}</div>
+      <div class="avatar-section glass block">
+        <div class="avatar-row">
+          <UserAvatar :src="auth.user?.avatar" :size="88" />
+          <div class="avatar-info">
+            <p class="avatar-name">{{ auth.user?.username }}</p>
+            <p class="avatar-id muted">ID {{ auth.user?.id ?? '—' }}</p>
+          </div>
+          <div class="avatar-actions">
+            <el-dropdown trigger="click" @command="onAvatarMenu">
+              <button type="button" class="settings-btn" aria-label="设置">
+                <el-icon :size="20"><Setting /></el-icon>
+              </button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="upload" :disabled="avatarUploading">
+                    {{ avatarUploading ? '上传中…' : '上传头像' }}
+                  </el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </div>
-        <div class="glass block">
-          <div class="k">用户ID</div>
-          <div class="v">{{ auth.user?.id }}</div>
-        </div>
+        <el-upload
+          ref="avatarUploadRef"
+          class="avatar-upload-hidden"
+          :show-file-list="false"
+          accept=".jpg,.jpeg,.png"
+          :auto-upload="true"
+          :before-upload="beforeAvatarUpload"
+          :http-request="customAvatarUpload"
+          :disabled="avatarUploading"
+        >
+          <span />
+        </el-upload>
       </div>
 
       <div class="glass block" style="margin-top: 12px">
@@ -250,27 +374,106 @@ onMounted(() => {
           建议：按你常看的内容配置 3-6 个兴趣，权重越高代表偏好越强，范围 <code>(0,5]</code>。
         </div>
       </div>
+
+      <div class="glass block api-section">
+        <div class="k">API 信息录入</div>
+        <p class="muted api-hint">用于 About 页旅游助手对话，保存在本浏览器（按账号区分），无需每次重新填写。</p>
+        <div class="api-row">
+          <el-input v-model="aiConfig.endpoint" placeholder="模型接口地址（自行填写）" clearable />
+          <el-input v-model="aiConfig.model" class="api-model" placeholder="模型名称（自行填写）" clearable />
+        </div>
+        <div class="api-row api-row--single">
+          <el-input
+            v-model="aiConfig.apiKey"
+            type="password"
+            show-password
+            placeholder="输入 API Key"
+            clearable
+          />
+        </div>
+        <div class="actions">
+          <el-button type="primary" :loading="aiSaving" @click="saveAiForm">保存 API 配置</el-button>
+        </div>
+      </div>
     </el-card>
   </div>
 </template>
 
 <style scoped>
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+.avatar-section {
+  margin-bottom: 12px;
 }
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: nowrap;
+}
+
+.avatar-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.avatar-actions {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(22, 66, 60, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #16423c;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.settings-btn:hover {
+  background: rgba(22, 66, 60, 0.08);
+  border-color: rgba(22, 66, 60, 0.38);
+  transform: rotate(18deg);
+}
+
+.settings-btn:focus-visible {
+  outline: 2px solid rgba(22, 66, 60, 0.35);
+  outline-offset: 2px;
+}
+
+.avatar-upload-hidden {
+  display: none;
+}
+
+.avatar-name {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.avatar-id {
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+
 .block {
   padding: 14px;
 }
 .k {
   font-size: 12px;
   color: var(--text-2);
-}
-.v {
-  font-size: 16px;
-  font-weight: 800;
-  margin-top: 6px;
 }
 .actions {
   display: flex;
@@ -322,9 +525,36 @@ onMounted(() => {
   margin-top: 8px;
   font-size: 12px;
 }
+
+.api-section {
+  margin-top: 12px;
+}
+
+.api-hint {
+  margin: 8px 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.api-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.api-row .el-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.api-model {
+  max-width: 280px;
+}
+
 @media (max-width: 720px) {
-  .grid {
-    grid-template-columns: 1fr;
+  .api-model {
+    max-width: none;
   }
 }
 </style>

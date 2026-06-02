@@ -1,0 +1,44 @@
+/* 设施 / 美食等页面：统一搜索行控件形状与提示文字左对齐 */
+
+.formRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.formRow .el-input__wrapper,
+.formRow .el-select__wrapper {
+  border-radius: 999px !important;
+  min-height: 36px;
+  box-sizing: border-box;
+}
+
+.formRow .el-button {
+  border-radius: 999px !important;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 22px;
+}
+
+.formRow .el-input__inner {
+  text-align: left;
+}
+
+.formRow .el-input__inner::placeholder {
+  text-align: left;
+}
+
+.formRow .el-select__wrapper {
+  justify-content: flex-start;
+}
+
+.formRow .el-select__selection {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.formRow .el-select__placeholder,
+.formRow .el-select__selected-item {
+  text-align: left;
+}

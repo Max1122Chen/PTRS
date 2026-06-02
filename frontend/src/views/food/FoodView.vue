@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
 import { onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   apiFoodRecommendation,
   apiFoodSearch,
@@ -10,6 +11,8 @@ import {
   type ScenicArea,
 } from '../../lib/api'
 
+const route = useRoute()
+const router = useRouter()
 const loading = ref(false)
 const tab = ref<'recommend' | 'search'>('recommend')
 
@@ -146,8 +149,49 @@ async function loadSearch() {
   }
 }
 
-onMounted(() => {
-  // areaId 需要用户选择；避免在未填写时直接调用后端
+async function openFoodRecRow(row: FoodRecommendVO) {
+  const rq: Record<string, string> = {
+    ft: 'r',
+    fa: String(rec.areaId ?? ''),
+    fp: String(rec.page),
+    fs: rec.sort || '',
+  }
+  await router.replace({ path: '/food', query: rq })
+  await router.push(`/food/${row.id}`)
+}
+
+async function openFoodSearchRow(row: Food) {
+  const rq: Record<string, string> = {
+    ft: 's',
+    fp: String(q.page),
+    fk: q.keyword || '',
+    fc: q.cuisine || '',
+  }
+  if (q.areaId != null) rq.fa = String(q.areaId)
+  await router.replace({ path: '/food', query: rq })
+  await router.push(`/food/${row.id}`)
+}
+
+onMounted(async () => {
+  const rq = route.query
+  if (rq.ft === 'r') {
+    tab.value = 'recommend'
+    if (typeof rq.fa === 'string' && rq.fa) rec.areaId = Number(rq.fa)
+    rec.page = rq.fp ? Number(rq.fp) || 1 : 1
+    rec.sort = (rq.fs as '' | 'heat' | 'rating' | 'distance') || ''
+    if (rec.areaId != null) await loadRec()
+  } else if (rq.ft === 's') {
+    tab.value = 'search'
+    if (typeof rq.fa === 'string' && rq.fa) q.areaId = Number(rq.fa)
+    else q.areaId = undefined
+    q.keyword = typeof rq.fk === 'string' ? rq.fk : ''
+    q.cuisine = typeof rq.fc === 'string' ? rq.fc : ''
+    q.page = rq.fp ? Number(rq.fp) || 1 : 1
+    await loadSearch()
+  }
+  if (rq.ft) {
+    await router.replace({ path: '/food' })
+  }
 })
 </script>
 
@@ -169,7 +213,7 @@ onMounted(() => {
               placeholder="景区（必填，输入名称关键字）"
               :remote-method="remoteRecArea"
               :loading="recAreaLoading"
-              style="min-width: 200px"
+              class="recArea"
             >
               <el-option
                 v-for="o in recAreaOpts"
@@ -179,7 +223,7 @@ onMounted(() => {
               />
             </el-select>
 
-            <el-select v-model="rec.sort" placeholder="排序（可选）" class="control sortControl" clearable>
+            <el-select v-model="rec.sort" placeholder="排序（可选）" class="sortControl" clearable>
               <el-option label="热度" value="heat" />
               <el-option label="评分" value="rating" />
               <el-option label="距离" value="distance" />
@@ -189,7 +233,12 @@ onMounted(() => {
             <el-button type="primary" :loading="loading" class="getRecBtn" @click="loadRec">搜索</el-button>
           </div>
 
-          <el-table :data="recList" v-loading="loading" style="width: 100%; margin-top: 16px" @row-click="(r: FoodRecommendVO)=>$router.push(`/food/${r.id}`)">
+          <el-table
+            :data="recList"
+            v-loading="loading"
+            style="width: 100%; margin-top: 16px"
+            @row-click="(r: FoodRecommendVO) => void openFoodRecRow(r)"
+          >
             <el-table-column prop="name" label="名称" />
             <el-table-column prop="restaurantName" label="餐厅" width="140" />
             <el-table-column prop="cuisine" label="菜系" width="120" />
@@ -210,7 +259,7 @@ onMounted(() => {
               placeholder="景区（必填，输入名称关键字）"
               :remote-method="remoteQArea"
               :loading="qAreaLoading"
-              style="min-width: 200px"
+              class="searchArea"
             >
               <el-option
                 v-for="o in qAreaOpts"
@@ -220,13 +269,18 @@ onMounted(() => {
               />
             </el-select>
 
-            <el-input v-model="q.keyword" placeholder="关键词 keyword" clearable class="control kwControl" />
-            <el-input v-model="q.cuisine" placeholder="菜系 cuisine" clearable class="control cuisineControl" />
+            <el-input v-model="q.keyword" placeholder="关键词（可选）" clearable class="kwControl" />
+            <el-input v-model="q.cuisine" placeholder="菜系（可选）" clearable class="cuisineControl" />
 
             <el-button type="primary" :loading="loading" class="searchBtn" @click="loadSearch">搜索</el-button>
           </div>
 
-          <el-table :data="list" v-loading="loading" style="width: 100%; margin-top: 16px" @row-click="(r: Food)=>$router.push(`/food/${r.id}`)">
+          <el-table
+            :data="list"
+            v-loading="loading"
+            style="width: 100%; margin-top: 16px"
+            @row-click="(r: Food) => void openFoodSearchRow(r)"
+          >
             <el-table-column prop="name" label="名称" />
             <el-table-column prop="cuisine" label="菜系" width="120" />
             <el-table-column prop="price" label="价格" width="120" />
@@ -240,45 +294,47 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.formRow {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
 .recommendRow {
-  flex-wrap: nowrap; /* 桌面端尽量保持同一排 */
+  flex-wrap: nowrap;
 }
 
-.control {
-  flex-shrink: 1; /* 允许在较窄宽度下自动压缩，避免按钮被挤出画面 */
+.recArea {
+  flex: 1;
+  min-width: 200px;
 }
 
 .sortControl {
-  width: 120px;
+  width: 140px;
+  flex-shrink: 0;
 }
 
 .getRecBtn {
-  flex-shrink: 1;
-  min-width: 120px;
+  flex-shrink: 0;
+  min-width: 96px;
 }
 
 .searchRow {
   flex-wrap: nowrap;
 }
 
+.searchArea {
+  flex: 1.4;
+  min-width: 200px;
+}
+
 .kwControl {
-  width: 150px;
+  flex: 1;
+  min-width: 140px;
 }
 
 .cuisineControl {
-  width: 140px;
+  flex: 0.9;
+  min-width: 130px;
 }
 
 .searchBtn {
-  flex-shrink: 1;
-  min-width: 98px;
+  flex-shrink: 0;
+  min-width: 96px;
 }
 
 @media (max-width: 780px) {
@@ -286,11 +342,6 @@ onMounted(() => {
   .searchRow {
     flex-wrap: wrap;
   }
-}
-
-.hint {
-  margin-top: 8px;
-  font-size: 12px;
 }
 </style>
 

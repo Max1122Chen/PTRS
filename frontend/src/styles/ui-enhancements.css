@@ -1,0 +1,129 @@
+/*
+ * UI polish inspired by code/code1.html — adapted to ExploreScape palette.
+ * Shared motion, scrollbars, and interactive surfaces (no behavior changes).
+ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* —— Scrollbar (themed) —— */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(22, 66, 60, 0.06);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(22, 66, 60, 0.32);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(22, 66, 60, 0.5);
+}
+
+/* —— Entrance animations —— */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.7s ease-out forwards;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+.delay-200 {
+  animation-delay: 0.2s;
+}
+.delay-300 {
+  animation-delay: 0.3s;
+}
+.delay-400 {
+  animation-delay: 0.4s;
+}
+.delay-500 {
+  animation-delay: 0.5s;
+}
+
+/* —— Interactive cards (list / grid items) —— */
+.ui-interactive-card {
+  transition:
+    transform 0.28s ease,
+    box-shadow 0.28s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.ui-interactive-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(10, 21, 19, 0.14);
+}
+
+.ui-interactive-card:active {
+  transform: translateY(-2px);
+}
+
+/* Cover image zoom on card hover (lookbook-style) */
+.ui-card-media {
+  overflow: hidden;
+}
+
+.ui-card-media img {
+  transition: transform 0.45s ease;
+}
+
+.ui-interactive-card:hover .ui-card-media img {
+  transform: scale(1.05);
+}
+
+/* —— Pill / filter chip (category-pill pattern) —— */
+.ui-filter-pill {
+  border: 1px solid var(--glass-border-soft);
+  border-radius: 999px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.ui-filter-pill:hover:not(.is-active) {
+  background: var(--glass-subtle);
+}
+
+.ui-filter-pill.is-active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* —— Focus ring for custom controls —— */
+.es-cta button:focus-visible,
+.ui-filter-pill:focus-visible,
+.ghost-btn:focus-visible,
+.send-btn:focus-visible,
+.cfg-input:focus-visible,
+.chat-input:focus-visible {
+  outline: 2px solid var(--accent-ring, rgba(22, 66, 60, 0.45));
+  outline-offset: 2px;
+}
+
+/* Thin scrollbar variant for nested panels */
+.ui-scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(22, 66, 60, 0.35) transparent;
+}

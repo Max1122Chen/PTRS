@@ -55,5 +55,15 @@ public interface UserService
      * @return 用户视图，找不到时返回 null
      */
     UserVO findByUsername(String username);
+
+    /**
+     * 根据用户 ID 查询用户视图。
+     */
+    UserVO findById(Long userId);
+
+    /**
+     * 更新用户头像 URL。
+     */
+    UserVO updateAvatar(Long userId, String avatarUrl);
 }
 

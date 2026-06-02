@@ -39,7 +39,7 @@ async function submit() {
 
 <template>
   <div class="es-auth-page">
-    <div class="panel glass">
+    <div class="panel glass animate-fade-in-up">
       <div class="hero">
         <div class="h1">创建账号</div>
         <div class="muted">

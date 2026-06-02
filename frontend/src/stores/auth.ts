@@ -5,6 +5,7 @@ export type UserVO = {
   username: string
   role?: string
   interests?: string[]
+  avatar?: string
 }
 
 const LS_TOKEN = 'travel_token'
@@ -26,6 +27,11 @@ export const useAuthStore = defineStore('auth', {
       this.user = user
       localStorage.setItem(LS_TOKEN, token)
       localStorage.setItem(LS_USER, JSON.stringify(user))
+    },
+    patchUser(partial: Partial<UserVO>) {
+      if (!this.user) return
+      this.user = { ...this.user, ...partial }
+      localStorage.setItem(LS_USER, JSON.stringify(this.user))
     },
     clear() {
       this.token = ''

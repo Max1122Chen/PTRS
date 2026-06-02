@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   apiRecommendationList,
@@ -17,6 +18,8 @@ import {
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 const tab = ref<'recommend' | 'personalized'>('recommend')
 
 const query = reactive({
@@ -116,12 +119,16 @@ async function load() {
   }
 }
 
-onMounted(() => {
-  if (canPersonal.value) {
+onMounted(async () => {
+  applyRecommendQueryFromRoute()
+  if (!route.query.rt && canPersonal.value) {
     tab.value = 'personalized'
   }
-  void loadTagCatalog()
-  load()
+  await loadTagCatalog()
+  await load()
+  if (route.query.rt) {
+    await router.replace({ path: '/recommend' })
+  }
 })
 
 watch(
@@ -138,20 +145,60 @@ watch(
 function formatScore(score?: number) {
   return typeof score === 'number' ? score.toFixed(2) : '0.00'
 }
+
+/** 从景区详情返回 /recommend 时用于恢复列表状态（写入历史记录） */
+function recommendReturnQuery(): Record<string, string> {
+  const out: Record<string, string> = {
+    rt: tab.value === 'recommend' ? 'r' : 'p',
+    rp: String(query.page),
+  }
+  if (tab.value === 'personalized' && query.tagKeyword) {
+    out.rk = query.tagKeyword
+  }
+  return out
+}
+
+async function openScenic(item: ScenicArea | ScenicAreaRecommendVO) {
+  const q = recommendReturnQuery()
+  await router.replace({ path: '/recommend', query: q })
+  await router.push(`/scenic/${item.id}`)
+}
+
+function applyRecommendQueryFromRoute() {
+  const rq = route.query
+  if (rq.rt === 'r') {
+    tab.value = 'recommend'
+    query.page = rq.rp ? Number(rq.rp) || 1 : 1
+    query.tagKeyword = ''
+  } else if (rq.rt === 'p') {
+    tab.value = 'personalized'
+    query.page = rq.rp ? Number(rq.rp) || 1 : 1
+    query.tagKeyword = typeof rq.rk === 'string' ? rq.rk : ''
+  }
+}
+
+function onRecommendTabChange() {
+  query.page = 1
+  void load()
+}
 </script>
 
 <template>
   <div class="page">
-    <div class="hero glass">
+    <div class="hero glass animate-fade-in-up">
       <div class="h1">探索你的下一段旅程</div>
       <div class="muted">
         热门景区、个性化推荐、路线规划与周边设施一站式体验。
       </div>
       <div class="filters">
-        <el-segmented v-model="tab" :options="[
-          { label: '热门列表', value: 'recommend' },
-          { label: '智能推荐', value: 'personalized' },
-        ]" />
+        <el-segmented
+          v-model="tab"
+          :options="[
+            { label: '热门列表', value: 'recommend' },
+            { label: '智能推荐', value: 'personalized' },
+          ]"
+          @change="onRecommendTabChange"
+        />
         <el-select
           v-if="tab === 'personalized'"
           v-model="query.tagKeyword"
@@ -173,9 +220,9 @@ function formatScore(score?: number) {
       </div>
     </div>
 
-    <div class="grid" v-loading="loading">
+    <div class="grid animate-fade-in-up delay-200" v-loading="loading">
       <template v-if="tab !== 'personalized'">
-        <el-card v-for="s in list" :key="s.id" class="card" shadow="never" @click="$router.push(`/scenic/${s.id}`)">
+        <el-card v-for="s in list" :key="s.id" class="card ui-interactive-card" shadow="never" @click="openScenic(s)">
           <div class="card-title">{{ s.name }}</div>
           <div class="muted line">{{ s.location || '—' }}</div>
           <div class="muted line">{{ s.description || '暂无简介' }}</div>
@@ -189,7 +236,7 @@ function formatScore(score?: number) {
       </template>
 
       <template v-else>
-        <el-card v-for="s in pList" :key="s.id" class="card" shadow="never" @click="$router.push(`/scenic/${s.id}`)">
+        <el-card v-for="s in pList" :key="s.id" class="card ui-interactive-card" shadow="never" @click="openScenic(s)">
           <div class="card-title">{{ s.name }}</div>
           <div class="muted line">{{ s.location || '—' }}</div>
           <div class="muted line">{{ s.description || '暂无简介' }}</div>
@@ -248,16 +295,14 @@ function formatScore(score?: number) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
   backdrop-filter: blur(var(--glass-card-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-card-blur)) saturate(var(--glass-saturate));
   box-shadow: var(--shadow-sm);
 }
-.card:hover {
-  transform: translateY(-2px);
+
+.card.ui-interactive-card:hover {
   border-color: var(--accent-ring);
   background: var(--glass-card-dense) !important;
-  box-shadow: var(--shadow-md);
 }
 .card-title {
   font-weight: 820;

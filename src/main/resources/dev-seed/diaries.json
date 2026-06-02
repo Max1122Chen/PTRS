@@ -1,8 +1,14 @@
 [
-  {"id": 1001, "userId": 101, "title": "未名湖晨跑", "content": "清晨沿湖步道空气很好，适合慢跑。", "images": "[]", "videos": "[]", "heat": 120, "rating": 4.5, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 1002, "userId": 102, "title": "图书馆学习日", "content": "图书馆安静，打印点也很方便。", "images": "[]", "videos": "[]", "heat": 95, "rating": 4.4, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 1003, "userId": 103, "title": "校史馆打卡", "content": "展陈内容丰富，适合新同学了解历史。", "images": "[]", "videos": "[]", "heat": 87, "rating": 4.6, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 1004, "userId": 104, "title": "银杏大道拍照", "content": "下午逆光很出片，建议避开高峰。", "images": "[]", "videos": "[]", "heat": 135, "rating": 4.7, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 1005, "userId": 105, "title": "食堂美食攻略", "content": "学一食堂性价比高，盖饭和面都不错。", "images": "[]", "videos": "[]", "heat": 160, "rating": 4.5, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
-  {"id": 1006, "userId": 102, "title": "博物馆半日路线", "content": "从图书馆步行至博物馆，再到校史馆，路线紧凑。", "images": "[]", "videos": "[]", "heat": 75, "rating": 4.3, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"}
+  {"id": 1001, "userId": 101, "title": "未名湖晨跑", "content": "清晨沿湖步道空气很好，适合慢跑。",
+    "images": "[]", "videos": "[]", "heat": 120, "rating": 4.5, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
+  {"id": 1002, "userId": 102, "title": "图书馆学习日", "content": "图书馆安静，打印点也很方便。",
+    "images": "[]", "videos": "[]", "heat": 95, "rating": 4.4, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
+  {"id": 1003, "userId": 103, "title": "校史馆打卡", "content": "展陈内容丰富，适合新同学了解历史。",
+    "images": "[]", "videos": "[]", "heat": 87, "rating": 4.6, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
+  {"id": 1004, "userId": 104, "title": "银杏大道拍照", "content": "下午逆光很出片，建议避开高峰。",
+    "images": "[]", "videos": "[]", "heat": 135, "rating": 4.7, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
+  {"id": 1005, "userId": 105, "title": "食堂美食攻略", "content": "学一食堂性价比高，盖饭和面都不错。",
+    "images": "[]", "videos": "[]", "heat": 160, "rating": 4.5, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"},
+  {"id": 1006, "userId": 102, "title": "博物馆半日路线", "content": "从图书馆步行至博物馆，再到校史馆，路线紧凑。",
+    "images": "[]", "videos": "[]", "heat": 75, "rating": 4.3, "createTime": "2026-03-28T12:00:00", "updateTime": "2026-03-28T12:00:00"}
 ]

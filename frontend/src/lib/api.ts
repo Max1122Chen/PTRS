@@ -239,6 +239,20 @@ export async function apiGetInterest() {
   return res.data
 }
 
+export async function apiGetProfile() {
+  const res = (await http.get('/api/auth/me')) as ApiResponse<UserVO>
+  return res.data
+}
+
+export async function apiUploadAvatar(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  const res = (await http.post('/api/auth/avatar', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })) as ApiResponse<UserVO>
+  return res.data
+}
+
 /** 标签字典（tags 表），用于筛选下拉等 */
 export async function apiTagsList() {
   const res = (await http.get('/api/tags')) as ApiResponse<TagVO[]>

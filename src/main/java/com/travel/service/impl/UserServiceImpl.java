@@ -239,6 +239,30 @@ public class UserServiceImpl implements UserService
         return toUserVO(user);
     }
 
+    @Override
+    public UserVO findById(Long userId)
+    {
+        User user = store.findUserById(userId);
+        if (user == null)
+        {
+            return null;
+        }
+        return toUserVO(user);
+    }
+
+    @Override
+    public UserVO updateAvatar(Long userId, String avatarUrl)
+    {
+        User user = store.findUserById(userId);
+        if (user == null)
+        {
+            throw new IllegalArgumentException("用户不存在");
+        }
+        user.setAvatar(avatarUrl);
+        user.setUpdateTime(LocalDateTime.now());
+        return toUserVO(user);
+    }
+
     /**
      * 将当前用户的兴趣偏好同步到数据库，保证重启后预加载与内存一致。
      * 失败时仅打日志：内存已更新，且避免因无库连接场景下事务取连接导致接口 500（见 HANDOFF 2026-03-28 点赞与兴趣保存）。

@@ -28,7 +28,6 @@ const searchForm = reactive({
   keyword: '',
   type: '',
   areaId: undefined as number | undefined,
-  limit: undefined as number | undefined,
 })
 const searchList = ref<Facility[]>([])
 
@@ -138,7 +137,6 @@ async function loadSearch() {
       keyword: searchForm.keyword || undefined,
       type: searchForm.type || undefined,
       areaId: searchForm.areaId,
-      limit: searchForm.limit,
     })
   } finally {
     loading.value = false
@@ -183,7 +181,7 @@ onMounted(() => {
               placeholder="景区（可选，输入名称关键字）"
               :remote-method="remoteNearbyArea"
               :loading="nearbyAreaLoading"
-              style="min-width: 220px"
+              class="nearbyArea"
             >
               <el-option
                 v-for="o in nearbyAreaOpts"
@@ -210,9 +208,7 @@ onMounted(() => {
         </el-tab-pane>
 
         <el-tab-pane label="搜索" name="search">
-          <div class="formRow">
-            <el-input v-model="searchForm.keyword" placeholder="关键字（可选）" clearable />
-            <el-input v-model="searchForm.type" placeholder="类型（可选）" clearable />
+          <div class="formRow searchRow">
             <el-select
               v-model="searchForm.areaId"
               filterable
@@ -222,7 +218,7 @@ onMounted(() => {
               placeholder="景区（可选，输入名称关键字）"
               :remote-method="remoteSearchArea"
               :loading="searchAreaLoading"
-              style="min-width: 280px"
+              class="searchArea"
             >
               <el-option
                 v-for="o in searchAreaOpts"
@@ -231,8 +227,9 @@ onMounted(() => {
                 :value="o.id"
               />
             </el-select>
-            <el-input-number v-model="searchForm.limit" :min="1" :max="200" :controls="false" placeholder="最多返回条数 limit（可选）" />
-            <el-button type="primary" :loading="loading" @click="loadSearch">查询</el-button>
+            <el-input v-model="searchForm.type" placeholder="类型（可选）" clearable class="searchType" />
+            <el-input v-model="searchForm.keyword" placeholder="关键字（可选）" clearable class="searchKeyword" />
+            <el-button type="primary" :loading="loading" class="searchBtn" @click="loadSearch">查询</el-button>
           </div>
 
 
@@ -260,13 +257,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.formRow {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
 .nearbyRow {
   flex-wrap: nowrap; /* 让半径/类型/景区/查询在桌面端尽量保持同一排 */
 }
@@ -279,13 +269,46 @@ onMounted(() => {
   width: 160px;
 }
 
+.nearbyArea {
+  flex: 1;
+  min-width: 220px;
+}
+
 .nearbyBtn {
   flex-shrink: 1;
   min-width: 96px;
 }
 
+.searchRow {
+  flex-wrap: nowrap;
+}
+
+.searchArea {
+  flex: 1.4;
+  min-width: 220px;
+}
+
+.searchType {
+  flex: 0.9;
+  min-width: 140px;
+}
+
+.searchKeyword {
+  flex: 1;
+  min-width: 160px;
+}
+
+.searchBtn {
+  flex-shrink: 0;
+  min-width: 96px;
+}
+
 @media (max-width: 780px) {
   .nearbyRow {
+    flex-wrap: wrap;
+  }
+
+  .searchRow {
     flex-wrap: wrap;
   }
 }

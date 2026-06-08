@@ -27,6 +27,7 @@ public interface FoodService
      * @return 推荐列表
      */
     List<FoodRecommendVO> recommend(Long areaId,
+                                    Long anchorPoiId,
                                     Double lat,
                                     Double lng,
                                     Integer radiusMeters,

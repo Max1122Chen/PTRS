@@ -43,6 +43,7 @@ public class FoodController
      */
     @GetMapping("/recommendation")
     public ApiResponse<List<FoodRecommendVO>> recommendation(@RequestParam("areaId") @NotNull Long areaId,
+                                                             @RequestParam(value = "anchorPoiId", required = false) Long anchorPoiId,
                                                              @RequestParam(value = "lat", required = false) Double lat,
                                                              @RequestParam(value = "lng", required = false) Double lng,
                                                              @RequestParam(value = "radius", required = false) Integer radius,
@@ -53,7 +54,7 @@ public class FoodController
                                                              @RequestParam(value = "size", required = false) Integer size)
     {
         return ApiResponse.success(
-            foodService.recommend(areaId, lat, lng, radius, wHeat, wRating, wDistance, page, size),
+            foodService.recommend(areaId, anchorPoiId, lat, lng, radius, wHeat, wRating, wDistance, page, size),
             "获取成功"
         );
     }

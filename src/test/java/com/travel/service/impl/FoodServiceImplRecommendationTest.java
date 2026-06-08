@@ -36,8 +36,8 @@ class FoodServiceImplRecommendationTest
         when(store.findRestaurantById(802L)).thenReturn(restaurant(802L, 39.998, 116.310));
         when(store.findRestaurantById(803L)).thenReturn(restaurant(803L, 39.998, 116.310));
 
-        List<FoodRecommendVO> page1 = service.recommend(201L, null, null, 1000, null, null, null, 1, 2);
-        List<FoodRecommendVO> page2 = service.recommend(201L, null, null, 1000, null, null, null, 2, 2);
+        List<FoodRecommendVO> page1 = service.recommend(201L, null, null, null, 1000, null, null, null, 1, 2);
+        List<FoodRecommendVO> page2 = service.recommend(201L, null, null, null, 1000, null, null, null, 2, 2);
 
         assertEquals(2, page1.size());
         assertEquals(1L, page1.get(0).getFood().getId());
@@ -59,7 +59,7 @@ class FoodServiceImplRecommendationTest
         when(store.findRestaurantById(801L)).thenReturn(restaurant(801L, 39.9980, 116.3100));
         when(store.findRestaurantById(802L)).thenReturn(restaurant(802L, 40.0200, 116.3300));
 
-        List<FoodRecommendVO> result = service.recommend(201L, 39.9980, 116.3100, 500, 0.0, 0.0, 1.0, 1, 10);
+        List<FoodRecommendVO> result = service.recommend(201L, null, 39.9980, 116.3100, 500, 0.0, 0.0, 1.0, 1, 10);
 
         assertEquals(1, result.size());
         assertEquals(1L, result.get(0).getFood().getId());
@@ -78,7 +78,7 @@ class FoodServiceImplRecommendationTest
         when(store.findRestaurantById(801L)).thenReturn(restaurant(801L, 39.998, 116.310));
         when(store.findRestaurantById(802L)).thenReturn(restaurant(802L, 39.998, 116.310));
 
-        List<FoodRecommendVO> result = service.recommend(201L, 39.998, 116.310, 1000, -1.0, -2.0, -3.0, 1, 10);
+        List<FoodRecommendVO> result = service.recommend(201L, null, 39.998, 116.310, 1000, -1.0, -2.0, -3.0, 1, 10);
 
         assertEquals(2, result.size());
         assertEquals(1L, result.get(0).getFood().getId());

@@ -133,11 +133,11 @@ async function loadNearby() {
 async function loadSearch() {
   loading.value = true
   try {
-    searchList.value = await apiFacilitySearch({
+    searchList.value = (await apiFacilitySearch({
       keyword: searchForm.keyword || undefined,
       type: searchForm.type || undefined,
       areaId: searchForm.areaId,
-    })
+    })) as Facility[]
   } finally {
     loading.value = false
   }
@@ -198,12 +198,22 @@ onMounted(() => {
           </div>
 
 
-          <el-table :data="nearbyList" v-loading="loading" style="width: 100%; margin-top: 16px" @row-click="(r: FacilityNearbyVO)=>openDetail(r.id)">
-            <el-table-column prop="id" label="ID" width="80" />
-            <el-table-column prop="name" label="名称" />
-            <el-table-column prop="type" label="类型" width="120" />
-            <el-table-column prop="distance" label="距离(m)" width="120" />
-            <el-table-column prop="location" label="位置" />
+          <el-table :data="nearbyList" v-loading="loading" style="width: 100%; margin-top: 16px" @row-click="(r: FacilityNearbyVO)=>r.facility?.id != null && openDetail(r.facility.id)">
+            <el-table-column label="ID" width="80">
+              <template #default="{ row }">{{ row.facility?.id }}</template>
+            </el-table-column>
+            <el-table-column label="名称">
+              <template #default="{ row }">{{ row.facility?.name }}</template>
+            </el-table-column>
+            <el-table-column label="类型" width="120">
+              <template #default="{ row }">{{ row.facility?.type }}</template>
+            </el-table-column>
+            <el-table-column label="距离(m)" width="120">
+              <template #default="{ row }">{{ row.pathDistance ?? row.geoDistance }}</template>
+            </el-table-column>
+            <el-table-column label="位置">
+              <template #default="{ row }">{{ row.facility?.location }}</template>
+            </el-table-column>
           </el-table>
         </el-tab-pane>
 

@@ -147,8 +147,26 @@ flowchart TB
 - [ ] 衍生 seed（日记/美食等）按需补全
 
 ### S3 需求与实现纠偏
-- [ ] 错位 FR/页面/接口清单（负责人提供）
-- [ ] 每项：改代码 vs 改需求文档
+
+> 负责人确认：**不在路线页修补**，新建 **景区一体化工作台**（FR-017）。算法复用，改 IA + 锚点 API + 小范围后端入参。设计：[Scenic Hub Page Design.md](../Tech/Scenic%20Hub%20Page%20Design.md)；需求 v1.7。
+
+| ID | 类型 | 描述 | 处置 |
+|----|------|------|------|
+| **S3-UI-01** | FR-017 | `/route`、`/facility`、`/food` 三页平行 → 单一 `/scenic` | **新建** `ScenicHubView` + panels；旧路由 redirect |
+| **S3-FAC-01** | FR-006-1 / FR-017-1 | 设施「附近」以 **GPS** 为锚，非选中 POI | API `anchorPoiId`；前端弃 Geolocation 主流程 |
+| **S3-FAC-02** | FR-006-1 | 路径距离相对最近设施节点，非相对锚点 POI | `FacilityServiceImpl.nearby` 改锚点图节点 |
+| **S3-FAC-03** | FR-006-3 | 类别模糊搜索缺路径距离排序 | search 结果补 pathDistance |
+| **S3-FAC-04** | FR-006-4 | 设施仅列表展示，地图无联动 | 查询后高亮设施节点 + 突出名称；列表悬停联动 |
+| **S3-FOOD-01** | FR-013 / FR-013-1 | 距离为 **直线**（`GeoUtil`），非路网 | 推荐/搜索改路径距离 + `anchorPoiId` |
+| **S3-FOOD-02** | FR-017 | 美食独立页，无景区地图上下文 | 迁入 `FoodPanel` |
+| **S3-ROUTE-01** | FR-004 | 多点 TSP **偶发**「无法规划到达路径」 | 失败返回不可达段提示；连通性/交通工具过滤排查 |
+| **S3-DOC-01** | — | 需求 §9 与实现错位 | **已完成** Requirements v1.7 + 本表 |
+
+- [x] 错位 FR/页面/接口清单（负责人确认）
+- [x] 每项：改代码 vs 改需求文档（文档已更；代码待 S3 实施）
+- [ ] 景区页前端实现（S3-UI-01）
+- [ ] 设施/美食锚点 API（S3-FAC-* / S3-FOOD-*）
+- [ ] 多点路线失败提示（S3-ROUTE-01）
 
 ### S4 自制数据结构替换
 - [ ] 替换范围（包/类列表，负责人指示）
@@ -193,3 +211,4 @@ flowchart TB
 | 2026-06-08 | 负责人优先级：**S2→S3→S1→S4→S5**；S2 明确 dev-seed 瘦身 + osm 真源；登记设施/室内采集缺口 |
 | 2026-06-08 | S2 拍板：现有 osm-data 均可弃；**暂留北邮沙河** 作抓取迭代沙箱；闭环见 §2.4 |
 | 2026-06-08 | 新增 [OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)：现状、目标、设施/室内重构方案、沙河迭代；**待审核后编码** |
+| 2026-06-08 | S3：登记错位项 S3-UI/FAC/FOOD/ROUTE；Requirements v1.7 + [Scenic Hub Page Design.md](../Tech/Scenic%20Hub%20Page%20Design.md) |

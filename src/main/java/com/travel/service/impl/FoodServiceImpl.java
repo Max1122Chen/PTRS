@@ -1,7 +1,14 @@
 package com.travel.service.impl;
 
 import com.travel.algorithm.TopKSelector;
+import com.travel.algorithm.graph.Dijkstra;
+import com.travel.algorithm.graph.Edge;
+import com.travel.algorithm.graph.Graph;
+import com.travel.algorithm.graph.PathResult;
+import com.travel.model.entity.Facility;
 import com.travel.model.entity.Food;
+import com.travel.model.entity.Poi;
+import com.travel.model.entity.Road;
 import com.travel.model.entity.ScenicArea;
 import com.travel.model.entity.Restaurant;
 import com.travel.storage.InMemoryStore;
@@ -9,6 +16,7 @@ import com.travel.model.vo.food.FoodDetailVO;
 import com.travel.model.vo.food.FoodRecommendVO;
 import com.travel.service.FoodService;
 import com.travel.util.GeoUtil;
+import com.travel.util.ModeProfileCodec;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,14 +46,18 @@ public class FoodServiceImpl implements FoodService
 
     private final TopKSelector<FoodRecommendVO> topKSelector;
 
+    private final Dijkstra dijkstra;
+
     public FoodServiceImpl(InMemoryStore store)
     {
         this.store = store;
         this.topKSelector = new TopKSelector<>();
+        this.dijkstra = new Dijkstra();
     }
 
     @Override
     public List<FoodRecommendVO> recommend(Long areaId,
+                                          Long anchorPoiId,
                                           Double lat,
                                           Double lng,
                                           Integer radiusMeters,
@@ -60,12 +72,19 @@ public class FoodServiceImpl implements FoodService
             throw new IllegalArgumentException("areaId 不能为空");
         }
 
-        // 如果前端不传经纬度，则尝试用景区自身坐标做距离估计（用于“距离排序”）。
+        Long pathStartNodeId = null;
         Double effectiveLat = lat;
         Double effectiveLng = lng;
-        if (effectiveLat == null || effectiveLng == null)
+        if (anchorPoiId != null)
         {
-            var area = store.findScenicAreaById(areaId);
+            AnchorPoint anchor = resolveAnchor(anchorPoiId);
+            effectiveLat = anchor.lat();
+            effectiveLng = anchor.lng();
+            pathStartNodeId = anchor.nodeId();
+        }
+        else if (effectiveLat == null || effectiveLng == null)
+        {
+            ScenicArea area = store.findScenicAreaById(areaId);
             if (area != null)
             {
                 if (effectiveLat == null)
@@ -131,6 +150,7 @@ public class FoodServiceImpl implements FoodService
             maxHeat = 1;
         }
 
+        Graph graph = pathStartNodeId != null ? loadGraph(areaId) : null;
         boolean hasLocation = effectiveLat != null && effectiveLng != null;
         for (Food food : foods)
         {
@@ -143,10 +163,19 @@ public class FoodServiceImpl implements FoodService
             Double distance = null;
             if (hasLocation && restaurant.getLatitude() != null && restaurant.getLongitude() != null)
             {
-                distance = GeoUtil.distanceMeters(effectiveLat, effectiveLng, restaurant.getLatitude(), restaurant.getLongitude());
-                if (distance > r)
+                double geo = GeoUtil.distanceMeters(effectiveLat, effectiveLng, restaurant.getLatitude(), restaurant.getLongitude());
+                if (geo > r)
                 {
                     continue;
+                }
+                distance = geo;
+                if (graph != null && pathStartNodeId != null && restaurant.getId() != null)
+                {
+                    PathResult path = dijkstra.shortestPath(graph, pathStartNodeId, restaurant.getId(), Edge::getDistance, null);
+                    if (!path.getPath().isEmpty())
+                    {
+                        distance = path.getTotalWeight();
+                    }
                 }
             }
 
@@ -313,6 +342,47 @@ public class FoodServiceImpl implements FoodService
             return defaultValue;
         }
         return Math.max(0.0, candidate);
+    }
+
+    private Graph loadGraph(Long areaId)
+    {
+        List<Road> roads = store.findRoadsByAreaId(areaId);
+        Graph graph = new Graph();
+        for (Road road : roads)
+        {
+            double distance = road.getDistance() == null ? 0.0 : road.getDistance();
+            double speed = road.getSpeed() == null ? 0.0 : road.getSpeed();
+            var modeCongestion = ModeProfileCodec.decode(road.getModeProfile());
+            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed, modeCongestion);
+        }
+        return graph;
+    }
+
+    private AnchorPoint resolveAnchor(Long anchorId)
+    {
+        Poi poi = store.findPoiById(anchorId);
+        if (poi != null)
+        {
+            if (poi.getLatitude() == null || poi.getLongitude() == null)
+            {
+                throw new IllegalArgumentException("锚点 POI 缺少经纬度");
+            }
+            return new AnchorPoint(anchorId, poi.getLatitude(), poi.getLongitude());
+        }
+        Facility facility = store.findFacilityById(anchorId);
+        if (facility != null)
+        {
+            if (facility.getLatitude() == null || facility.getLongitude() == null)
+            {
+                throw new IllegalArgumentException("锚点设施缺少经纬度");
+            }
+            return new AnchorPoint(anchorId, facility.getLatitude(), facility.getLongitude());
+        }
+        throw new IllegalArgumentException("锚点不存在");
+    }
+
+    private record AnchorPoint(Long nodeId, double lat, double lng)
+    {
     }
 }
 

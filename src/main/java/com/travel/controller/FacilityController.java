@@ -33,13 +33,22 @@ public class FacilityController
      * 附近设施。
      */
     @GetMapping("/nearby")
-    public ApiResponse<List<FacilityNearbyVO>> nearby(@RequestParam("lat") @NotNull Double lat,
-                                                      @RequestParam("lng") @NotNull Double lng,
+    public ApiResponse<List<FacilityNearbyVO>> nearby(@RequestParam(value = "lat", required = false) Double lat,
+                                                      @RequestParam(value = "lng", required = false) Double lng,
+                                                      @RequestParam(value = "anchorPoiId", required = false) Long anchorPoiId,
                                                       @RequestParam(value = "radius", required = false) Integer radius,
                                                       @RequestParam(value = "type", required = false) String type,
                                                       @RequestParam(value = "areaId", required = false) Long areaId)
     {
         int r = radius == null ? 500 : radius;
+        if (anchorPoiId != null)
+        {
+            return ApiResponse.success(facilityService.nearbyByAnchor(anchorPoiId, r, type, areaId), "查询成功");
+        }
+        if (lat == null || lng == null)
+        {
+            return ApiResponse.failure(400, "须提供 anchorPoiId 或 lat/lng");
+        }
         return ApiResponse.success(facilityService.nearby(lat, lng, r, type, areaId), "查询成功");
     }
 
@@ -47,12 +56,22 @@ public class FacilityController
      * 设施搜索。
      */
     @GetMapping("/search")
-    public ApiResponse<List<Facility>> search(@RequestParam(value = "keyword", required = false) String keyword,
-                                              @RequestParam(value = "type", required = false) String type,
-                                              @RequestParam(value = "areaId", required = false) Long areaId,
-                                              @RequestParam(value = "limit", required = false) Integer limit)
+    public ApiResponse<?> search(@RequestParam(value = "keyword", required = false) String keyword,
+                                 @RequestParam(value = "type", required = false) String type,
+                                 @RequestParam(value = "areaId", required = false) Long areaId,
+                                 @RequestParam(value = "anchorPoiId", required = false) Long anchorPoiId,
+                                 @RequestParam(value = "radius", required = false) Integer radius,
+                                 @RequestParam(value = "limit", required = false) Integer limit)
     {
         int l = limit == null ? 50 : limit;
+        if (anchorPoiId != null)
+        {
+            int r = radius == null ? 500 : radius;
+            return ApiResponse.success(
+                facilityService.searchNearAnchor(keyword, type, areaId, anchorPoiId, r, l),
+                "查询成功"
+            );
+        }
         return ApiResponse.success(facilityService.search(keyword, type, areaId, l), "查询成功");
     }
 

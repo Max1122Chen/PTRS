@@ -161,7 +161,7 @@ function recommendReturnQuery(): Record<string, string> {
 async function openScenic(item: ScenicArea | ScenicAreaRecommendVO) {
   const q = recommendReturnQuery()
   await router.replace({ path: '/recommend', query: q })
-  await router.push(`/scenic/${item.id}`)
+  await router.push({ path: '/scenic', query: { areaId: String(item.id) } })
 }
 
 function applyRecommendQueryFromRoute() {

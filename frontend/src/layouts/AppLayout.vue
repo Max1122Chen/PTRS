@@ -52,13 +52,9 @@ function mainNavActive(path: string): boolean {
 
       p === '/recommend' ||
 
-      /^\/scenic\/[^/]+$/.test(p) ||
+      p === '/scenic' ||
 
-      p.startsWith('/route') ||
-
-      p.startsWith('/facility') ||
-
-      p.startsWith('/food') ||
+      p.startsWith('/scenic/') ||
 
       p.startsWith('/admin')
 
@@ -202,11 +198,7 @@ function closeDrawer() {
 
               <div class="drawer-sep" />
 
-              <router-link to="/route" class="drawer-link" @click="closeDrawer">路线</router-link>
-
-              <router-link to="/facility" class="drawer-link" @click="closeDrawer">设施</router-link>
-
-              <router-link to="/food" class="drawer-link" @click="closeDrawer">美食</router-link>
+              <router-link to="/scenic" class="drawer-link" @click="closeDrawer">景区</router-link>
 
               <router-link v-if="auth.user?.role?.toUpperCase() === 'ADMIN'" to="/admin" class="drawer-link" @click="closeDrawer">管理</router-link>
 
@@ -240,15 +232,7 @@ function closeDrawer() {
 
       <span style="color: rgba(255,255,255,0.25)">·</span>
 
-      <router-link to="/route" class="es-subnav__link">路线</router-link>
-
-      <span style="color: rgba(255,255,255,0.25)">·</span>
-
-      <router-link to="/facility" class="es-subnav__link">设施</router-link>
-
-      <span style="color: rgba(255,255,255,0.25)">·</span>
-
-      <router-link to="/food" class="es-subnav__link">美食</router-link>
+      <router-link to="/scenic" class="es-subnav__link">景区</router-link>
 
       <template v-if="auth.user?.role?.toUpperCase() === 'ADMIN'">
 

@@ -36,7 +36,11 @@ export type Facility = {
   areaId?: number
 }
 
-export type FacilityNearbyVO = Facility & { distance?: number }
+export type FacilityNearbyVO = {
+  facility: Facility
+  geoDistance?: number
+  pathDistance?: number
+}
 
 export type Food = {
   id: number
@@ -385,18 +389,26 @@ export async function apiPlanRouteMulti(payload: {
 }
 
 export async function apiFacilityNearby(params: {
-  lat: number
-  lng: number
+  lat?: number
+  lng?: number
+  anchorPoiId?: number
   radius?: number
   type?: string
   areaId?: number
 }) {
   const res = (await http.get('/api/facility/nearby', { params })) as ApiResponse<FacilityNearbyVO[]>
-  return res.data
+  return Array.isArray(res.data) ? res.data : []
 }
 
-export async function apiFacilitySearch(params: { keyword?: string; type?: string; areaId?: number; limit?: number }) {
-  const res = (await http.get('/api/facility/search', { params })) as ApiResponse<Facility[]>
+export async function apiFacilitySearch(params: {
+  keyword?: string
+  type?: string
+  areaId?: number
+  anchorPoiId?: number
+  radius?: number
+  limit?: number
+}) {
+  const res = (await http.get('/api/facility/search', { params })) as ApiResponse<Facility[] | FacilityNearbyVO[]>
   return res.data
 }
 
@@ -407,6 +419,7 @@ export async function apiFacilityDetail(id: number) {
 
 export async function apiFoodRecommendation(params: {
   areaId: number
+  anchorPoiId?: number
   lat?: number
   lng?: number
   radius?: number

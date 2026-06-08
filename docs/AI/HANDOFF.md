@@ -1,5 +1,88 @@
 # HANDOFF LOG
 
+## 2026-06-08（设施锚点选中 + 室内 POI 标签）
+### 本次目标
+- 设施查询高亮节点可单击设为锚点；列表行点击同步设锚；室内图显示 POI 名称标签；后端支持设施 ID 作 anchor。
+
+### 变更文件
+- `ScenicMapCanvas.vue`：移除 facilityOnly 点击拦截；`facilityHit` 可选中；室内 `label`+`labelLayout`；高亮设施补全 name
+- `scenicHub.ts`：`focusDisplayName`、`setFocusPoi(id, name?)`
+- `FacilityPanel.vue`：行点击 `selectFacilityRow` 设锚
+- `FacilityServiceImpl` / `FoodServiceImpl`：`resolveAnchor`（POI 或 Facility）
+
+### 验证
+- `npm run build` 通过；`mvn compile` 通过
+
+### 演示
+- `/scenic?areaId=252&tab=facility`：选 POI A → 查周边 → 点橙色设施 B 设锚 → 再查周边；列表行点击亦可设锚；双击室内 POI 可见名称标签
+
+## 2026-06-08（景区地图：路网线/视角/单击双击）
+### 本次目标
+- 路网边加粗可见；虚拟节点开启时更易见；`setOption` 保留 roam 视角；单击设锚点、双击进室内。
+
+### 变更文件
+- `ScenicMapCanvas.vue`：ROAD_EDGE 样式、`captureGraphRoam`、click/dblclick 分离
+
+### 验证
+- `npm run build` 通过；Vite HMR 可热更新
+
+## 2026-06-08（景区地图渲染对齐旧版）
+### 本次目标
+- `ScenicMapCanvas` 对齐 `RoutePlannerView` 室外/室内渲染：virtual_node 隐藏、labelLayout、路网 tooltip、室内 lat/lng 投影；保留 focus/设施高亮。
+
+### 变更文件
+- `frontend/src/views/scenic/components/ScenicMapCanvas.vue`（完整移植旧版 renderGraph/renderIndoorGraph）
+- `scenicHub.ts` + `RoutePanel.vue`：`showRoadNodes` 经 store 驱动地图
+
+### 验证
+- `npm run build` 通过
+- 后端 `:8080`、前端 `:5173` 已重启
+
+## 2026-06-08（S3 景区工作台实现）
+### 本次目标
+- 实现 FR-017 景区一体化页面 `/scenic`：路线/设施/美食/详情 Tab + 共享地图上下文；后端 `anchorPoiId`；设施地图高亮 FR-006-4。
+
+### 变更文件
+- **新建** `frontend/src/stores/scenicHub.ts`、`views/scenic/ScenicHubView.vue`、`components/ScenicMapCanvas.vue`、`panels/*`
+- `FacilityServiceImpl` / `FoodServiceImpl`：`anchorPoiId`、路径距离
+- `FacilityController` / `FoodController`、前端 `api.ts`
+- `router/index.ts` redirect；`AppLayout` 子导航「景区」；`HomeView` 进入 `/scenic?areaId=`
+
+### 验证
+- `npm run build` 通过
+- `mvn -Dtest=FoodServiceImplRecommendationTest test` 通过
+- 后端 `:8080`、前端 `:5173` 已重启
+
+### 演示
+- 打开 http://localhost:5173/scenic?areaId=252&tab=facility
+- 地图点 POI → 设施 Tab 查询 → 列表 + 地图橙色高亮与名称
+
+### 负责人
+- Max1122Chen；Cursor Agent
+
+## 2026-06-08（S3 错位登记 + 景区工作台设计）
+### 本次目标
+- 登记路线/设施/美食与需求错位；更新 Requirements v1.7（FR-017）；输出景区一体化页面设计方案供负责人审阅。
+
+### 变更文件
+- **新建** `docs/Tech/Scenic Hub Page Design.md`
+- `docs/Requirements/Requirements Documendation.md` → v1.7（FR-017、FR-006/013 锚点语义、§9 错位状态）
+- `docs/AI/SPRINT_CLOSURE.md` §S3 错位表
+
+### 关键决策（负责人已确认，待编码）
+- **新建** `/scenic` 景区工作台，**不**在 `RoutePlannerView` 上叠 Tab
+- 布局：桌面侧栏 + 移动底部 Sheet；旧 `/route` `/facility` `/food` **redirect**
+- 美食详情：侧栏展开（不做子路由）
+- 共享 `areaId` + `focusPoiId`；设施/美食以地图选中 POI 为锚
+- **FR-006-4**：设施查询结果在地图高亮设施 POI 并突出名称（列表悬停联动）
+- 后端小改：`anchorPoiId`、美食路径距离；算法层不动
+
+### 下一步
+- 按 `Scenic Hub Page Design.md` §9 实施顺序编码
+
+### 负责人
+- Max1122Chen；Cursor Agent
+
 ## 2026-06-08（室内错位登记 + S2 R6 数据治理）
 ### 本次目标
 - 登记沙河室内 room 错位问题，决策后期人工改 bundle；执行 R6：dev-seed 瘦身、删旧 osm 包、`map-imports` 仅挂鸿雁路沙河。

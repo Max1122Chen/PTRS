@@ -4,11 +4,12 @@ import com.travel.algorithm.graph.Dijkstra;
 import com.travel.algorithm.graph.Edge;
 import com.travel.algorithm.graph.Graph;
 import com.travel.algorithm.graph.PathResult;
-import com.travel.storage.InMemoryStore;
 import com.travel.model.entity.Facility;
+import com.travel.model.entity.Poi;
 import com.travel.model.entity.Road;
 import com.travel.model.vo.facility.FacilityNearbyVO;
 import com.travel.service.FacilityService;
+import com.travel.storage.InMemoryStore;
 import com.travel.util.GeoUtil;
 import com.travel.util.ModeProfileCodec;
 import org.springframework.stereotype.Service;
@@ -16,19 +17,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 设施查询服务实现。
- *
- * <p>
- * 说明：需求要求“按实际可达路径距离排序”。这里提供一个可运行的基础实现：
- * <ul>
- *     <li>先按直线距离过滤 radius 范围内的候选设施</li>
- *     <li>再用道路图计算从“用户位置最近的设施节点”到各候选设施的最短路径距离</li>
- * </ul>
- * 该实现不依赖外部地图服务，后续可替换为更精确的“最近道路节点/定位点映射”策略。
- * </p>
  */
 @Service
 public class FacilityServiceImpl implements FacilityService
@@ -49,58 +40,39 @@ public class FacilityServiceImpl implements FacilityService
     {
         int r = radius <= 0 ? 500 : radius;
         List<Facility> all = store.findFacilitiesByAreaIdAndType(areaId, type);
-        if (all.isEmpty())
-        {
-            return List.of();
-        }
-
-        // 先按直线距离筛选
-        List<FacilityNearbyVO> candidates = new ArrayList<>();
-        for (Facility f : all)
-        {
-            if (f.getLatitude() == null || f.getLongitude() == null)
-            {
-                continue;
-            }
-            double d = GeoUtil.distanceMeters(lat, lng, f.getLatitude(), f.getLongitude());
-            if (d <= r)
-            {
-                FacilityNearbyVO vo = new FacilityNearbyVO();
-                vo.setFacility(f);
-                vo.setGeoDistance(d);
-                candidates.add(vo);
-            }
-        }
+        List<FacilityNearbyVO> candidates = filterByGeo(all, lat, lng, r);
         if (candidates.isEmpty())
         {
             return List.of();
         }
 
-        // 用道路图估算“可达路径距离”
         Graph graph = loadGraph(areaId);
         Long startNode = findNearestFacilityNode(lat, lng, candidates);
-        if (startNode != null)
+        applyPathDistances(graph, startNode, candidates);
+        sortByPathDistance(candidates);
+        return candidates;
+    }
+
+    @Override
+    public List<FacilityNearbyVO> nearbyByAnchor(Long anchorPoiId, int radius, String type, Long areaId)
+    {
+        if (anchorPoiId == null)
         {
-            for (FacilityNearbyVO vo : candidates)
-            {
-                Long endNode = vo.getFacility().getId();
-                PathResult path = dijkstra.shortestPath(graph, startNode, endNode, Edge::getDistance, null);
-                if (!path.getPath().isEmpty())
-                {
-                    vo.setPathDistance(path.getTotalWeight());
-                }
-            }
+            throw new IllegalArgumentException("anchorPoiId 不能为空");
+        }
+        AnchorPoint anchor = resolveAnchor(anchorPoiId);
+
+        int r = radius <= 0 ? 500 : radius;
+        List<Facility> all = store.findFacilitiesByAreaIdAndType(areaId, type);
+        List<FacilityNearbyVO> candidates = filterByGeo(all, anchor.lat(), anchor.lng(), r);
+        if (candidates.isEmpty())
+        {
+            return List.of();
         }
 
-        candidates.sort(Comparator.comparingDouble(v ->
-        {
-            if (v.getPathDistance() != null)
-            {
-                return v.getPathDistance();
-            }
-            return v.getGeoDistance() == null ? Double.MAX_VALUE : v.getGeoDistance();
-        }));
-
+        Graph graph = loadGraph(areaId);
+        applyPathDistances(graph, anchor.nodeId(), candidates);
+        sortByPathDistance(candidates);
         return candidates;
     }
 
@@ -109,6 +81,30 @@ public class FacilityServiceImpl implements FacilityService
     {
         int l = limit <= 0 ? 50 : Math.min(limit, 200);
         return store.searchFacilities(keyword, type, areaId, l);
+    }
+
+    @Override
+    public List<FacilityNearbyVO> searchNearAnchor(String keyword, String type, Long areaId, Long anchorPoiId, int radius, int limit)
+    {
+        if (anchorPoiId == null)
+        {
+            throw new IllegalArgumentException("anchorPoiId 不能为空");
+        }
+        AnchorPoint anchor = resolveAnchor(anchorPoiId);
+
+        int r = radius <= 0 ? 500 : radius;
+        int l = limit <= 0 ? 50 : Math.min(limit, 200);
+        List<Facility> hits = store.searchFacilities(keyword, type, areaId, l);
+        List<FacilityNearbyVO> candidates = filterByGeo(hits, anchor.lat(), anchor.lng(), r);
+        if (candidates.isEmpty())
+        {
+            return List.of();
+        }
+
+        Graph graph = loadGraph(areaId);
+        applyPathDistances(graph, anchor.nodeId(), candidates);
+        sortByPathDistance(candidates);
+        return candidates;
     }
 
     @Override
@@ -122,6 +118,83 @@ public class FacilityServiceImpl implements FacilityService
         return facility;
     }
 
+    private AnchorPoint resolveAnchor(Long anchorId)
+    {
+        Poi poi = store.findPoiById(anchorId);
+        if (poi != null)
+        {
+            if (poi.getLatitude() == null || poi.getLongitude() == null)
+            {
+                throw new IllegalArgumentException("锚点 POI 缺少经纬度");
+            }
+            return new AnchorPoint(anchorId, poi.getLatitude(), poi.getLongitude());
+        }
+        Facility facility = store.findFacilityById(anchorId);
+        if (facility != null)
+        {
+            if (facility.getLatitude() == null || facility.getLongitude() == null)
+            {
+                throw new IllegalArgumentException("锚点设施缺少经纬度");
+            }
+            return new AnchorPoint(anchorId, facility.getLatitude(), facility.getLongitude());
+        }
+        throw new IllegalArgumentException("锚点不存在");
+    }
+
+    private record AnchorPoint(Long nodeId, double lat, double lng)
+    {
+    }
+
+    private List<FacilityNearbyVO> filterByGeo(List<Facility> all, double lat, double lng, int radiusMeters)
+    {
+        List<FacilityNearbyVO> candidates = new ArrayList<>();
+        for (Facility f : all)
+        {
+            if (f.getLatitude() == null || f.getLongitude() == null)
+            {
+                continue;
+            }
+            double d = GeoUtil.distanceMeters(lat, lng, f.getLatitude(), f.getLongitude());
+            if (d <= radiusMeters)
+            {
+                FacilityNearbyVO vo = new FacilityNearbyVO();
+                vo.setFacility(f);
+                vo.setGeoDistance(d);
+                candidates.add(vo);
+            }
+        }
+        return candidates;
+    }
+
+    private void applyPathDistances(Graph graph, Long startNodeId, List<FacilityNearbyVO> candidates)
+    {
+        if (startNodeId == null || graph == null)
+        {
+            return;
+        }
+        for (FacilityNearbyVO vo : candidates)
+        {
+            Long endNode = vo.getFacility().getId();
+            PathResult path = dijkstra.shortestPath(graph, startNodeId, endNode, Edge::getDistance, null);
+            if (!path.getPath().isEmpty())
+            {
+                vo.setPathDistance(path.getTotalWeight());
+            }
+        }
+    }
+
+    private void sortByPathDistance(List<FacilityNearbyVO> candidates)
+    {
+        candidates.sort(Comparator.comparingDouble(v ->
+        {
+            if (v.getPathDistance() != null)
+            {
+                return v.getPathDistance();
+            }
+            return v.getGeoDistance() == null ? Double.MAX_VALUE : v.getGeoDistance();
+        }));
+    }
+
     private Graph loadGraph(Long areaId)
     {
         List<Road> roads = store.findRoadsByAreaId(areaId);
@@ -130,7 +203,7 @@ public class FacilityServiceImpl implements FacilityService
         {
             double distance = road.getDistance() == null ? 0.0 : road.getDistance();
             double speed = road.getSpeed() == null ? 0.0 : road.getSpeed();
-            Map<String, Double> modeCongestion = ModeProfileCodec.decode(road.getModeProfile());
+            var modeCongestion = ModeProfileCodec.decode(road.getModeProfile());
             graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed, modeCongestion);
         }
         return graph;
@@ -149,4 +222,3 @@ public class FacilityServiceImpl implements FacilityService
         return nearest == null ? null : nearest.getFacility().getId();
     }
 }
-

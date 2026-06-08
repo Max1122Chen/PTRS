@@ -1,7 +1,7 @@
 # 验收冲刺项登记（待拍板）
 
 > **用途**：记录收尾冲刺的五类工作及其**依赖顺序**；具体方案与实施细节**待负责人逐条给出需求后再定**。
-> **状态**：`登记中` — 负责人已给出**优先级/难易排序**与 S2 方向；具体实施待分条需求。
+> **状态**：`S2 数据治理 R6 已完成` — 仅保留沙河 **鸿雁路** osm 包；室内归属错位已登记，**后期人工改 bundle**（见 [OSM Indoor Manual Attribution](../Tech/OSM%20Indoor%20Manual%20Attribution.md)）。
 > **基线**：`main` @ `74a2e03`（2026-06-08）
 
 ---
@@ -10,7 +10,7 @@
 
 | 顺序 | ID | 主题 | 负责人理解（难易/先后） | 状态 |
 |------|-----|------|-------------------------|------|
-| **①** | **S2** | 展示数据治理 | **最好做、最先做**；见 §2 | 方向已明确，待 OSM 包清单与脚本修正 |
+| **①** | **S2** | 展示数据治理 + **地图采集重构** | **最好做、最先做**；见 §2、**§6**、[OSM 采集重构方案](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md) | R1–R5 完成；R6 待执行 |
 | **②** | **S3** | 业务功能纠偏 | 需求错位项待逐条给出 | 待需求 |
 | **③** | **S1** | 前端导航与视觉 | 在数据与业务口径稳定后再改 | 待需求 |
 | **④** | **S4** | 自制数据结构 | 课程硬约束，范围待指示 | 待需求 |
@@ -58,8 +58,8 @@
 | 项 | 决策 |
 |----|------|
 | 现有 `osm-data` | **均可弃用**（抓取逻辑将重做，旧包不保留为真源） |
-| **迭代沙箱（暂留）** | 仅保留 **北邮沙河校区** 一包，用于自动化验证脚本：<br/>`osm-data/北京邮电大学-沙河校区-南丰路-沙河镇-昌平区-北京市-102206-中国/` |
-| 其余 OSM 包 | 数据治理阶段删除（师大北路、执信、贵阳一中等） |
+| **唯一真源包** | `osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/` |
+| 其余 OSM 包 | **已删除**（师大北路、南丰路旧沙箱、执信、贵阳一中） |
 | 衍生 seed | 脚本验证通过、重抓沙河包达标后，再清 dev-seed 假数据并更新 `map-imports.json` |
 
 ### 2.4 S2 执行顺序与脚本迭代闭环
@@ -84,6 +84,13 @@ flowchart LR
 2. 跑室内采集 → 统计 `indoor/` 通过 vs `rejected/` 及原因；目标减少误杀、提高 `indoorAvailable` 命中。
 3. `python scripts/validate_osm_output.py`（或等价检查）+ 后端加载 smoke（`dev` profile 启动后 `map-data` / `facility/search` / `indoor/buildings`）。
 4. 未达标则回到步骤 1 改脚本，**不**提前清 dev-seed 或删沙河沙箱数据。
+
+### 2.5 室内归属结论（2026-06-08 确认）
+
+- **脚本现状**：`building_footprint` + P0 缓冲已落地；节点写入 `parentId`。
+- **错位问题**：沙河 OSM room 与 building 面地理错位，自动归属不可靠（图书馆/报告厅装入 `N-*`，公共教学楼装入 `S4-*`）。
+- **决策（2026-06-08）**：**后期人工校正** `latest/indoor/*.json`；登记见 [OSM Indoor Manual Attribution.md](../Tech/OSM%20Indoor%20Manual%20Attribution.md)；预留 `indoor_manual_assign.json`（脚本未读）。
+- **采集重构详情**：[OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)。
 
 ---
 
@@ -125,15 +132,19 @@ flowchart TB
 - [ ] 二级导航是否调整
 - [ ] 视觉问题清单（由负责人逐条指出）
 
-### S2 展示数据治理
+### S2 展示数据治理 + 地图采集重构
 - [x] 方向：dev-seed 仅保留用户相关；osm-data 为唯一业务真源；衍生数据后置
-- [ ] 设施脚本：`classify_facility` 扩展（商店/饭店/洗手间/图书馆/食堂/超市/咖啡馆等）
-- [ ] 室内脚本：rejected 审计 + 完整度/特征抽取修正
-- [x] OSM 沙箱：暂留北邮沙河（南丰路）；其余包待治理阶段删除
-- [ ] 沙河迭代验收脚本/检查表（自行设计）
+- [x] 现状审计：设施错位、室内半径归属问题（见技术文档 §1.4）
+- [x] 重构方案文档：[OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)
+- [x] **负责人审核** §6 审核清单
+- [x] 设施：`classify_facility` 扩展 + POI/设施分流（§3.1）
+- [x] 室内：建筑面归属 + `parentId`（§3.2）；**错位改人工**（§2.5）
+- [x] OSM 唯一包：鸿雁路沙河；其余包已删
+- [x] 沙河迭代达标（indoor ok≥3、facilities 6/6 raw、error=0）
+- [x] R6：dev-seed 地图 JSON 清空 + `map-imports` 单包
+- [ ] 室内 bundle 人工校正（`indoor_manual_assign` / 手改 JSON）
 - [ ] 是否彻底 JSON-only（不连 MySQL）
-- [ ] dev-seed 删除文件最终清单
-- [ ] `map-imports.json` 与清空后基线关系
+- [ ] 衍生 seed（日记/美食等）按需补全
 
 ### S3 需求与实现纠偏
 - [ ] 错位 FR/页面/接口清单（负责人提供）
@@ -159,10 +170,26 @@ flowchart TB
 
 ---
 
-## 6. 变更记录
+## 6. 地图数据采集重构（摘要）
+
+> 完整版：[docs/Tech/OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)（**待审核**）
+
+| 维度 | 现状 | 重构目标 |
+|------|------|----------|
+| **设施** | `classify_facility` 过窄；商店/饭店/咖啡馆等进 POI | 按 FR-006 进入 `facilities.append` |
+| **室内归属** | POI 单点 + 半径 80m | **建筑 `building` way 多边形** + `parentId` |
+| **室内数据源** | 共享 campus raw + 二次 Overpass | **单次 raw** + `building_registry` |
+| **迭代** | — | 北邮沙河沙箱重抓直至 §3.3 达标表满足 |
+
+**审核通过后**：按技术文档 §4 执行 R1→R5（脚本重构 + 自行迭代），R6 再做 dev-seed 瘦身。
+
+---
+
+## 7. 变更记录
 
 | 日期 | 说明 |
 |------|------|
 | 2026-06-08 | 初建：登记 S1–S5 与依赖关系；状态均为「待需求」，不拍板、不实施 |
 | 2026-06-08 | 负责人优先级：**S2→S3→S1→S4→S5**；S2 明确 dev-seed 瘦身 + osm 真源；登记设施/室内采集缺口 |
 | 2026-06-08 | S2 拍板：现有 osm-data 均可弃；**暂留北邮沙河** 作抓取迭代沙箱；闭环见 §2.4 |
+| 2026-06-08 | 新增 [OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)：现状、目标、设施/室内重构方案、沙河迭代；**待审核后编码** |

@@ -1,0 +1,74 @@
+[
+  {
+    "id": 799,
+    "name": "生活服务区",
+    "type": "shop",
+    "description": "OSM source=node:8626148956, review required",
+    "location": "生活服务区",
+    "longitude": 116.282712,
+    "latitude": 40.157182,
+    "areaId": 252,
+    "createTime": "2026-06-08T18:28:59",
+    "updateTime": "2026-06-08T18:28:59"
+  },
+  {
+    "id": 800,
+    "name": "天猫超市",
+    "type": "shop",
+    "description": "OSM source=node:8626148957, review required",
+    "location": "天猫超市",
+    "longitude": 116.28383,
+    "latitude": 40.157853,
+    "areaId": 252,
+    "createTime": "2026-06-08T18:28:59",
+    "updateTime": "2026-06-08T18:28:59"
+  },
+  {
+    "id": 801,
+    "name": "图书馆自习室",
+    "type": "library",
+    "description": "OSM source=node:8628342717, review required",
+    "location": "图书馆自习室",
+    "longitude": 116.285171,
+    "latitude": 40.15829,
+    "areaId": 252,
+    "createTime": "2026-06-08T18:28:59",
+    "updateTime": "2026-06-08T18:28:59"
+  },
+  {
+    "id": 802,
+    "name": "北京邮电大学沙河校区南区食堂",
+    "type": "restaurant",
+    "description": "OSM source=node:10074833424, review required",
+    "location": "北京邮电大学沙河校区南区食堂",
+    "longitude": 116.28462,
+    "latitude": 40.154886,
+    "areaId": 252,
+    "createTime": "2026-06-08T18:28:59",
+    "updateTime": "2026-06-08T18:28:59"
+  },
+  {
+    "id": 803,
+    "name": "图书馆",
+    "type": "library",
+    "description": "OSM source=way:685054783, review required",
+    "location": "图书馆",
+    "longitude": 116.285596,
+    "latitude": 40.158497,
+    "areaId": 252,
+    "createTime": "2026-06-08T18:28:59",
+    "updateTime": "2026-06-08T18:28:59"
+  },
+  {
+    "id": 804,
+    "name": "沙河校医院",
+    "type": "hospital",
+    "description": "OSM source=way:947735342, review required",
+    "location": "沙河校医院",
+    "longitude": 116.28355,
+    "latitude": 40.158722,
+    "areaId": 252,
+    "createTime": "2026-06-08T18:28:59",
+    "updateTime": "2026-06-08T18:28:59"
+  }
+]

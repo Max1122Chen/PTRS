@@ -188,6 +188,10 @@ public class IndoorDevSeedLoader
             for (IndoorNodeRecord n : bundle.getNodes())
             {
                 n.setBuildingPoiId(bundle.getBuildingPoiId());
+                if (n.getParentId() == null)
+                {
+                    n.setParentId(bundle.getBuildingPoiId());
+                }
             }
         }
         if (bundle.getEdges() != null)

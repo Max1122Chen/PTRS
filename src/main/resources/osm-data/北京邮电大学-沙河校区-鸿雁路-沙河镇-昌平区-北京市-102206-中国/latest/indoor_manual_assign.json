@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "status": "draft",
+  "note": "后期人工校正室内 room 归属；当前脚本未读取本文件。见 docs/Tech/OSM Indoor Manual Attribution.md",
+  "targetAreaId": 252,
+  "excludeAutoIndoorBuildingPoiIds": [900022224, 900022232],
+  "roomNamePrefixRules": [
+    {
+      "prefix": "S4-",
+      "buildingPoiId": 900022208,
+      "comment": "S4区 POI（OSM node/8626186257），待补 building 面或手工 bundle"
+    },
+    {
+      "prefix": "N-",
+      "buildingPoiId": 900022239,
+      "comment": "公共教学楼"
+    }
+  ],
+  "roomOsmOverrides": []
+}

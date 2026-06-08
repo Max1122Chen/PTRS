@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022228,
+  "name": "学生活动中心",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

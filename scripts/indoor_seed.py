@@ -41,6 +41,9 @@ DEFAULT_INDOOR_POI_TYPES = frozenset(
 
 # Heuristic caps (avoid importing an entire city as one building graph)
 MAX_ROOMS_PER_BUILDING = 36
+# Campus OSM indoor footprints are often misaligned; P0 buffer for osmId-matched buildings.
+P0_BUILDING_BUFFER_M = 150.0
+P0_MAX_CLAIM_ELEMENTS = 42
 
 
 def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -423,6 +426,19 @@ def cap_rooms_by_distance(
     return prune_room_nodes_and_edges(nodes, edges, keep)
 
 
+def cap_rooms_by_count(
+    nodes: List[Dict[str, Any]],
+    edges: List[Dict[str, Any]],
+    max_rooms: int,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    rooms = [n for n in nodes if str(n.get("nodeKind", "")).lower() == "room"]
+    if len(rooms) <= max_rooms:
+        return nodes, edges
+    rooms.sort(key=lambda n: int(n["id"]))
+    keep = {int(n["id"]) for n in rooms[:max_rooms]}
+    return prune_room_nodes_and_edges(nodes, edges, keep)
+
+
 def add_synthetic_corridor_edges(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> None:
     """Per-level MST on room centroids + extra corridor edges until count >= 3."""
     rooms = [n for n in nodes if str(n.get("nodeKind", "")).lower() == "room"]
@@ -563,6 +579,38 @@ def pick_entrance_node_id(nodes: List[Dict[str, Any]], origin_lat: float, origin
     return int(nodes[0]["id"]) if nodes else None
 
 
+def finalize_indoor_bundle(
+    nodes: List[Dict[str, Any]],
+    edges: List[Dict[str, Any]],
+    *,
+    origin_lat: float,
+    origin_lng: float,
+    building_poi_id: int,
+    area_id: int,
+    source: str,
+) -> Tuple[Optional[Dict[str, Any]], List[str]]:
+    add_synthetic_corridor_edges(nodes, edges)
+    add_cross_level_vertical_edges(nodes, edges)
+    bridge_walkable_components(nodes, edges)
+    ok, failures = evaluate_completeness(nodes, edges)
+    if not ok:
+        return None, failures
+    for node in nodes:
+        node["parentId"] = building_poi_id
+    levels = sorted({str(n["level"]) for n in nodes})
+    bundle = {
+        "buildingPoiId": building_poi_id,
+        "areaId": area_id,
+        "source": source,
+        "completenessScore": 1.0,
+        "levels": [{"level": lv, "label": level_display_label(lv), "order": i} for i, lv in enumerate(levels)],
+        "entranceNodeId": pick_entrance_node_id(nodes, origin_lat, origin_lng),
+        "nodes": nodes,
+        "edges": edges,
+    }
+    return bundle, []
+
+
 def try_build_bundle_from_elements(
     elements: List[Dict[str, Any]],
     *,
@@ -575,24 +623,36 @@ def try_build_bundle_from_elements(
     subset = filter_elements_near(elements, origin_lat, origin_lng, radius_m)
     nodes, edges = build_graph_from_osm_elements(subset, origin_lat, origin_lng)
     nodes, edges = cap_rooms_by_distance(nodes, edges, origin_lat, origin_lng, MAX_ROOMS_PER_BUILDING)
-    add_synthetic_corridor_edges(nodes, edges)
-    add_cross_level_vertical_edges(nodes, edges)
-    bridge_walkable_components(nodes, edges)
-    ok, failures = evaluate_completeness(nodes, edges)
-    if not ok:
-        return None, failures
-    levels = sorted({str(n["level"]) for n in nodes})
-    bundle = {
-        "buildingPoiId": building_poi_id,
-        "areaId": area_id,
-        "source": "osm-raw+heuristic-corridors+component-bridges",
-        "completenessScore": 1.0,
-        "levels": [{"level": lv, "label": level_display_label(lv), "order": i} for i, lv in enumerate(levels)],
-        "entranceNodeId": pick_entrance_node_id(nodes, origin_lat, origin_lng),
-        "nodes": nodes,
-        "edges": edges,
-    }
-    return bundle, []
+    return finalize_indoor_bundle(
+        nodes,
+        edges,
+        origin_lat=origin_lat,
+        origin_lng=origin_lng,
+        building_poi_id=building_poi_id,
+        area_id=area_id,
+        source="osm-raw+heuristic-corridors+component-bridges",
+    )
+
+
+def try_build_bundle_from_subset(
+    elements: List[Dict[str, Any]],
+    *,
+    origin_lat: float,
+    origin_lng: float,
+    building_poi_id: int,
+    area_id: int,
+) -> Tuple[Optional[Dict[str, Any]], List[str]]:
+    nodes, edges = build_graph_from_osm_elements(elements, origin_lat, origin_lng)
+    nodes, edges = cap_rooms_by_count(nodes, edges, MAX_ROOMS_PER_BUILDING)
+    return finalize_indoor_bundle(
+        nodes,
+        edges,
+        origin_lat=origin_lat,
+        origin_lng=origin_lng,
+        building_poi_id=building_poi_id,
+        area_id=area_id,
+        source="osm-building-footprint+heuristic-corridors+component-bridges",
+    )
 
 
 def collect_indoor_for_poi(
@@ -704,6 +764,144 @@ def _write_reject(out_dir: Path, building_poi_id: int, poi_name: str, failures: 
     )
 
 
+def count_attributed_rooms(elements: List[Dict[str, Any]]) -> int:
+    total = 0
+    for el in elements:
+        tags = el.get("tags") or {}
+        if not isinstance(tags, dict):
+            continue
+        indoor = str(tags.get("indoor", "")).lower()
+        hw = str(tags.get("highway", "")).lower()
+        if indoor == "room" and hw not in {"elevator", "steps"}:
+            total += 1
+    return total
+
+
+def collect_indoor_by_footprint(
+    poi_rows: List[Dict[str, Any]],
+    *,
+    building_registry: List[Dict[str, Any]],
+    overpass_elements: List[Dict[str, Any]],
+    out_dir: Path,
+    max_buildings: int = 12,
+    poi_types: Optional[Set[str]] = None,
+) -> List[Dict[str, Any]]:
+    from osm_building_geo import (
+        element_osm_key,
+        filter_indoor_pool,
+        min_distance_to_building_m,
+        poi_osm_ref,
+        subset_indoor_for_building,
+    )
+
+    allowed = {t.lower() for t in (poi_types or DEFAULT_INDOOR_POI_TYPES)}
+    candidates = [
+        row
+        for row in poi_rows
+        if str(row.get("type") or "").lower() in allowed
+        and row.get("latitude") is not None
+        and row.get("longitude") is not None
+    ]
+    pri = {"library": 0, "teaching": 1, "lab": 2, "dormitory": 3, "medical": 4, "sports": 5, "gate": 6, "scenic_spot": 7}
+
+    def sort_key(row: Dict[str, Any]) -> Tuple[int, str]:
+        t = str(row.get("type") or "").lower()
+        return (pri.get(t, 99), str(row.get("name") or ""))
+
+    candidates.sort(key=sort_key)
+    candidates = candidates[: max_buildings]
+
+    registry_by_key = {
+        (str(row["osmType"]).lower(), int(row["osmId"])): row for row in building_registry if row.get("osmId") is not None
+    }
+    indoor_pool = filter_indoor_pool(overpass_elements)
+    remaining_keys: Set[Tuple[str, int]] = {element_osm_key(el) for el in indoor_pool}
+    assignments: Dict[Tuple[str, int], List[Dict[str, Any]]] = {}
+
+    results: List[Dict[str, Any]] = []
+    for row in candidates:
+        bid = int(row["id"])
+        area_id = int(row.get("areaId") or 0)
+        lat = float(row["latitude"])
+        lng = float(row["longitude"])
+        name = str(row.get("name") or "")
+        ptype = str(row.get("type") or "")
+        result: Dict[str, Any] = {
+            "buildingPoiId": bid,
+            "areaId": area_id,
+            "name": name,
+            "type": ptype,
+            "status": "reject",
+            "failures": [],
+            "outputPath": None,
+            "strategy": "building_footprint",
+            "attributedRooms": 0,
+            "buildingOsmId": None,
+        }
+        ref = poi_osm_ref(row)
+        subset: List[Dict[str, Any]] = []
+        if ref:
+            result["buildingOsmId"] = ref[1]
+            reg = registry_by_key.get(ref)
+            if reg:
+                pool = [el for el in indoor_pool if element_osm_key(el) in remaining_keys]
+                subset = subset_indoor_for_building(
+                    pool,
+                    reg,
+                    buffer_m=P0_BUILDING_BUFFER_M,
+                )
+                if len(subset) > P0_MAX_CLAIM_ELEMENTS:
+                    subset.sort(key=lambda el: min_distance_to_building_m(el, reg))
+                    subset = subset[:P0_MAX_CLAIM_ELEMENTS]
+                assignments[ref] = subset
+                for el in subset:
+                    remaining_keys.discard(element_osm_key(el))
+        result["attributedRooms"] = count_attributed_rooms(subset)
+
+        if not ref:
+            result["failures"] = ["NO_OSM_REF"]
+            _write_reject(out_dir, bid, name, result["failures"], 0, 0)
+            results.append(result)
+            continue
+        if not subset:
+            pool = [el for el in indoor_pool if element_osm_key(el) in remaining_keys]
+            near = filter_elements_near(pool, lat, lng, radius_m=min(120.0, P0_BUILDING_BUFFER_M))
+            if near:
+                subset = near
+                result["strategy"] = "building_footprint+radius_fallback"
+                result["attributedRooms"] = count_attributed_rooms(subset)
+                for el in subset:
+                    remaining_keys.discard(element_osm_key(el))
+        if not subset:
+            result["failures"] = ["EMPTY_SUBSET"]
+            _write_reject(out_dir, bid, name, result["failures"], 0, 0)
+            results.append(result)
+            continue
+
+        anchor_lat, anchor_lng = lat, lng
+        reg = registry_by_key.get(ref)
+        centroid = reg.get("centroid") if isinstance(reg, dict) else None
+        if isinstance(centroid, list) and len(centroid) >= 2:
+            anchor_lng, anchor_lat = float(centroid[0]), float(centroid[1])
+
+        bundle, failures = try_build_bundle_from_subset(
+            subset,
+            origin_lat=anchor_lat,
+            origin_lng=anchor_lng,
+            building_poi_id=bid,
+            area_id=area_id,
+        )
+        if bundle is not None:
+            results.append(_write_bundle(bundle, out_dir, result))
+            continue
+        result["failures"] = failures or ["REJECT"]
+        _write_reject(out_dir, bid, name, result["failures"], 0, 0)
+        results.append(result)
+
+    update_indoor_manifest(out_dir, results)
+    return results
+
+
 def collect_indoor_for_pois(
     poi_rows: List[Dict[str, Any]],
     *,
@@ -713,8 +911,19 @@ def collect_indoor_for_pois(
     sleep_s: float = 1.0,
     poi_types: Optional[Set[str]] = None,
     overpass_elements: Optional[List[Dict[str, Any]]] = None,
+    building_registry: Optional[List[Dict[str, Any]]] = None,
     max_buildings: int = 12,
 ) -> List[Dict[str, Any]]:
+    if building_registry and overpass_elements:
+        return collect_indoor_by_footprint(
+            poi_rows,
+            building_registry=building_registry,
+            overpass_elements=overpass_elements,
+            out_dir=out_dir,
+            max_buildings=max_buildings,
+            poi_types=poi_types,
+        )
+
     allowed = {t.lower() for t in (poi_types or DEFAULT_INDOOR_POI_TYPES)}
     candidates = [
         row

@@ -1,0 +1,179 @@
+{
+  "enabled": true,
+  "candidates": 12,
+  "ok": 3,
+  "reject": 9,
+  "error": 0,
+  "results": [
+    {
+      "buildingPoiId": 900022224,
+      "areaId": 252,
+      "name": "图书馆",
+      "type": "library",
+      "status": "ok",
+      "failures": [],
+      "outputPath": "src\\main\\resources\\osm-data\\北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国\\latest\\indoor\\900022224.json",
+      "strategy": "building_footprint",
+      "attributedRooms": 40,
+      "buildingOsmId": 685054783,
+      "nodeCount": 48,
+      "edgeCount": 47
+    },
+    {
+      "buildingPoiId": 900022239,
+      "areaId": 252,
+      "name": "公共教学楼",
+      "type": "teaching",
+      "status": "ok",
+      "failures": [],
+      "outputPath": "src\\main\\resources\\osm-data\\北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国\\latest\\indoor\\900022239.json",
+      "strategy": "building_footprint",
+      "attributedRooms": 41,
+      "buildingOsmId": 1458664382,
+      "nodeCount": 41,
+      "edgeCount": 40
+    },
+    {
+      "buildingPoiId": 900022222,
+      "areaId": 252,
+      "name": "北京邮电大学（沙河校区）",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint+radius_fallback",
+      "attributedRooms": 1,
+      "buildingOsmId": 685054417
+    },
+    {
+      "buildingPoiId": 900022229,
+      "areaId": 252,
+      "name": "基建处",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 685054971
+    },
+    {
+      "buildingPoiId": 900022232,
+      "areaId": 252,
+      "name": "学术报告厅",
+      "type": "teaching",
+      "status": "ok",
+      "failures": [],
+      "outputPath": "src\\main\\resources\\osm-data\\北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国\\latest\\indoor\\900022232.json",
+      "strategy": "building_footprint",
+      "attributedRooms": 9,
+      "buildingOsmId": 919010294,
+      "nodeCount": 19,
+      "edgeCount": 18
+    },
+    {
+      "buildingPoiId": 900022228,
+      "areaId": 252,
+      "name": "学生活动中心",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 685054788
+    },
+    {
+      "buildingPoiId": 900022227,
+      "areaId": 252,
+      "name": "教工食堂",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 1,
+      "buildingOsmId": 685054787
+    },
+    {
+      "buildingPoiId": 900022235,
+      "areaId": 252,
+      "name": "数字媒体与设计艺术学院楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 1099680764
+    },
+    {
+      "buildingPoiId": 900022238,
+      "areaId": 252,
+      "name": "理学院楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 1101746101
+    },
+    {
+      "buildingPoiId": 900022234,
+      "areaId": 252,
+      "name": "网络空间安全学院楼 & 现代邮政学院楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 1099680763
+    },
+    {
+      "buildingPoiId": 900022226,
+      "areaId": 252,
+      "name": "行政办公楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 685054786
+    },
+    {
+      "buildingPoiId": 900022225,
+      "areaId": 252,
+      "name": "风味食堂",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 685054785
+    }
+  ]
+}

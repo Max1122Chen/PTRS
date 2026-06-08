@@ -1,0 +1,10 @@
+{
+  "buildingPoiId": 900022222,
+  "name": "北京邮电大学（沙河校区）",
+  "failures": [
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "buildingPoiId": 900022224,
+    "name": "图书馆",
+    "areaId": 252,
+    "completenessScore": 1.0
+  },
+  {
+    "buildingPoiId": 900022239,
+    "name": "公共教学楼",
+    "areaId": 252,
+    "completenessScore": 1.0
+  },
+  {
+    "buildingPoiId": 900022232,
+    "name": "学术报告厅",
+    "areaId": 252,
+    "completenessScore": 1.0
+  }
+]

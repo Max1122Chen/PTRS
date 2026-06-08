@@ -1,0 +1,927 @@
+{
+  "buildingPoiId": 900022224,
+  "areaId": 252,
+  "source": "osm-building-footprint+heuristic-corridors+component-bridges",
+  "completenessScore": 1.0,
+  "levels": [
+    {
+      "level": "0",
+      "label": "1层",
+      "order": 0
+    },
+    {
+      "level": "1",
+      "label": "2层",
+      "order": 1
+    }
+  ],
+  "entranceNodeId": 9004,
+  "nodes": [
+    {
+      "id": 9001,
+      "level": "0",
+      "name": "N-105, N-107",
+      "nodeKind": "room",
+      "longitude": 116.2858144,
+      "latitude": 40.1573633,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9002,
+      "level": "1",
+      "name": "N-201, N-203",
+      "nodeKind": "room",
+      "longitude": 116.2858763,
+      "latitude": 40.1573514,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9003,
+      "level": "1",
+      "name": "N-205, N-207",
+      "nodeKind": "room",
+      "longitude": 116.2860807,
+      "latitude": 40.1574129,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9004,
+      "level": "0",
+      "name": "N-109, N-111",
+      "nodeKind": "room",
+      "longitude": 116.2860324,
+      "latitude": 40.157417,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9005,
+      "level": "0",
+      "name": "N-101, N-103",
+      "nodeKind": "room",
+      "longitude": 116.2856423,
+      "latitude": 40.1572969,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9006,
+      "level": "0",
+      "name": "N-113, N-115",
+      "nodeKind": "room",
+      "longitude": 116.2863722,
+      "latitude": 40.1574997,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9007,
+      "level": "1",
+      "name": "N-209, N211",
+      "nodeKind": "room",
+      "longitude": 116.2864035,
+      "latitude": 40.1574984,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9008,
+      "level": "0",
+      "name": "N-117, N-118",
+      "nodeKind": "room",
+      "longitude": 116.2866202,
+      "latitude": 40.157556,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9009,
+      "level": "1",
+      "name": "N-213, N-215",
+      "nodeKind": "room",
+      "longitude": 116.2866703,
+      "latitude": 40.1575684,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9010,
+      "level": "0",
+      "name": "开水间",
+      "nodeKind": "room",
+      "longitude": 116.2858871,
+      "latitude": 40.1572461,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9011,
+      "level": "0",
+      "name": "卫生间",
+      "nodeKind": "room",
+      "longitude": 116.285837,
+      "latitude": 40.1572035,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9012,
+      "level": "0",
+      "name": "N-102, N-104",
+      "nodeKind": "room",
+      "longitude": 116.2856543,
+      "latitude": 40.1571572,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9013,
+      "level": "0",
+      "name": "N-106, N-108",
+      "nodeKind": "room",
+      "longitude": 116.2861159,
+      "latitude": 40.1572455,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9014,
+      "level": "1",
+      "name": "N-202",
+      "nodeKind": "room",
+      "longitude": 116.2859624,
+      "latitude": 40.1572054,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9015,
+      "level": "1",
+      "name": "N-204, N-206",
+      "nodeKind": "room",
+      "longitude": 116.2861072,
+      "latitude": 40.1572669,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9016,
+      "level": "1",
+      "name": "卫生间",
+      "nodeKind": "room",
+      "longitude": 116.2858346,
+      "latitude": 40.1571981,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9017,
+      "level": "1",
+      "name": "开水间",
+      "nodeKind": "room",
+      "longitude": 116.2858738,
+      "latitude": 40.1572344,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9018,
+      "level": "1",
+      "name": "N-208, N-210",
+      "nodeKind": "room",
+      "longitude": 116.2864242,
+      "latitude": 40.1573524,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9019,
+      "level": "0",
+      "name": "N-110, N-112",
+      "nodeKind": "room",
+      "longitude": 116.2864301,
+      "latitude": 40.1573519,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9020,
+      "level": "0",
+      "name": "N-114, N-116",
+      "nodeKind": "room",
+      "longitude": 116.2866018,
+      "latitude": 40.1573974,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9021,
+      "level": "1",
+      "name": "N-212, N-214",
+      "nodeKind": "room",
+      "longitude": 116.2865973,
+      "latitude": 40.1574113,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9022,
+      "level": "0",
+      "name": "N-119, N-120",
+      "nodeKind": "room",
+      "longitude": 116.2868467,
+      "latitude": 40.1576124,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9023,
+      "level": "1",
+      "name": "N-216, N-217",
+      "nodeKind": "room",
+      "longitude": 116.2868627,
+      "latitude": 40.1576275,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9024,
+      "level": "0",
+      "name": "卫生间",
+      "nodeKind": "room",
+      "longitude": 116.2867542,
+      "latitude": 40.1574533,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9025,
+      "level": "1",
+      "name": "卫生间",
+      "nodeKind": "room",
+      "longitude": 116.2867707,
+      "latitude": 40.1574552,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9026,
+      "level": "0",
+      "name": "开水间",
+      "nodeKind": "room",
+      "longitude": 116.2868497,
+      "latitude": 40.157497,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9027,
+      "level": "1",
+      "name": "开水间",
+      "nodeKind": "room",
+      "longitude": 116.2868599,
+      "latitude": 40.1574953,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9028,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2868419,
+      "latitude": 40.1574763,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9029,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2868605,
+      "latitude": 40.1574322,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9030,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2868607,
+      "latitude": 40.1574322,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9031,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2869009,
+      "latitude": 40.1574414,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9032,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2868822,
+      "latitude": 40.1574845,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9033,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2868419,
+      "latitude": 40.1574763,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9034,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2868462,
+      "latitude": 40.1574722,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9035,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2868605,
+      "latitude": 40.1574322,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9036,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2869184,
+      "latitude": 40.1574454,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9037,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2868994,
+      "latitude": 40.1574807,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9038,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2868969,
+      "latitude": 40.1574854,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9039,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2868462,
+      "latitude": 40.1574722,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9040,
+      "level": "1",
+      "name": "N-218",
+      "nodeKind": "room",
+      "longitude": 116.287023,
+      "latitude": 40.1574453,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9041,
+      "level": "1",
+      "name": "S-201",
+      "nodeKind": "room",
+      "longitude": 116.2860892,
+      "latitude": 40.1569097,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9042,
+      "level": "0",
+      "name": "洗手间",
+      "nodeKind": "room",
+      "longitude": 116.285978,
+      "latitude": 40.1568747,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9043,
+      "level": "1",
+      "name": "卫生间",
+      "nodeKind": "room",
+      "longitude": 116.2859569,
+      "latitude": 40.1568717,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9044,
+      "level": "0",
+      "name": "S-101, S-103",
+      "nodeKind": "room",
+      "longitude": 116.2858159,
+      "latitude": 40.1568402,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9045,
+      "level": "0",
+      "name": "S-105, S-107",
+      "nodeKind": "room",
+      "longitude": 116.2862455,
+      "latitude": 40.1569402,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9046,
+      "level": "1",
+      "name": "S-203, S-205",
+      "nodeKind": "room",
+      "longitude": 116.28627,
+      "latitude": 40.1569501,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9047,
+      "level": "1",
+      "name": "开水间",
+      "nodeKind": "room",
+      "longitude": 116.286033,
+      "latitude": 40.156847,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    },
+    {
+      "id": 9048,
+      "level": "1",
+      "name": "S-207, S-209",
+      "nodeKind": "room",
+      "longitude": 116.2865756,
+      "latitude": 40.1570053,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022224
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "startNodeId": 9028,
+      "endNodeId": 9029,
+      "edgeKind": "elevator",
+      "distance": 5.15,
+      "directed": false
+    },
+    {
+      "id": 2,
+      "startNodeId": 9029,
+      "endNodeId": 9030,
+      "edgeKind": "elevator",
+      "distance": 0.5,
+      "directed": false
+    },
+    {
+      "id": 3,
+      "startNodeId": 9030,
+      "endNodeId": 9031,
+      "edgeKind": "elevator",
+      "distance": 3.57,
+      "directed": false
+    },
+    {
+      "id": 4,
+      "startNodeId": 9031,
+      "endNodeId": 9032,
+      "edgeKind": "elevator",
+      "distance": 5.05,
+      "directed": false
+    },
+    {
+      "id": 5,
+      "startNodeId": 9032,
+      "endNodeId": 9033,
+      "edgeKind": "elevator",
+      "distance": 3.54,
+      "directed": false
+    },
+    {
+      "id": 6,
+      "startNodeId": 9034,
+      "endNodeId": 9035,
+      "edgeKind": "elevator",
+      "distance": 4.61,
+      "directed": false
+    },
+    {
+      "id": 7,
+      "startNodeId": 9035,
+      "endNodeId": 9036,
+      "edgeKind": "elevator",
+      "distance": 5.13,
+      "directed": false
+    },
+    {
+      "id": 8,
+      "startNodeId": 9036,
+      "endNodeId": 9037,
+      "edgeKind": "elevator",
+      "distance": 4.24,
+      "directed": false
+    },
+    {
+      "id": 9,
+      "startNodeId": 9037,
+      "endNodeId": 9038,
+      "edgeKind": "elevator",
+      "distance": 0.56,
+      "directed": false
+    },
+    {
+      "id": 10,
+      "startNodeId": 9038,
+      "endNodeId": 9039,
+      "edgeKind": "elevator",
+      "distance": 4.55,
+      "directed": false
+    },
+    {
+      "id": 11,
+      "startNodeId": 9010,
+      "endNodeId": 9011,
+      "edgeKind": "corridor",
+      "distance": 6.37,
+      "directed": false
+    },
+    {
+      "id": 12,
+      "startNodeId": 9024,
+      "endNodeId": 9026,
+      "edgeKind": "corridor",
+      "distance": 9.46,
+      "directed": false
+    },
+    {
+      "id": 13,
+      "startNodeId": 9022,
+      "endNodeId": 9026,
+      "edgeKind": "corridor",
+      "distance": 12.83,
+      "directed": false
+    },
+    {
+      "id": 14,
+      "startNodeId": 9042,
+      "endNodeId": 9044,
+      "edgeKind": "corridor",
+      "distance": 14.3,
+      "directed": false
+    },
+    {
+      "id": 15,
+      "startNodeId": 9020,
+      "endNodeId": 9024,
+      "edgeKind": "corridor",
+      "distance": 14.37,
+      "directed": false
+    },
+    {
+      "id": 16,
+      "startNodeId": 9001,
+      "endNodeId": 9010,
+      "edgeKind": "corridor",
+      "distance": 14.42,
+      "directed": false
+    },
+    {
+      "id": 17,
+      "startNodeId": 9019,
+      "endNodeId": 9020,
+      "edgeKind": "corridor",
+      "distance": 15.44,
+      "directed": false
+    },
+    {
+      "id": 18,
+      "startNodeId": 9005,
+      "endNodeId": 9012,
+      "edgeKind": "corridor",
+      "distance": 15.57,
+      "directed": false
+    },
+    {
+      "id": 19,
+      "startNodeId": 9008,
+      "endNodeId": 9024,
+      "edgeKind": "corridor",
+      "distance": 16.13,
+      "directed": false
+    },
+    {
+      "id": 20,
+      "startNodeId": 9011,
+      "endNodeId": 9012,
+      "edgeKind": "corridor",
+      "distance": 16.36,
+      "directed": false
+    },
+    {
+      "id": 21,
+      "startNodeId": 9006,
+      "endNodeId": 9019,
+      "edgeKind": "corridor",
+      "distance": 17.16,
+      "directed": false
+    },
+    {
+      "id": 22,
+      "startNodeId": 9010,
+      "endNodeId": 9013,
+      "edgeKind": "corridor",
+      "distance": 19.44,
+      "directed": false
+    },
+    {
+      "id": 23,
+      "startNodeId": 9001,
+      "endNodeId": 9004,
+      "edgeKind": "corridor",
+      "distance": 19.46,
+      "directed": false
+    },
+    {
+      "id": 24,
+      "startNodeId": 9042,
+      "endNodeId": 9045,
+      "edgeKind": "corridor",
+      "distance": 23.87,
+      "directed": false
+    },
+    {
+      "id": 25,
+      "startNodeId": 9013,
+      "endNodeId": 9019,
+      "edgeKind": "corridor",
+      "distance": 29.21,
+      "directed": false
+    },
+    {
+      "id": 26,
+      "startNodeId": 9013,
+      "endNodeId": 9045,
+      "edgeKind": "corridor",
+      "distance": 35.69,
+      "directed": false
+    },
+    {
+      "id": 27,
+      "startNodeId": 9016,
+      "endNodeId": 9017,
+      "edgeKind": "corridor",
+      "distance": 5.23,
+      "directed": false
+    },
+    {
+      "id": 28,
+      "startNodeId": 9043,
+      "endNodeId": 9047,
+      "edgeKind": "corridor",
+      "distance": 7.03,
+      "directed": false
+    },
+    {
+      "id": 29,
+      "startNodeId": 9014,
+      "endNodeId": 9017,
+      "edgeKind": "corridor",
+      "distance": 8.19,
+      "directed": false
+    },
+    {
+      "id": 30,
+      "startNodeId": 9041,
+      "endNodeId": 9047,
+      "edgeKind": "corridor",
+      "distance": 8.45,
+      "directed": false
+    },
+    {
+      "id": 31,
+      "startNodeId": 9025,
+      "endNodeId": 9027,
+      "edgeKind": "corridor",
+      "distance": 8.79,
+      "directed": false
+    },
+    {
+      "id": 32,
+      "startNodeId": 9002,
+      "endNodeId": 9017,
+      "edgeKind": "corridor",
+      "distance": 13.01,
+      "directed": false
+    },
+    {
+      "id": 33,
+      "startNodeId": 9014,
+      "endNodeId": 9015,
+      "edgeKind": "corridor",
+      "distance": 14.08,
+      "directed": false
+    },
+    {
+      "id": 34,
+      "startNodeId": 9023,
+      "endNodeId": 9027,
+      "edgeKind": "corridor",
+      "distance": 14.7,
+      "directed": false
+    },
+    {
+      "id": 35,
+      "startNodeId": 9027,
+      "endNodeId": 9040,
+      "edgeKind": "corridor",
+      "distance": 14.93,
+      "directed": false
+    },
+    {
+      "id": 36,
+      "startNodeId": 9009,
+      "endNodeId": 9025,
+      "edgeKind": "corridor",
+      "distance": 15.21,
+      "directed": false
+    },
+    {
+      "id": 37,
+      "startNodeId": 9021,
+      "endNodeId": 9025,
+      "edgeKind": "corridor",
+      "distance": 15.52,
+      "directed": false
+    },
+    {
+      "id": 38,
+      "startNodeId": 9041,
+      "endNodeId": 9046,
+      "edgeKind": "corridor",
+      "distance": 16.01,
+      "directed": false
+    },
+    {
+      "id": 39,
+      "startNodeId": 9018,
+      "endNodeId": 9021,
+      "edgeKind": "corridor",
+      "distance": 16.1,
+      "directed": false
+    },
+    {
+      "id": 40,
+      "startNodeId": 9007,
+      "endNodeId": 9018,
+      "edgeKind": "corridor",
+      "distance": 16.33,
+      "directed": false
+    },
+    {
+      "id": 41,
+      "startNodeId": 9003,
+      "endNodeId": 9015,
+      "edgeKind": "corridor",
+      "distance": 16.39,
+      "directed": false
+    },
+    {
+      "id": 42,
+      "startNodeId": 9046,
+      "endNodeId": 9048,
+      "edgeKind": "corridor",
+      "distance": 26.69,
+      "directed": false
+    },
+    {
+      "id": 43,
+      "startNodeId": 9015,
+      "endNodeId": 9018,
+      "edgeKind": "corridor",
+      "distance": 28.57,
+      "directed": false
+    },
+    {
+      "id": 44,
+      "startNodeId": 9014,
+      "endNodeId": 9041,
+      "edgeKind": "corridor",
+      "distance": 34.6,
+      "directed": false
+    },
+    {
+      "id": 45,
+      "startNodeId": 9019,
+      "endNodeId": 9018,
+      "edgeKind": "elevator",
+      "distance": 10.0,
+      "directed": false
+    },
+    {
+      "id": 46,
+      "startNodeId": 9029,
+      "endNodeId": 9035,
+      "edgeKind": "corridor",
+      "distance": 0.5,
+      "directed": false
+    },
+    {
+      "id": 47,
+      "startNodeId": 9027,
+      "endNodeId": 9032,
+      "edgeKind": "corridor",
+      "distance": 2.24,
+      "directed": false
+    }
+  ]
+}

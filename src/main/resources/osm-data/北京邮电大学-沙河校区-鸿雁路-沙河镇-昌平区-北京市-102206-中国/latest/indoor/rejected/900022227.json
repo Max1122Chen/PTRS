@@ -1,0 +1,10 @@
+{
+  "buildingPoiId": 900022227,
+  "name": "教工食堂",
+  "failures": [
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

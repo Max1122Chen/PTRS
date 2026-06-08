@@ -1,0 +1,376 @@
+{
+  "buildingPoiId": 900022232,
+  "areaId": 252,
+  "source": "osm-building-footprint+heuristic-corridors+component-bridges",
+  "completenessScore": 1.0,
+  "levels": [
+    {
+      "level": "0",
+      "label": "1层",
+      "order": 0
+    },
+    {
+      "level": "1",
+      "label": "2层",
+      "order": 1
+    }
+  ],
+  "entranceNodeId": 9008,
+  "nodes": [
+    {
+      "id": 9001,
+      "level": "0",
+      "name": "洗手间",
+      "nodeKind": "room",
+      "longitude": 116.2869317,
+      "latitude": 40.1570915,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9002,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2869868,
+      "latitude": 40.1571391,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9003,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2870035,
+      "latitude": 40.1571002,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9004,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2870431,
+      "latitude": 40.1571103,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9005,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.287027,
+      "latitude": 40.1571483,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9006,
+      "level": "0",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2869868,
+      "latitude": 40.1571391,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9007,
+      "level": "0",
+      "name": "开水间",
+      "nodeKind": "room",
+      "longitude": 116.2870248,
+      "latitude": 40.1570911,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9008,
+      "level": "0",
+      "name": "S-114, S-116",
+      "nodeKind": "room",
+      "longitude": 116.2866643,
+      "latitude": 40.1568838,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9009,
+      "level": "0",
+      "name": "S-117, S-118",
+      "nodeKind": "room",
+      "longitude": 116.2869115,
+      "latitude": 40.156947,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9010,
+      "level": "0",
+      "name": "S-119, S-120",
+      "nodeKind": "room",
+      "longitude": 116.2871272,
+      "latitude": 40.1570018,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9011,
+      "level": "1",
+      "name": "卫生间",
+      "nodeKind": "room",
+      "longitude": 116.2869111,
+      "latitude": 40.1570895,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9012,
+      "level": "1",
+      "name": "S-214, S-215",
+      "nodeKind": "room",
+      "longitude": 116.2869266,
+      "latitude": 40.1569279,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9013,
+      "level": "1",
+      "name": "S-216, S-217",
+      "nodeKind": "room",
+      "longitude": 116.2871405,
+      "latitude": 40.1569811,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9014,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2869895,
+      "latitude": 40.1571401,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9015,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2870042,
+      "latitude": 40.1571053,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9016,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2870498,
+      "latitude": 40.1571165,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9017,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2870351,
+      "latitude": 40.1571503,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9018,
+      "level": "1",
+      "name": "电梯",
+      "nodeKind": "elevator",
+      "longitude": 116.2869895,
+      "latitude": 40.1571401,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    },
+    {
+      "id": 9019,
+      "level": "1",
+      "name": "开水间",
+      "nodeKind": "room",
+      "longitude": 116.2870305,
+      "latitude": 40.157088,
+      "x": 0.0,
+      "y": 0.0,
+      "parentId": 900022232
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "startNodeId": 9002,
+      "endNodeId": 9003,
+      "edgeKind": "elevator",
+      "distance": 4.55,
+      "directed": false
+    },
+    {
+      "id": 2,
+      "startNodeId": 9003,
+      "endNodeId": 9004,
+      "edgeKind": "elevator",
+      "distance": 3.55,
+      "directed": false
+    },
+    {
+      "id": 3,
+      "startNodeId": 9004,
+      "endNodeId": 9005,
+      "edgeKind": "elevator",
+      "distance": 4.44,
+      "directed": false
+    },
+    {
+      "id": 4,
+      "startNodeId": 9005,
+      "endNodeId": 9006,
+      "edgeKind": "elevator",
+      "distance": 3.57,
+      "directed": false
+    },
+    {
+      "id": 5,
+      "startNodeId": 9014,
+      "endNodeId": 9015,
+      "edgeKind": "elevator",
+      "distance": 4.07,
+      "directed": false
+    },
+    {
+      "id": 6,
+      "startNodeId": 9015,
+      "endNodeId": 9016,
+      "edgeKind": "elevator",
+      "distance": 4.07,
+      "directed": false
+    },
+    {
+      "id": 7,
+      "startNodeId": 9016,
+      "endNodeId": 9017,
+      "edgeKind": "elevator",
+      "distance": 3.96,
+      "directed": false
+    },
+    {
+      "id": 8,
+      "startNodeId": 9017,
+      "endNodeId": 9018,
+      "edgeKind": "elevator",
+      "distance": 4.04,
+      "directed": false
+    },
+    {
+      "id": 9,
+      "startNodeId": 9001,
+      "endNodeId": 9007,
+      "edgeKind": "corridor",
+      "distance": 7.91,
+      "directed": false
+    },
+    {
+      "id": 10,
+      "startNodeId": 9007,
+      "endNodeId": 9010,
+      "edgeKind": "corridor",
+      "distance": 13.2,
+      "directed": false
+    },
+    {
+      "id": 11,
+      "startNodeId": 9001,
+      "endNodeId": 9009,
+      "edgeKind": "corridor",
+      "distance": 16.16,
+      "directed": false
+    },
+    {
+      "id": 12,
+      "startNodeId": 9008,
+      "endNodeId": 9009,
+      "edgeKind": "corridor",
+      "distance": 22.15,
+      "directed": false
+    },
+    {
+      "id": 13,
+      "startNodeId": 9011,
+      "endNodeId": 9019,
+      "edgeKind": "corridor",
+      "distance": 10.15,
+      "directed": false
+    },
+    {
+      "id": 14,
+      "startNodeId": 9013,
+      "endNodeId": 9019,
+      "edgeKind": "corridor",
+      "distance": 15.12,
+      "directed": false
+    },
+    {
+      "id": 15,
+      "startNodeId": 9011,
+      "endNodeId": 9012,
+      "edgeKind": "corridor",
+      "distance": 18.02,
+      "directed": false
+    },
+    {
+      "id": 16,
+      "startNodeId": 9007,
+      "endNodeId": 9019,
+      "edgeKind": "elevator",
+      "distance": 10.0,
+      "directed": false
+    },
+    {
+      "id": 17,
+      "startNodeId": 9002,
+      "endNodeId": 9014,
+      "edgeKind": "corridor",
+      "distance": 0.5,
+      "directed": false
+    },
+    {
+      "id": 18,
+      "startNodeId": 9007,
+      "endNodeId": 9003,
+      "edgeKind": "corridor",
+      "distance": 2.07,
+      "directed": false
+    }
+  ]
+}

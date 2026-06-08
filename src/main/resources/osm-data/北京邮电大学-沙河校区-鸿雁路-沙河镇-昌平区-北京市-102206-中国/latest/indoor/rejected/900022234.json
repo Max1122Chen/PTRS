@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022234,
+  "name": "网络空间安全学院楼 & 现代邮政学院楼",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

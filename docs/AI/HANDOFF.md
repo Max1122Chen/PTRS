@@ -1,5 +1,78 @@
 # HANDOFF LOG
 
+## 2026-06-08（室内错位登记 + S2 R6 数据治理）
+### 本次目标
+- 登记沙河室内 room 错位问题，决策后期人工改 bundle；执行 R6：dev-seed 瘦身、删旧 osm 包、`map-imports` 仅挂鸿雁路沙河。
+
+### 变更文件
+- **新建** `docs/Tech/OSM Indoor Manual Attribution.md`
+- **新建** `.../鸿雁路.../latest/indoor_manual_assign.json`（草稿，脚本未读）
+- `dev-seed/map-imports.json` → 单包
+- `dev-seed/scenic_areas.json`、`buildings.json`、`roads.json`、`facilities.json`、`scenic_area_tags.json` → `[]`
+- 删除 `dev-seed/indoor/502.json`
+- **删除** osm-data 下师大北路、南丰路、执信、贵阳一中共 4 包
+- 更新 `SPRINT_CLOSURE.md`、`_audit_osm_data.py`
+
+### 验证
+- `osm-data` 仅剩鸿雁路沙河 1 包（26 files）
+- `validate_osm_output.py` 待重启后端后 smoke
+
+### 遗留
+- **室内**：按 `OSM Indoor Manual Attribution.md` 手改 `latest/indoor/*.json` 或后续实现 `indoor_manual_assign` 读取
+- 衍生 seed（foods/diaries/comments）仍保留在 dev-seed
+
+### 负责人
+- Max1122Chen；Cursor Agent
+
+## 2026-06-08（OSM 采集 R1–R5 闭环 — 沙河沙箱）
+### 本次目标
+- 按已批准重构方案实施设施分流、建筑 registry、室内建筑面归属；沙河重抓至 indoor/facilities 达标；**R6 未执行**。
+
+### 变更文件
+- **新建** `scripts/osm_building_geo.py`（建筑面、P0 缓冲归属、最近建筑分配）
+- `scripts/osm_seed.py`：`classify_facility` 扩展、POI/设施分流、`osmType/osmId`、`building_registry.json`
+- `scripts/indoor_seed.py`：`building_footprint` 主路径、`parentId`、P0 认领上限 + 半径兜底
+- `scripts/_audit_osm_data.py`：registry / parentId 检查
+- `src/main/java/.../IndoorNodeRecord.java`、`IndoorDevSeedLoader.java`：可选 `parentId`
+- `docs/Tech/OSM Map Data Collection Refactor.md` §6–7 状态更新
+
+### 验证结果
+- `python scripts/osm_seed.py ... --collect-indoor`（沙河）：POI=267, **Facilities=6**（shop/library/restaurant/hospital），**indoor ok=3 error=0**
+- 图书馆 bundle：`900022224.json`（鸿雁路 latest），`parentId` 已写入
+- `mvn -q "-Dtest=Indoor*" test`：**通过**
+- 沙箱路径：`src/main/resources/osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/`（Nominatim 地址键；南丰路包仍保留作对照）
+
+### 风险 / 遗留
+- 沙河 raw 仅 6 条设施标签，**无 toilet/cafe** OSM 源；达标表「≥6 种」当前为 4 种（可接受或补人工种子）
+- 室内 P0 缓冲 150m + 认领上限 42：应对 room 与 building 面错位；非严格多边形内归属
+- **R6**：dev-seed 瘦身、删其余 osm 包、`map-imports` 单包 — **待负责人确认鸿雁路包为 canonical 后执行**
+
+### 下一步
+- 负责人确认 canonical 沙河包（鸿雁路 vs 南丰路）
+- R6 数据治理；S3 业务 FR 纠偏
+
+### 负责人
+- Max1122Chen；Cursor Agent
+
+## 2026-06-08（地图采集重构方案文档 — 待审核）
+### 本次目标
+- 将 OSM 采集**现状说明、重构目标、重构方案**写入技术文档；审核通过后再实施 R1–R5 编码与沙河迭代。
+
+### 变更文件
+- **新建** `docs/Tech/OSM Map Data Collection Refactor.md`（As-Is 审计、To-Be 目标、设施分流、室内建筑面+parentId、沙河达标表、R1–R6 计划、审核清单）
+- 更新 `docs/AI/SPRINT_CLOSURE.md` §2.5、§6、S2 待办
+
+### 关键决策（待审核）
+- 室内：废弃半径主路径 → **building way 多边形归属** → 节点 `parentId = buildingPoiId`
+- 设施：扩展 `classify_facility`，与 POI 分流
+- 实施：审核通过后自行迭代沙河沙箱，达标后再 dev-seed 瘦身
+
+### 下一步
+- 负责人审阅技术文档 §6 审核清单；批准后开始 R1。
+
+### 负责人
+- Max1122Chen（审核）；Cursor Agent（文档）
+
 ## 2026-06-08（冲刺登记 commit + 沙河 OSM 沙箱拍板）
 ### 本次目标
 - Git 提交冲刺登记与需求 §9 对齐文档；记录 S2 执行拍板：**暂留北邮沙河 osm-data** 作抓取脚本迭代沙箱。

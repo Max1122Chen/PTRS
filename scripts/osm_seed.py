@@ -647,18 +647,47 @@ def build_unmatched_poi_item(el: Dict[str, object], tags: Dict[str, object], nam
     }
 
 
+FACILITY_AMENITY_MAP: Dict[str, str] = {
+    "toilets": "toilet",
+    "toilet": "toilet",
+    "restaurant": "restaurant",
+    "fast_food": "restaurant",
+    "food_court": "restaurant",
+    "canteen": "restaurant",
+    "cafe": "cafe",
+    "coffee_shop": "cafe",
+    "library": "library",
+    "clinic": "medical",
+    "hospital": "hospital",
+    "doctors": "medical",
+    "bicycle_parking": "bike",
+    "bicycle_rental": "bike",
+    "information": "service",
+    "reception": "service",
+    "printer": "printer",
+    "copyshop": "printer",
+    "atm": "service",
+    "vending_machine": "shop",
+}
+
+FACILITY_SHOP_MAP: Dict[str, str] = {
+    "supermarket": "shop",
+    "convenience": "shop",
+    "mall": "shop",
+    "department_store": "shop",
+    "kiosk": "shop",
+    "variety_store": "shop",
+    "general": "shop",
+}
+
+
 def classify_facility(tags: Dict[str, object]) -> Optional[str]:
     amenity = str(tags.get("amenity", "")).lower()
-    if amenity in {"toilets", "toilet"}:
-        return "toilet"
-    if amenity in {"clinic", "hospital", "doctors"}:
-        return "hospital"
-    if amenity in {"bicycle_parking", "bicycle_rental"}:
-        return "bike"
-    if amenity in {"information", "reception"}:
-        return "service"
-    if amenity in {"printer", "copyshop"}:
-        return "printer"
+    if amenity in FACILITY_AMENITY_MAP:
+        return FACILITY_AMENITY_MAP[amenity]
+    shop = str(tags.get("shop", "")).lower()
+    if shop in FACILITY_SHOP_MAP:
+        return FACILITY_SHOP_MAP[shop]
     return None
 
 
@@ -852,10 +881,15 @@ def main() -> int:
         if not isinstance(poi_rows, list):
             poi_rows = []
         from indoor_seed import collect_indoor_for_pois
+        from osm_building_geo import build_building_registry, load_building_registry
 
         indoor_out = resolve_indoor_out_dir(
             repo_root, args.indoor_out_dir, scenic_root=scenic_root, latest_dir=latest
         )
+        registry_path = latest / "raw" / "building_registry.json"
+        building_registry = load_building_registry(registry_path)
+        if not building_registry and isinstance(elements, list):
+            building_registry = build_building_registry(elements)
         business_pois = [row for row in poi_rows if str(row.get("type") or "").lower() != "virtual_node"]
         results = collect_indoor_for_pois(
             business_pois,
@@ -864,6 +898,7 @@ def main() -> int:
             radius=int(args.indoor_radius),
             sleep_s=max(2.0, float(args.sleep)),
             overpass_elements=elements if isinstance(elements, list) else None,
+            building_registry=building_registry,
         )
         summary_path = latest / "indoor_collect.json"
         summary = {
@@ -933,6 +968,10 @@ def main() -> int:
         )
     overpass_raw: Dict[str, object] = {"version": 0.6, "elements": elements, "generator": f"osm_seed/{overpass_mode}"}
 
+    from osm_building_geo import build_building_registry, is_building_way
+
+    building_registry = build_building_registry(elements if isinstance(elements, list) else [])
+
     # Temporary IDs are used during graph construction and are remapped to global IDs later.
     scenic_id = 1
     poi_id = 1
@@ -982,52 +1021,43 @@ def main() -> int:
             continue
         loc_text = str(tags.get("addr:full", "") or tags.get("addr:street", "") or name)[:255]
 
+        osm_type = str(el.get("type", ""))
+        osm_id_val = el.get("id")
+        fac_type = classify_facility(tags)
+        building_fp = is_building_way(el, tags)
         poi_type = classify_poi(tags)
-        if not is_indoor_micro_feature(tags) and poi_type and poi_type in known_poi_type_codes:
-            poi_rows.append(
-                {
-                    "id": poi_id,
-                    "name": name,
-                    "type": poi_type,
-                    "description": f"OSM source={el.get('type')}:{el.get('id')}, review required",
-                    "location": loc_text,
-                    "longitude": round(lng, 6),
-                    "latitude": round(lat, 6),
-                    "parentId": None,
-                    "areaId": scenic_id,
-                    "createTime": ts,
-                    "updateTime": ts,
-                }
-            )
-            poi_id += 1
-        elif not is_indoor_micro_feature(tags) and is_poi_candidate(tags):
-            # Keep candidate POI with explicit null type for later taxonomy expansion.
-            poi_rows.append(
-                {
-                    "id": poi_id,
-                    "name": name,
-                    "type": None,
-                    "description": f"OSM source={el.get('type')}:{el.get('id')}, poi_type_unmatched",
-                    "location": loc_text,
-                    "longitude": round(lng, 6),
-                    "latitude": round(lat, 6),
-                    "parentId": None,
-                    "areaId": scenic_id,
-                    "createTime": ts,
-                    "updateTime": ts,
-                }
-            )
-            unmatched_poi_items.append(build_unmatched_poi_item(el, tags, name, loc_text))
+
+        def append_poi_row(type_val: Optional[str], desc_suffix: str, unmatched: bool = False) -> None:
+            nonlocal poi_id
+            row: Dict[str, object] = {
+                "id": poi_id,
+                "name": name,
+                "type": type_val,
+                "description": f"OSM source={osm_type}:{osm_id_val}, {desc_suffix}",
+                "location": loc_text,
+                "longitude": round(lng, 6),
+                "latitude": round(lat, 6),
+                "parentId": None,
+                "areaId": scenic_id,
+                "createTime": ts,
+                "updateTime": ts,
+            }
+            if osm_type and osm_id_val is not None:
+                row["osmType"] = osm_type
+                row["osmId"] = int(osm_id_val)
+            poi_rows.append(row)
+            if unmatched:
+                unmatched_poi_items.append(build_unmatched_poi_item(el, tags, name, loc_text))
             poi_id += 1
 
-        fac_type = classify_facility(tags)
-        if fac_type:
+        def append_fac_row() -> None:
+            nonlocal fac_id
             fac_rows.append(
                 {
                     "id": fac_id,
                     "name": name,
                     "type": fac_type,
-                    "description": f"OSM source={el.get('type')}:{el.get('id')}, review required",
+                    "description": f"OSM source={osm_type}:{osm_id_val}, review required",
                     "location": loc_text,
                     "longitude": round(lng, 6),
                     "latitude": round(lat, 6),
@@ -1038,8 +1068,24 @@ def main() -> int:
             )
             fac_id += 1
 
+        if building_fp and not is_indoor_micro_feature(tags):
+            if poi_type and poi_type in known_poi_type_codes:
+                append_poi_row(poi_type, "review required")
+            elif is_poi_candidate(tags):
+                append_poi_row(None, "poi_type_unmatched", unmatched=True)
+            else:
+                append_poi_row("teaching", "building_footprint")
+            if fac_type:
+                append_fac_row()
+        elif fac_type:
+            append_fac_row()
+        elif not is_indoor_micro_feature(tags) and poi_type and poi_type in known_poi_type_codes:
+            append_poi_row(poi_type, "review required")
+        elif not is_indoor_micro_feature(tags) and is_poi_candidate(tags):
+            append_poi_row(None, "poi_type_unmatched", unmatched=True)
+
     poi_rows = dedup_rows(poi_rows)[: max(1, int(args.business_poi_cap))]
-    fac_rows = dedup_rows(fac_rows)[:15]
+    fac_rows = dedup_rows(fac_rows)
     business_poi_ids = [int(row["id"]) for row in poi_rows]
 
     # Build true-road-network graph from OSM highway way geometry.
@@ -1286,6 +1332,10 @@ def main() -> int:
 
     (raw_dir / "nominatim_top.json").write_text(json.dumps(top, ensure_ascii=False, indent=2), encoding="utf-8")
     (raw_dir / "overpass.json").write_text(json.dumps(overpass_raw, ensure_ascii=False, indent=2), encoding="utf-8")
+    (raw_dir / "building_registry.json").write_text(
+        json.dumps(building_registry, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     (out_dir / ".scenic_root.txt").write_text(str(scenic_root.resolve()), encoding="utf-8")
     (raw_dir / "unmatched_poi_types.json").write_text(json.dumps(unmatched_poi_items, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -1406,6 +1456,7 @@ def main() -> int:
             radius=int(args.indoor_radius),
             sleep_s=max(0.0, float(args.sleep)),
             overpass_elements=elements if isinstance(elements, list) else None,
+            building_registry=building_registry,
         )
         indoor_summary["candidates"] = len(indoor_results)
         indoor_summary["results"] = indoor_results

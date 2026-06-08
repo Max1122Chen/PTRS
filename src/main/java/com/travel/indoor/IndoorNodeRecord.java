@@ -10,6 +10,11 @@ public class IndoorNodeRecord
 
     private long buildingPoiId;
 
+    /**
+     * 归属建筑 POI（种子 JSON 可选；加载后应与 {@link #buildingPoiId} 一致）。
+     */
+    private Long parentId;
+
     private String level;
 
     private String name;
@@ -48,6 +53,16 @@ public class IndoorNodeRecord
     public void setBuildingPoiId(long buildingPoiId)
     {
         this.buildingPoiId = buildingPoiId;
+    }
+
+    public Long getParentId()
+    {
+        return parentId;
+    }
+
+    public void setParentId(Long parentId)
+    {
+        this.parentId = parentId;
     }
 
     public String getLevel()

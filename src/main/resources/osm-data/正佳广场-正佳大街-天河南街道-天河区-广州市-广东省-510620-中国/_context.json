@@ -1,0 +1,32 @@
+{
+  "place_id": 238336244,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "way",
+  "osm_id": 240402425,
+  "lat": "23.1346415",
+  "lon": "113.3216015",
+  "category": "shop",
+  "type": "mall",
+  "place_rank": 30,
+  "importance": 0.37817846516583514,
+  "addresstype": "shop",
+  "name": "正佳广场",
+  "display_name": "正佳广场, 正佳大街, 天河南街道, 天河区, 广州市, 广东省, 510620, 中国",
+  "address": {
+    "shop": "正佳广场",
+    "road": "正佳大街",
+    "suburb": "天河南街道",
+    "city": "天河区",
+    "state": "广东省",
+    "ISO3166-2-lvl4": "CN-GD",
+    "postcode": "510620",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "23.1339159",
+    "23.1355856",
+    "113.3206004",
+    "113.3225911"
+  ]
+}

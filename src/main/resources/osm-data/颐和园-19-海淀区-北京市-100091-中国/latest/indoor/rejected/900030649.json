@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900030649,
+  "name": "五圣祠",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

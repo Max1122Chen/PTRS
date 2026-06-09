@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900023152,
+  "name": "长廊",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

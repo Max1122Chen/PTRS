@@ -1,0 +1,32 @@
+{
+  "place_id": 241774892,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "node",
+  "osm_id": 4859449416,
+  "lat": "26.6249982",
+  "lon": "106.6207499",
+  "category": "highway",
+  "type": "bus_stop",
+  "place_rank": 30,
+  "importance": 6.0002288853238995e-05,
+  "addresstype": "highway",
+  "name": "贵阳一中",
+  "display_name": "贵阳一中, 黔灵山路, 金阳街道, 观山湖区, 贵阳市, 贵州省, 550081, 中国",
+  "address": {
+    "highway": "贵阳一中",
+    "road": "黔灵山路",
+    "suburb": "金阳街道",
+    "city": "观山湖区",
+    "state": "贵州省",
+    "ISO3166-2-lvl4": "CN-GZ",
+    "postcode": "550081",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "26.6249482",
+    "26.6250482",
+    "106.6206999",
+    "106.6207999"
+  ]
+}

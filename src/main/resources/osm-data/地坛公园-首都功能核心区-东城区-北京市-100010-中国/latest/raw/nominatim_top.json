@@ -1,0 +1,30 @@
+{
+  "place_id": 221461141,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "way",
+  "osm_id": 24825400,
+  "lat": "39.9531184",
+  "lon": "116.4089225",
+  "category": "leisure",
+  "type": "park",
+  "place_rank": 24,
+  "importance": 0.4246822253175736,
+  "addresstype": "park",
+  "name": "地坛公园",
+  "display_name": "地坛公园, 首都功能核心区, 东城区, 北京市, 100010, 中国",
+  "address": {
+    "park": "地坛公园",
+    "suburb": "首都功能核心区",
+    "city": "东城区",
+    "ISO3166-2-lvl4": "CN-BJ",
+    "postcode": "100010",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "39.9499822",
+    "39.9555657",
+    "116.4061616",
+    "116.4119150"
+  ]
+}

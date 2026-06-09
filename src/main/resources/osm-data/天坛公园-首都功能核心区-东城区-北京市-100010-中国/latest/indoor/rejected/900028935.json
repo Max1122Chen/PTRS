@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900028935,
+  "name": "七星石",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

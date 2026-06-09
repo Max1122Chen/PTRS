@@ -1,0 +1,17 @@
+[
+  {
+    "id": 260,
+    "name": "地坛公园",
+    "description": "地坛公园，明清祭地场所，银杏大道与方泽坛是秋季打卡热点。",
+    "location": "地坛公园, 首都功能核心区, 东城区, 北京市, 100010, 中国",
+    "longitude": 116.408923,
+    "latitude": 39.953118,
+    "type": "scenic",
+    "rating": 3.8,
+    "heat": 312,
+    "openTime": "6:00-21:00",
+    "ticketPrice": "2元",
+    "createTime": "2026-06-09T11:12:17",
+    "updateTime": "2026-06-09T12:17:05"
+  }
+]

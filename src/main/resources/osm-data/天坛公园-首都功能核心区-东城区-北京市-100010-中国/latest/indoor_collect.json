@@ -1,0 +1,177 @@
+{
+  "enabled": true,
+  "candidates": 12,
+  "ok": 0,
+  "reject": 12,
+  "error": 0,
+  "results": [
+    {
+      "buildingPoiId": 900028905,
+      "areaId": 257,
+      "name": "东配殿",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43921111
+    },
+    {
+      "buildingPoiId": 900028908,
+      "areaId": 257,
+      "name": "东配殿",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43921117
+    },
+    {
+      "buildingPoiId": 900028942,
+      "areaId": 257,
+      "name": "北京市文汇中学南校区",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 962135673
+    },
+    {
+      "buildingPoiId": 900028927,
+      "areaId": 257,
+      "name": "无梁殿",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43925089
+    },
+    {
+      "buildingPoiId": 900028929,
+      "areaId": 257,
+      "name": "百花亭",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43929222
+    },
+    {
+      "buildingPoiId": 900028920,
+      "areaId": 257,
+      "name": "皇乾殿",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43921140
+    },
+    {
+      "buildingPoiId": 900028915,
+      "areaId": 257,
+      "name": "职工休息室",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43921135
+    },
+    {
+      "buildingPoiId": 900028918,
+      "areaId": 257,
+      "name": "职工休息室",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43921138
+    },
+    {
+      "buildingPoiId": 900028912,
+      "areaId": 257,
+      "name": "西配殿",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43921122
+    },
+    {
+      "buildingPoiId": 900028914,
+      "areaId": 257,
+      "name": "西配殿",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43921133
+    },
+    {
+      "buildingPoiId": 900028926,
+      "areaId": 257,
+      "name": "钟楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43925087
+    },
+    {
+      "buildingPoiId": 900028935,
+      "areaId": 257,
+      "name": "七星石",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 727020465
+    }
+  ]
+}

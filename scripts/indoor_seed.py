@@ -991,6 +991,7 @@ def update_indoor_manifest(out_dir: Path, results: List[Dict[str, Any]]) -> None
             "areaId": row.get("areaId"),
             "completenessScore": 1.0,
         }
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(list(by_id.values()), ensure_ascii=False, indent=2), encoding="utf-8")
 
 

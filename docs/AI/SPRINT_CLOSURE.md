@@ -1,8 +1,8 @@
-# 验收冲刺项登记（待拍板）
+# 验收冲刺项登记
 
-> **用途**：记录收尾冲刺的五类工作及其**依赖顺序**；具体方案与实施细节**待负责人逐条给出需求后再定**。
-> **状态**：`S2 数据治理 R6 已完成` — 仅保留沙河 **鸿雁路** osm 包；室内归属错位已登记，**后期人工改 bundle**（见 [OSM Indoor Manual Attribution](../Tech/OSM%20Indoor%20Manual%20Attribution.md)）。
-> **基线**：`main` @ `74a2e03`（2026-06-08）
+> **用途**：记录收尾冲刺的五类工作及其**依赖顺序**。
+> **状态（2026-06-08）**：S2 R1–R6 完成；**S2 R7–R12** 按 [S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) 推进；S3 景区 Hub 主体已 commit。
+> **基线**：`main` @ `4f049e6`（2026-06-08）
 
 ---
 
@@ -10,8 +10,8 @@
 
 | 顺序 | ID | 主题 | 负责人理解（难易/先后） | 状态 |
 |------|-----|------|-------------------------|------|
-| **①** | **S2** | 展示数据治理 + **地图采集重构** | **最好做、最先做**；见 §2、**§6**、[OSM 采集重构方案](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md) | R1–R5 完成；R6 待执行 |
-| **②** | **S3** | 业务功能纠偏 | 需求错位项待逐条给出 | 待需求 |
+| **①** | **S2** | 展示数据治理 + **地图采集重构** | **最好做、最先做**；见 §2、[S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) | R1–R6 ✅；**R7–R12 进行中** |
+| **②** | **S3** | 业务功能纠偏 | 景区工作台 + 锚点 API | **主体完成**；S3-ROUTE-01 待做 |
 | **③** | **S1** | 前端导航与视觉 | 在数据与业务口径稳定后再改 | 待需求 |
 | **④** | **S4** | 自制数据结构 | 课程硬约束，范围待指示 | 待需求 |
 | **⑤** | **S5** | 验收参考资料 | **最后**定稿（依赖前几项结果） | 待需求 |
@@ -27,9 +27,23 @@
    - **保留候选**：`users.json`、`user_interests.json`（及鉴权演示所需最小集）。
    - **删除/清空候选**：`scenic_areas`、`buildings`、`roads`、`facilities`、`foods`、`restaurants`、`diaries`、`comments`、`diary_destinations`、`tags` 等业务假数据（以负责人最终清单为准）。
 3. **衍生数据后置**：日记、美食、设施等**手工/种子补充**，须在**确定保留哪些 osm-data 包之后**再写，且与真源景区 ID 对齐。
-4. **运行模式倾向**：答辩以 **JSON + 内存** 为主，可考虑完全弃用 MySQL 连接（配置层待 S2 实施时固化）。
+4. **运行模式（已定稿）**：答辩与 dev 演示 **JSON-only** — 仅 `dev-seed` + `osm-data` JSON，`InMemoryStore` 承载业务；**不依赖 MySQL**（`dev` profile + `ignore-db-connection-failure`）。详见 [S2 执行计划 §2](../Tech/S2%20Data%20Governance%20Execution%20Plan.md)。
 
-### 2.2 S2 子任务：采集脚本缺口（阻塞真源质量）
+### 2.2 S2 阶段二：多包采集 + 衍生 seed + 规模口径（负责人 2026-06-08 拍板）
+
+> 完整流程：[S2 Data Governance Execution Plan.md](../Tech/S2%20Data%20Governance%20Execution%20Plan.md)
+
+| 阶段 | 内容 | 负责分工 |
+|------|------|----------|
+| **R7** | 负责人给景点/校园名称 → Agent 调 `osm_seed.py` 批量拉包 → 更新 `map-imports.json` | 名称：负责人；脚本：Agent |
+| **R8** | 负责人前端走查室内错位 → 登记 → Agent 手改 `indoor/*.json` | 走查：负责人；校正：Agent |
+| **R9** | 校正完成后各景区随机补 **日记**、**美食**（美食 **必须** 绑餐厅/食堂类 POI） | Agent + 脚本 |
+| **R10** | JSON-only 配置与 README 固化 | Agent |
+| **R11a** | 设施 `type` **枚举 ≥10**（OSM 不足则 seed 补齐） | Agent |
+| **R11b** | 景区记录 **≥200**：alias id **复用** canonical 地图数据，不需 200 份 OSM | Agent |
+| **R12** | 规模表 + smoke 合并验收 | 共同 |
+
+### 2.3 S2 子任务：采集脚本缺口（R1–R5 已处理，留存对照）
 
 负责人指出当前 **OSM 抓取与需求口径不匹配**，需在选定 osm-data 包之前或并行修正脚本：
 
@@ -53,37 +67,37 @@
 
 **待办（登记）**：审计 rejected 原因分布；放宽或分级完整度（演示级 vs 严格级）；改进从 `raw/overpass.json` 抽室内特征的逻辑。
 
-### 2.3 OSM 包策略（负责人 2026-06-08 拍板）
+### 2.4 OSM 包策略（负责人 2026-06-08 拍板，R7 扩展）
 
 | 项 | 决策 |
 |----|------|
-| 现有 `osm-data` | **均可弃用**（抓取逻辑将重做，旧包不保留为真源） |
-| **唯一真源包** | `osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/` |
-| 其余 OSM 包 | **已删除**（师大北路、南丰路旧沙箱、执信、贵阳一中） |
-| 衍生 seed | 脚本验证通过、重抓沙河包达标后，再清 dev-seed 假数据并更新 `map-imports.json` |
+| 首批真源包 | `osm-data/北京邮电大学-沙河校区-鸿雁路-.../`（areaId **252**，已入库） |
+| 后续包 | 负责人提供名称列表，**逐包** osm_seed 拉取并挂入 `map-imports.json` |
+| 已删旧包 | 师大北路、南丰路旧沙箱、执信、贵阳一中 |
+| 衍生 seed | **R8 室内校正完成后** 再写日记/美食；美食绑餐饮 POI |
+| 规模 | 设施 type ≥10（枚举+seed）；景区 ≥200（**alias 复用** canonical 数据） |
 
-### 2.4 S2 执行顺序与脚本迭代闭环
+### 2.4 S2 执行顺序（阶段一 ✅，阶段二 ⏳）
+
+**阶段一（已完成）**：脚本重构 → 沙河迭代 → dev-seed 瘦身 → map-imports 挂沙河包
+
+**阶段二**（详见 [S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md)）：
 
 ```mermaid
 flowchart LR
-  A["更新 osm_seed / indoor_seed<br/>设施 + 室内逻辑"]
-  B["以北邮沙河校区重抓 / 校验"]
-  C["迭代直至贴需求"]
-  D["清理 dev-seed 假数据 + 删其余 osm 包"]
-  E["map-imports 仅挂沙河包"]
-  F["按需补日记/美食等衍生 seed"]
+  R7["R7 多包 OSM 拉取"]
+  R8["R8 室内人工校正"]
+  R9["R9 日记+美食 seed"]
+  R10["R10 JSON-only"]
+  R11["R11 规模 alias+设施枚举"]
+  R12["R12 合并验收"]
 
-  A --> B --> C
-  C -->|未达标| A
-  C -->|达标| D --> E --> F
+  R7 --> R8 --> R9
+  R7 --> R11
+  R10 --> R12
+  R9 --> R12
+  R11 --> R12
 ```
-
-**迭代验收（自行设计，以北邮沙河为固定样本）**：
-
-1. 跑室外采集 → 检查 `pois` / `facilities` 种类与数量（商店、饭店、洗手间、图书馆、食堂、超市、咖啡馆等是否进入 **facilities**）。
-2. 跑室内采集 → 统计 `indoor/` 通过 vs `rejected/` 及原因；目标减少误杀、提高 `indoorAvailable` 命中。
-3. `python scripts/validate_osm_output.py`（或等价检查）+ 后端加载 smoke（`dev` profile 启动后 `map-data` / `facility/search` / `indoor/buildings`）。
-4. 未达标则回到步骤 1 改脚本，**不**提前清 dev-seed 或删沙河沙箱数据。
 
 ### 2.5 室内归属结论（2026-06-08 确认）
 
@@ -133,18 +147,18 @@ flowchart TB
 - [ ] 视觉问题清单（由负责人逐条指出）
 
 ### S2 展示数据治理 + 地图采集重构
-- [x] 方向：dev-seed 仅保留用户相关；osm-data 为唯一业务真源；衍生数据后置
-- [x] 现状审计：设施错位、室内半径归属问题（见技术文档 §1.4）
-- [x] 重构方案文档：[OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)
-- [x] **负责人审核** §6 审核清单
-- [x] 设施：`classify_facility` 扩展 + POI/设施分流（§3.1）
-- [x] 室内：建筑面归属 + `parentId`（§3.2）；**错位改人工**（§2.5）
-- [x] OSM 唯一包：鸿雁路沙河；其余包已删
-- [x] 沙河迭代达标（indoor ok≥3、facilities 6/6 raw、error=0）
-- [x] R6：dev-seed 地图 JSON 清空 + `map-imports` 单包
-- [ ] 室内 bundle 人工校正（`indoor_manual_assign` / 手改 JSON）
-- [ ] 是否彻底 JSON-only（不连 MySQL）
-- [ ] 衍生 seed（日记/美食等）按需补全
+- [x] 方向：dev-seed 仅保留用户相关；osm-data 为业务真源；衍生数据后置
+- [x] R1–R5：脚本重构 + 沙河迭代
+- [x] R6：dev-seed 地图 JSON 清空 + map-imports 单包（沙河）
+- [x] **JSON-only** 运行模式拍板（见 [S2 执行计划 §2](../Tech/S2%20Data%20Governance%20Execution%20Plan.md)）
+- [x] **规模口径**拍板：设施 type 枚举 ≥10；景区 ≥200 用 alias 复用 canonical 数据
+- [ ] **R7** 负责人提供名称 → 批量 osm_seed 拉包
+- [ ] **R8** 室内 bundle 人工校正（负责人走查 → Agent 改 JSON）
+- [ ] **R9** 衍生 seed：日记 + 美食（美食绑餐厅/食堂 POI）
+- [ ] **R10** JSON-only 配置/README 固化
+- [ ] **R11a** 设施 type 枚举 ≥10 落地 + 校验
+- [ ] **R11b** scenic-area-aliases ≥200
+- [ ] **R12** §9.7 规模表 + smoke 验收
 
 ### S3 需求与实现纠偏
 
@@ -162,10 +176,8 @@ flowchart TB
 | **S3-ROUTE-01** | FR-004 | 多点 TSP **偶发**「无法规划到达路径」 | 失败返回不可达段提示；连通性/交通工具过滤排查 |
 | **S3-DOC-01** | — | 需求 §9 与实现错位 | **已完成** Requirements v1.7 + 本表 |
 
-- [x] 错位 FR/页面/接口清单（负责人确认）
-- [x] 每项：改代码 vs 改需求文档（文档已更；代码待 S3 实施）
-- [ ] 景区页前端实现（S3-UI-01）
-- [ ] 设施/美食锚点 API（S3-FAC-* / S3-FOOD-*）
+- [x] 景区页前端实现（S3-UI-01）
+- [x] 设施/美食锚点 API（S3-FAC-* / S3-FOOD-*）
 - [ ] 多点路线失败提示（S3-ROUTE-01）
 
 ### S4 自制数据结构替换
@@ -211,4 +223,5 @@ flowchart TB
 | 2026-06-08 | 负责人优先级：**S2→S3→S1→S4→S5**；S2 明确 dev-seed 瘦身 + osm 真源；登记设施/室内采集缺口 |
 | 2026-06-08 | S2 拍板：现有 osm-data 均可弃；**暂留北邮沙河** 作抓取迭代沙箱；闭环见 §2.4 |
 | 2026-06-08 | 新增 [OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)：现状、目标、设施/室内重构方案、沙河迭代；**待审核后编码** |
-| 2026-06-08 | S3：登记错位项 S3-UI/FAC/FOOD/ROUTE；Requirements v1.7 + [Scenic Hub Page Design.md](../Tech/Scenic%20Hub%20Page%20Design.md) |
+| 2026-06-08 | S3 景区 Hub commit（`4f049e6`）；S3 主体完成 |
+| 2026-06-08 | S2 v2 拍板：多包协作流、JSON-only、设施枚举≥10、景区 alias≥200、美食绑餐饮 POI；新增 [S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) |

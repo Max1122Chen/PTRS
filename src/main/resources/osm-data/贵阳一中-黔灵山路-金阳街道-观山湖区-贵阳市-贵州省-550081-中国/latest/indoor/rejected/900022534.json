@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022534,
+  "name": "高一组团",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

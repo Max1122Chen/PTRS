@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900038699,
+  "name": "游泳馆",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

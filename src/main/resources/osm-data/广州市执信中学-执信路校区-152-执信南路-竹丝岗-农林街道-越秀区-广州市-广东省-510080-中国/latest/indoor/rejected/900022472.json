@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022472,
+  "name": "元培楼",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

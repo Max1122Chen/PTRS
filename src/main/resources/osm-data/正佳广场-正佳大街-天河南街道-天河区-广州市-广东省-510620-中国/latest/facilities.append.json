@@ -1,0 +1,62 @@
+[
+  {
+    "id": 959,
+    "name": "Taste",
+    "type": "shop",
+    "description": "OSM source=node:6612939090, review required",
+    "location": "Taste",
+    "longitude": 113.320914,
+    "latitude": 23.134764,
+    "areaId": 262,
+    "createTime": "2026-06-09T11:45:17",
+    "updateTime": "2026-06-09T11:45:17"
+  },
+  {
+    "id": 960,
+    "name": "奈雪的茶",
+    "type": "cafe",
+    "description": "OSM source=node:9407196433, review required",
+    "location": "奈雪的茶",
+    "longitude": 113.321863,
+    "latitude": 23.134101,
+    "areaId": 262,
+    "createTime": "2026-06-09T11:45:17",
+    "updateTime": "2026-06-09T11:45:17"
+  },
+  {
+    "id": 961,
+    "name": "麦当劳",
+    "type": "restaurant",
+    "description": "OSM source=node:9407196438, review required",
+    "location": "麦当劳",
+    "longitude": 113.32147,
+    "latitude": 23.134526,
+    "areaId": 262,
+    "createTime": "2026-06-09T11:45:17",
+    "updateTime": "2026-06-09T11:45:17"
+  },
+  {
+    "id": 962,
+    "name": "顾里奇客俄罗斯西餐厅",
+    "type": "restaurant",
+    "description": "OSM source=node:12816230411, review required",
+    "location": "天河路",
+    "longitude": 113.321816,
+    "latitude": 23.134965,
+    "areaId": 262,
+    "createTime": "2026-06-09T11:45:17",
+    "updateTime": "2026-06-09T11:45:17"
+  },
+  {
+    "id": 963,
+    "name": "正佳广场",
+    "type": "shop",
+    "description": "OSM source=way:240402425, review required",
+    "location": "正佳广场",
+    "longitude": 113.321615,
+    "latitude": 23.134865,
+    "areaId": 262,
+    "createTime": "2026-06-09T11:45:17",
+    "updateTime": "2026-06-09T11:45:17"
+  }
+]

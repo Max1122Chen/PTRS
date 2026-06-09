@@ -1,26 +1,240 @@
 [
-  {"id": 1001, "userId": 101, "interestType": "nature", "weight": 0.9, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1002, "userId": 101, "interestType": "food", "weight": 0.8, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1003, "userId": 101, "interestType": "history", "weight": 0.6, "createTime": "2026-03-28T12:00:00"},
-
-  {"id": 1004, "userId": 102, "interestType": "campus", "weight": 0.9, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1005, "userId": 102, "interestType": "walk", "weight": 0.7, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1006, "userId": 102, "interestType": "food", "weight": 0.6, "createTime": "2026-03-28T12:00:00"},
-
-  {"id": 1007, "userId": 103, "interestType": "museum", "weight": 0.8, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1008, "userId": 103, "interestType": "history", "weight": 0.9, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1009, "userId": 103, "interestType": "culture", "weight": 0.7, "createTime": "2026-03-28T12:00:00"},
-
-  {"id": 1010, "userId": 104, "interestType": "photo", "weight": 0.8, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1011, "userId": 104, "interestType": "nature", "weight": 0.7, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1012, "userId": 104, "interestType": "food", "weight": 0.7, "createTime": "2026-03-28T12:00:00"},
-
-  {"id": 1013, "userId": 105, "interestType": "route", "weight": 0.8, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1014, "userId": 105, "interestType": "campus", "weight": 0.7, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1015, "userId": 105, "interestType": "food", "weight": 0.8, "createTime": "2026-03-28T12:00:00"},
-
-  {"id": 1016, "userId": 106, "interestType": "management", "weight": 0.6, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1017, "userId": 106, "interestType": "science", "weight": 1.0, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1018, "userId": 106, "interestType": "art", "weight": 0.9, "createTime": "2026-03-28T12:00:00"},
-  {"id": 1019, "userId": 106, "interestType": "food", "weight": 0.8, "createTime": "2026-03-28T12:00:00"}
+  {
+    "id": 1001,
+    "userId": 101,
+    "interestType": "nature",
+    "weight": 0.9,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1002,
+    "userId": 101,
+    "interestType": "food",
+    "weight": 0.8,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1003,
+    "userId": 101,
+    "interestType": "history",
+    "weight": 0.6,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1004,
+    "userId": 102,
+    "interestType": "campus",
+    "weight": 0.9,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1005,
+    "userId": 102,
+    "interestType": "walk",
+    "weight": 0.7,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1006,
+    "userId": 102,
+    "interestType": "food",
+    "weight": 0.6,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1007,
+    "userId": 103,
+    "interestType": "museum",
+    "weight": 0.8,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1008,
+    "userId": 103,
+    "interestType": "history",
+    "weight": 0.9,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1009,
+    "userId": 103,
+    "interestType": "culture",
+    "weight": 0.7,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1010,
+    "userId": 104,
+    "interestType": "photo",
+    "weight": 0.8,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1011,
+    "userId": 104,
+    "interestType": "nature",
+    "weight": 0.7,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1012,
+    "userId": 104,
+    "interestType": "food",
+    "weight": 0.7,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1013,
+    "userId": 105,
+    "interestType": "route",
+    "weight": 0.8,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1014,
+    "userId": 105,
+    "interestType": "campus",
+    "weight": 0.7,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1015,
+    "userId": 105,
+    "interestType": "food",
+    "weight": 0.8,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1016,
+    "userId": 106,
+    "interestType": "management",
+    "weight": 0.6,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1017,
+    "userId": 106,
+    "interestType": "science",
+    "weight": 1.0,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1018,
+    "userId": 106,
+    "interestType": "art",
+    "weight": 0.9,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1019,
+    "userId": 106,
+    "interestType": "food",
+    "weight": 0.8,
+    "createTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 1020,
+    "userId": 107,
+    "interestType": "campus",
+    "weight": 0.9,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1021,
+    "userId": 107,
+    "interestType": "walk",
+    "weight": 0.75,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1022,
+    "userId": 107,
+    "interestType": "museum",
+    "weight": 0.6,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1023,
+    "userId": 108,
+    "interestType": "museum",
+    "weight": 0.9,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1024,
+    "userId": 108,
+    "interestType": "science",
+    "weight": 0.75,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1025,
+    "userId": 108,
+    "interestType": "nature",
+    "weight": 0.6,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1026,
+    "userId": 109,
+    "interestType": "art",
+    "weight": 0.9,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1027,
+    "userId": 109,
+    "interestType": "history",
+    "weight": 0.75,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1028,
+    "userId": 109,
+    "interestType": "nature",
+    "weight": 0.6,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1029,
+    "userId": 110,
+    "interestType": "food",
+    "weight": 0.9,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1030,
+    "userId": 110,
+    "interestType": "photo",
+    "weight": 0.75,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1031,
+    "userId": 110,
+    "interestType": "walk",
+    "weight": 0.6,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1032,
+    "userId": 111,
+    "interestType": "history",
+    "weight": 0.9,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1033,
+    "userId": 111,
+    "interestType": "photo",
+    "weight": 0.75,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 1034,
+    "userId": 111,
+    "interestType": "art",
+    "weight": 0.6,
+    "createTime": "2026-06-09T12:17:05"
+  }
 ]

@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900030645,
+  "name": "水村居",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

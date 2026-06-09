@@ -1,0 +1,30 @@
+{
+  "place_id": 222079237,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "way",
+  "osm_id": 24824550,
+  "lat": "39.8799066",
+  "lon": "116.4028716",
+  "category": "leisure",
+  "type": "park",
+  "place_rank": 24,
+  "importance": 0.5389376124622165,
+  "addresstype": "plot",
+  "name": "天坛公园",
+  "display_name": "天坛公园, 首都功能核心区, 东城区, 北京市, 100010, 中国",
+  "address": {
+    "plot": "天坛公园",
+    "suburb": "首都功能核心区",
+    "city": "东城区",
+    "ISO3166-2-lvl4": "CN-BJ",
+    "postcode": "100010",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "39.8729584",
+    "39.8868254",
+    "116.3941455",
+    "116.4142197"
+  ]
+}

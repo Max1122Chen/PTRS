@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900028929,
+  "name": "百花亭",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

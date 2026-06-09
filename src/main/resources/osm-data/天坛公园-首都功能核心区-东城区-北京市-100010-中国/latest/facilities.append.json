@@ -1,0 +1,26 @@
+[
+  {
+    "id": 855,
+    "name": "天坛福宴",
+    "type": "restaurant",
+    "description": "OSM source=way:371497134, review required",
+    "location": "天坛福宴",
+    "longitude": 116.398633,
+    "latitude": 39.880329,
+    "areaId": 257,
+    "createTime": "2026-06-09T11:11:49",
+    "updateTime": "2026-06-09T11:11:49"
+  },
+  {
+    "id": 856,
+    "name": "祈谷·天坛味道",
+    "type": "cafe",
+    "description": "OSM source=way:521258107, review required",
+    "location": "祈谷·天坛味道",
+    "longitude": 116.406141,
+    "latitude": 39.877033,
+    "areaId": 257,
+    "createTime": "2026-06-09T11:11:49",
+    "updateTime": "2026-06-09T11:11:49"
+  }
+]

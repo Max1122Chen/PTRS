@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900030648,
+  "name": "排云殿",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

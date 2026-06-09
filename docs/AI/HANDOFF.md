@@ -1,5 +1,50 @@
 # HANDOFF LOG
 
+## 2026-06-09（S2 R9 衍生 seed 生成）
+### 本次目标
+- 清空并重生成美食/餐厅、日记、评论；景区描述/标签/rating/heat；用户扩至 11 人。
+
+### 变更
+- **新建** `scripts/seed_derived.py`
+- 更新 12 包 `scenic_areas.append.json`（description/type/rating/heat）
+- `dev-seed`: restaurants(55)、foods(452)、diaries(24)、comments(53)、scenic_area_tags(45)、users(11)
+
+### 验证
+- `python scripts/seed_derived.py` 成功；北邮两校区美食 156 条，食堂约 20 菜/家
+
+### 演示
+- 重启后端 dev → 美食 Tab 按景区有数据；日记列表有景区关联评论（targetType=diary）
+
+## 2026-06-09（S2 R7 批量 OSM 拉取 — 8 景区）
+### 本次目标
+- 负责人给出 8 个名称，执行 osm_seed 并更新 map-imports。
+
+### 结果
+- **7/8 首轮成功**；北邮西土城首次 Nominatim 误匹配「校医院」→ 指定 OSM way `279303636` 重抓成功（areaId **261**）。
+- 已从 map-imports 移除误匹配包并删除其目录。
+- 详见负责人会话汇报表；报告 `scripts/_batch_r7_report.json`。
+
+### 变更文件
+- `src/main/resources/osm-data/*`（+8 包，-1 误匹配）
+- `src/main/resources/dev-seed/map-imports.json`
+
+### 下一步
+- 负责人前端走查室内错位（R8）
+
+## 2026-06-08（S2 v2 需求拍板 + 文档）
+### 本次目标
+- 理解负责人 S2 三项决策并补齐文档：多包 OSM 协作流、JSON-only、设施枚举≥10、景区 alias≥200、美食绑餐饮 POI。
+
+### 变更文件
+- **新建** `docs/Tech/S2 Data Governance Execution Plan.md`（R7–R12 任务清单与验收）
+- `docs/AI/SPRINT_CLOSURE.md`：S2 阶段二、S3 状态更新
+- `docs/Requirements/Requirements Documendation.md` v1.7.2：§5.3 / §9.7 规模达成策略
+- `docs/AI/PROJECT_CONTEXT.md`：JSON-only 定稿
+
+### 下一步（待负责人）
+- 提供景点/校园名称列表 → 启动 **R7** 批量 osm_seed
+- 前端走查室内错位 → **R8** 校正清单
+
 ## 2026-06-08（设施锚点选中 + 室内 POI 标签）
 ### 本次目标
 - 设施查询高亮节点可单击设为锚点；列表行点击同步设锚；室内图显示 POI 名称标签；后端支持设施 ID 作 anchor。

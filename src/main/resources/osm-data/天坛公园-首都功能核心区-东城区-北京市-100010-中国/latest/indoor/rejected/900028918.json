@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900028918,
+  "name": "职工休息室",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

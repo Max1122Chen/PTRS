@@ -1,0 +1,31 @@
+{
+  "place_id": 237944159,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "way",
+  "osm_id": 295929689,
+  "lat": "23.1348182",
+  "lon": "113.3192605",
+  "category": "landuse",
+  "type": "retail",
+  "place_rank": 24,
+  "importance": 0.4069980038678312,
+  "addresstype": "retail",
+  "name": "天环广场",
+  "display_name": "天环广场, 218, 天河南街道, 天河区, 广州市, 广东省, 中国",
+  "address": {
+    "retail": "天环广场",
+    "house_number": "218",
+    "suburb": "天河南街道",
+    "city": "天河区",
+    "state": "广东省",
+    "ISO3166-2-lvl4": "CN-GD",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "23.1338019",
+    "23.1360106",
+    "113.3181868",
+    "113.3203720"
+  ]
+}

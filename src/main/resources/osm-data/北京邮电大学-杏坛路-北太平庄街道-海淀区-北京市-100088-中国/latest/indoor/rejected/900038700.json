@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900038700,
+  "name": "球类馆",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

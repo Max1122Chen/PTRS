@@ -1,15 +1,59 @@
 {
   "scenicAreas": [
-    "classpath:osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/scenic_areas.append.json"
+    "classpath:osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/广州市执信中学-执信路校区-152-执信南路-竹丝岗-农林街道-越秀区-广州市-广东省-510080-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/贵阳一中-黔灵山路-金阳街道-观山湖区-贵阳市-贵州省-550081-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/故宫博物院-4号-景山前街-智德社区-东华门街道-首都功能核心区-东城区-北京市-100010-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/天坛公园-首都功能核心区-东城区-北京市-100010-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/颐和园-19-海淀区-北京市-100091-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/圆明园-清华西路-水磨-青龙桥街道-海淀区-北京市-100871-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/地坛公园-首都功能核心区-东城区-北京市-100010-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/正佳广场-正佳大街-天河南街道-天河区-广州市-广东省-510620-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/动漫星城-1-吉祥路-北京街道-越秀区-广州市-广东省-510030-中国/latest/scenic_areas.append.json",
+    "classpath:osm-data/天环广场-218-天河南街道-天河区-广州市-广东省-中国/latest/scenic_areas.append.json"
   ],
   "pois": [
-    "classpath:osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/pois.append.json"
+    "classpath:osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/pois.append.json",
+    "classpath:osm-data/广州市执信中学-执信路校区-152-执信南路-竹丝岗-农林街道-越秀区-广州市-广东省-510080-中国/latest/pois.append.json",
+    "classpath:osm-data/贵阳一中-黔灵山路-金阳街道-观山湖区-贵阳市-贵州省-550081-中国/latest/pois.append.json",
+    "classpath:osm-data/故宫博物院-4号-景山前街-智德社区-东华门街道-首都功能核心区-东城区-北京市-100010-中国/latest/pois.append.json",
+    "classpath:osm-data/天坛公园-首都功能核心区-东城区-北京市-100010-中国/latest/pois.append.json",
+    "classpath:osm-data/颐和园-19-海淀区-北京市-100091-中国/latest/pois.append.json",
+    "classpath:osm-data/圆明园-清华西路-水磨-青龙桥街道-海淀区-北京市-100871-中国/latest/pois.append.json",
+    "classpath:osm-data/地坛公园-首都功能核心区-东城区-北京市-100010-中国/latest/pois.append.json",
+    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/pois.append.json",
+    "classpath:osm-data/正佳广场-正佳大街-天河南街道-天河区-广州市-广东省-510620-中国/latest/pois.append.json",
+    "classpath:osm-data/动漫星城-1-吉祥路-北京街道-越秀区-广州市-广东省-510030-中国/latest/pois.append.json",
+    "classpath:osm-data/天环广场-218-天河南街道-天河区-广州市-广东省-中国/latest/pois.append.json"
   ],
   "buildings": [],
   "roads": [
-    "classpath:osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/roads.append.json"
+    "classpath:osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/roads.append.json",
+    "classpath:osm-data/广州市执信中学-执信路校区-152-执信南路-竹丝岗-农林街道-越秀区-广州市-广东省-510080-中国/latest/roads.append.json",
+    "classpath:osm-data/贵阳一中-黔灵山路-金阳街道-观山湖区-贵阳市-贵州省-550081-中国/latest/roads.append.json",
+    "classpath:osm-data/故宫博物院-4号-景山前街-智德社区-东华门街道-首都功能核心区-东城区-北京市-100010-中国/latest/roads.append.json",
+    "classpath:osm-data/天坛公园-首都功能核心区-东城区-北京市-100010-中国/latest/roads.append.json",
+    "classpath:osm-data/颐和园-19-海淀区-北京市-100091-中国/latest/roads.append.json",
+    "classpath:osm-data/圆明园-清华西路-水磨-青龙桥街道-海淀区-北京市-100871-中国/latest/roads.append.json",
+    "classpath:osm-data/地坛公园-首都功能核心区-东城区-北京市-100010-中国/latest/roads.append.json",
+    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/roads.append.json",
+    "classpath:osm-data/正佳广场-正佳大街-天河南街道-天河区-广州市-广东省-510620-中国/latest/roads.append.json",
+    "classpath:osm-data/动漫星城-1-吉祥路-北京街道-越秀区-广州市-广东省-510030-中国/latest/roads.append.json",
+    "classpath:osm-data/天环广场-218-天河南街道-天河区-广州市-广东省-中国/latest/roads.append.json"
   ],
   "facilities": [
-    "classpath:osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/facilities.append.json"
+    "classpath:osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/facilities.append.json",
+    "classpath:osm-data/广州市执信中学-执信路校区-152-执信南路-竹丝岗-农林街道-越秀区-广州市-广东省-510080-中国/latest/facilities.append.json",
+    "classpath:osm-data/贵阳一中-黔灵山路-金阳街道-观山湖区-贵阳市-贵州省-550081-中国/latest/facilities.append.json",
+    "classpath:osm-data/故宫博物院-4号-景山前街-智德社区-东华门街道-首都功能核心区-东城区-北京市-100010-中国/latest/facilities.append.json",
+    "classpath:osm-data/天坛公园-首都功能核心区-东城区-北京市-100010-中国/latest/facilities.append.json",
+    "classpath:osm-data/颐和园-19-海淀区-北京市-100091-中国/latest/facilities.append.json",
+    "classpath:osm-data/圆明园-清华西路-水磨-青龙桥街道-海淀区-北京市-100871-中国/latest/facilities.append.json",
+    "classpath:osm-data/地坛公园-首都功能核心区-东城区-北京市-100010-中国/latest/facilities.append.json",
+    "classpath:osm-data/北京邮电大学-杏坛路-北太平庄街道-海淀区-北京市-100088-中国/latest/facilities.append.json",
+    "classpath:osm-data/正佳广场-正佳大街-天河南街道-天河区-广州市-广东省-510620-中国/latest/facilities.append.json",
+    "classpath:osm-data/动漫星城-1-吉祥路-北京街道-越秀区-广州市-广东省-510030-中国/latest/facilities.append.json",
+    "classpath:osm-data/天环广场-218-天河南街道-天河区-广州市-广东省-中国/latest/facilities.append.json"
   ]
 }

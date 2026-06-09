@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022540,
+  "name": "国际部",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

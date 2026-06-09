@@ -1,0 +1,482 @@
+[
+  {
+    "id": 900038648,
+    "name": "Nobel 16 Club",
+    "type": "restaurant",
+    "description": "OSM source=node:2110849471, review required",
+    "location": "Nobel 16 Club",
+    "longitude": 116.408212,
+    "latitude": 39.955216,
+    "parentId": null,
+    "areaId": 260,
+    "createTime": "2026-06-09T11:12:17",
+    "updateTime": "2026-06-09T11:12:17",
+    "osmType": "node",
+    "osmId": 2110849471
+  },
+  {
+    "id": 900038649,
+    "name": "地坛公园",
+    "type": "scenic_spot",
+    "description": "OSM source=way:24825400, review required",
+    "location": "地坛公园",
+    "longitude": 116.40884,
+    "latitude": 39.953653,
+    "parentId": null,
+    "areaId": 260,
+    "createTime": "2026-06-09T11:12:17",
+    "updateTime": "2026-06-09T11:12:17",
+    "osmType": "way",
+    "osmId": 24825400
+  },
+  {
+    "id": 900038650,
+    "name": "地坛",
+    "type": null,
+    "description": "OSM source=way:78050667, poi_type_unmatched",
+    "location": "地坛",
+    "longitude": 116.409659,
+    "latitude": 39.951632,
+    "parentId": null,
+    "areaId": 260,
+    "createTime": "2026-06-09T11:12:17",
+    "updateTime": "2026-06-09T11:12:17",
+    "osmType": "way",
+    "osmId": 78050667
+  },
+  {
+    "id": 900038651,
+    "name": "北京地铁5号线",
+    "type": null,
+    "description": "OSM source=way:120422132, poi_type_unmatched",
+    "location": "北京地铁5号线",
+    "longitude": 116.411296,
+    "latitude": 39.949424,
+    "parentId": null,
+    "areaId": 260,
+    "createTime": "2026-06-09T11:12:17",
+    "updateTime": "2026-06-09T11:12:17",
+    "osmType": "way",
+    "osmId": 120422132
+  },
+  {
+    "id": 900038652,
+    "name": "道路节点-900000001",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.407535,
+    "latitude": 39.952245,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038653,
+    "name": "道路节点-900000002",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.407616,
+    "latitude": 39.951747,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038654,
+    "name": "道路节点-900000003",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.407697,
+    "latitude": 39.951242,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038655,
+    "name": "道路节点-900000004",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409295,
+    "latitude": 39.955671,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038656,
+    "name": "道路节点-900000005",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409327,
+    "latitude": 39.955436,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038657,
+    "name": "道路节点-900000006",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409475,
+    "latitude": 39.954376,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038658,
+    "name": "道路节点-900000007",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409522,
+    "latitude": 39.953987,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038659,
+    "name": "道路节点-900000008",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409563,
+    "latitude": 39.953656,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038660,
+    "name": "道路节点-900000009",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409604,
+    "latitude": 39.953314,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038661,
+    "name": "道路节点-900000010",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409713,
+    "latitude": 39.952425,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038662,
+    "name": "道路节点-900000011",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409762,
+    "latitude": 39.952087,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038663,
+    "name": "道路节点-900000012",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409767,
+    "latitude": 39.95205,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038664,
+    "name": "道路节点-900000013",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.410022,
+    "latitude": 39.950231,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038665,
+    "name": "道路节点-900000014",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.41002,
+    "latitude": 39.950283,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038666,
+    "name": "道路节点-900000015",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.410004,
+    "latitude": 39.950326,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038667,
+    "name": "道路节点-900000016",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409756,
+    "latitude": 39.950398,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038668,
+    "name": "道路节点-900000017",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409057,
+    "latitude": 39.950378,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038669,
+    "name": "道路节点-900000018",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.408899,
+    "latitude": 39.951359,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038670,
+    "name": "道路节点-900000019",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.408491,
+    "latitude": 39.951321,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038671,
+    "name": "道路节点-900000020",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.406934,
+    "latitude": 39.951166,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038672,
+    "name": "道路节点-900000021",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.40899,
+    "latitude": 39.95137,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038673,
+    "name": "道路节点-900000022",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.408901,
+    "latitude": 39.952001,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038674,
+    "name": "道路节点-900000023",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.408419,
+    "latitude": 39.95181,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038675,
+    "name": "道路节点-900000024",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.408346,
+    "latitude": 39.952312,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038676,
+    "name": "道路节点-900000025",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.408213,
+    "latitude": 39.953192,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038677,
+    "name": "道路节点-900000026",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.40818,
+    "latitude": 39.953531,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038678,
+    "name": "道路节点-900000027",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.408128,
+    "latitude": 39.953872,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038679,
+    "name": "道路节点-900000028",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.408096,
+    "latitude": 39.954155,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038680,
+    "name": "道路节点-900000029",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.411623,
+    "latitude": 39.952561,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038681,
+    "name": "道路节点-900000030",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.411898,
+    "latitude": 39.950457,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038682,
+    "name": "道路节点-900000031",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.411202,
+    "latitude": 39.950409,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038683,
+    "name": "道路节点-900000032",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.412539,
+    "latitude": 39.952587,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038684,
+    "name": "道路节点-900000033",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.411701,
+    "latitude": 39.952566,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038685,
+    "name": "道路节点-900000034",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.410921,
+    "latitude": 39.952511,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038686,
+    "name": "道路节点-900000035",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.406376,
+    "latitude": 39.952149,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038687,
+    "name": "道路节点-900000036",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.406353,
+    "latitude": 39.952147,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038688,
+    "name": "道路节点-900000037",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.40215,
+    "latitude": 39.951779,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038689,
+    "name": "道路节点-900000038",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.402052,
+    "latitude": 39.95177,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038690,
+    "name": "道路节点-900000039",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.401899,
+    "latitude": 39.951757,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038691,
+    "name": "道路节点-900000040",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.40658,
+    "latitude": 39.953757,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038692,
+    "name": "道路节点-900000041",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.409931,
+    "latitude": 39.953344,
+    "parentId": null,
+    "areaId": 260
+  },
+  {
+    "id": 900038693,
+    "name": "道路节点-900000042",
+    "type": "virtual_node",
+    "location": "road_network",
+    "longitude": 116.406931,
+    "latitude": 39.951694,
+    "parentId": null,
+    "areaId": 260
+  }
+]

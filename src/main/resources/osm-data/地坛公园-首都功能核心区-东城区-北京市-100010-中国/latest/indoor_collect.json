@@ -1,0 +1,23 @@
+{
+  "enabled": true,
+  "candidates": 1,
+  "ok": 0,
+  "reject": 1,
+  "error": 0,
+  "results": [
+    {
+      "buildingPoiId": 900038649,
+      "areaId": 260,
+      "name": "地坛公园",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "LEVELS",
+        "ROOMS",
+        "CORRIDORS"
+      ],
+      "outputPath": null,
+      "strategy": "network_overpass"
+    }
+  ]
+}

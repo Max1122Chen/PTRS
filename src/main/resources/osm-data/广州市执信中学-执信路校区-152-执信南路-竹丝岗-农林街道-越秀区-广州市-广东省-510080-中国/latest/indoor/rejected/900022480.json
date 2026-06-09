@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022480,
+  "name": "厚望广场",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

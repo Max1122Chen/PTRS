@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022531,
+  "name": "综合楼",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

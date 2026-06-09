@@ -1,0 +1,17 @@
+[
+  {
+    "id": 258,
+    "name": "颐和园",
+    "description": "颐和园，皇家园林典范，昆明湖与万寿山相映，长廊佛香阁值得一游。",
+    "location": "颐和园, 19, 海淀区, 北京市, 100091, 中国",
+    "longitude": 116.26474,
+    "latitude": 39.990098,
+    "type": "scenic",
+    "rating": 4.7,
+    "heat": 143,
+    "openTime": "6:30-18:00",
+    "ticketPrice": "30元",
+    "createTime": "2026-06-09T11:11:58",
+    "updateTime": "2026-06-09T12:17:05"
+  }
+]

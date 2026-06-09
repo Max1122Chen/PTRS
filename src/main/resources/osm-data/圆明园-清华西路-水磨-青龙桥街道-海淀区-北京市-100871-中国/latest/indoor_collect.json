@@ -1,0 +1,163 @@
+{
+  "enabled": true,
+  "candidates": 11,
+  "ok": 0,
+  "reject": 11,
+  "error": 0,
+  "results": [
+    {
+      "buildingPoiId": 900031860,
+      "areaId": 259,
+      "name": "西苑医院",
+      "type": "medical",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 604939240
+    },
+    {
+      "buildingPoiId": 900031879,
+      "areaId": 259,
+      "name": "西苑医院",
+      "type": "medical",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 1293134698
+    },
+    {
+      "buildingPoiId": 900031866,
+      "areaId": 259,
+      "name": "二校门",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 941370305
+    },
+    {
+      "buildingPoiId": 900031841,
+      "areaId": 259,
+      "name": "圆明园盛时全景",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 288644164
+    },
+    {
+      "buildingPoiId": 900031853,
+      "areaId": 259,
+      "name": "天然图画",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494772338
+    },
+    {
+      "buildingPoiId": 900031865,
+      "areaId": 259,
+      "name": "日晷",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 941370303
+    },
+    {
+      "buildingPoiId": 900031840,
+      "areaId": 259,
+      "name": "泽兰堂",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 288643686
+    },
+    {
+      "buildingPoiId": 900031855,
+      "areaId": 259,
+      "name": "海岳开襟",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 498529841
+    },
+    {
+      "buildingPoiId": 900031854,
+      "areaId": 259,
+      "name": "碧桐书院",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494772546
+    },
+    {
+      "buildingPoiId": 900031877,
+      "areaId": 259,
+      "name": "荷塘月色",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 1213223876
+    },
+    {
+      "buildingPoiId": 900031852,
+      "areaId": 259,
+      "name": "谐奇趣",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494772154
+    }
+  ]
+}

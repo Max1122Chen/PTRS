@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022527,
+  "name": "学生食堂",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

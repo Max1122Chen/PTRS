@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022528,
+  "name": "图书馆",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

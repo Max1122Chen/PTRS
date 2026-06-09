@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900038701,
+  "name": "北京邮电大学出版社",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

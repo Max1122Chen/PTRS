@@ -1,0 +1,32 @@
+{
+  "place_id": 219913420,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "node",
+  "osm_id": 7861046849,
+  "lat": "39.9982949",
+  "lon": "116.3036739",
+  "category": "railway",
+  "type": "station",
+  "place_rank": 30,
+  "importance": 0.33935777253266924,
+  "addresstype": "railway",
+  "name": "圆明园",
+  "display_name": "圆明园, 清华西路, 水磨, 青龙桥街道, 海淀区, 北京市, 100871, 中国",
+  "address": {
+    "railway": "圆明园",
+    "road": "清华西路",
+    "neighbourhood": "水磨",
+    "suburb": "青龙桥街道",
+    "city": "海淀区",
+    "ISO3166-2-lvl4": "CN-BJ",
+    "postcode": "100871",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "39.9932949",
+    "40.0032949",
+    "116.2986739",
+    "116.3086739"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900031860,
+  "name": "西苑医院",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

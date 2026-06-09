@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900031866,
+  "name": "二校门",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

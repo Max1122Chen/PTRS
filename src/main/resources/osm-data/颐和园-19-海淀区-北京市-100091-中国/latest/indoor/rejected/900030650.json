@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900030650,
+  "name": "画中游",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

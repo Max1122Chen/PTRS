@@ -1,0 +1,33 @@
+{
+  "place_id": 237596022,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "node",
+  "osm_id": 12986800875,
+  "lat": "23.1286928",
+  "lon": "113.2590113",
+  "category": "shop",
+  "type": "mall",
+  "place_rank": 30,
+  "importance": 0.27438272693865795,
+  "addresstype": "shop",
+  "name": "动漫星城",
+  "display_name": "动漫星城, 1, 吉祥路, 北京街道, 越秀区, 广州市, 广东省, 510030, 中国",
+  "address": {
+    "shop": "动漫星城",
+    "house_number": "1",
+    "road": "吉祥路",
+    "suburb": "北京街道",
+    "city": "越秀区",
+    "state": "广东省",
+    "ISO3166-2-lvl4": "CN-GD",
+    "postcode": "510030",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "23.1286428",
+    "23.1287428",
+    "113.2589613",
+    "113.2590613"
+  ]
+}

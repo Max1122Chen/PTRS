@@ -1,0 +1,26 @@
+[
+  {
+    "osmType": "way",
+    "osmId": 78050667,
+    "name": "地坛",
+    "location": "地坛",
+    "amenity": null,
+    "building": null,
+    "leisure": null,
+    "tourism": null,
+    "highway": null,
+    "landuse": "religious"
+  },
+  {
+    "osmType": "way",
+    "osmId": 120422132,
+    "name": "北京地铁5号线",
+    "location": "北京地铁5号线",
+    "amenity": null,
+    "building": null,
+    "leisure": null,
+    "tourism": null,
+    "highway": null,
+    "landuse": null
+  }
+]

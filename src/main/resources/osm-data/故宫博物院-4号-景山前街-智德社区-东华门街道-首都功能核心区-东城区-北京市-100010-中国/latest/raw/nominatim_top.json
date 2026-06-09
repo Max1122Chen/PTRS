@@ -1,0 +1,33 @@
+{
+  "place_id": 220979740,
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "osm_type": "node",
+  "osm_id": 3884441391,
+  "lat": "39.9174311",
+  "lon": "116.3907817",
+  "category": "tourism",
+  "type": "museum",
+  "place_rank": 30,
+  "importance": 0.48844059519745653,
+  "addresstype": "tourism",
+  "name": "故宫博物院",
+  "display_name": "故宫博物院, 4号, 景山前街, 智德社区, 东华门街道, 首都功能核心区, 东城区, 北京市, 100010, 中国",
+  "address": {
+    "tourism": "故宫博物院",
+    "house_number": "4号",
+    "road": "景山前街",
+    "quarter": "智德社区",
+    "suburb": "东华门街道",
+    "city": "东城区",
+    "ISO3166-2-lvl4": "CN-BJ",
+    "postcode": "100010",
+    "country": "中国",
+    "country_code": "cn"
+  },
+  "boundingbox": [
+    "39.9173811",
+    "39.9174811",
+    "116.3907317",
+    "116.3908317"
+  ]
+}

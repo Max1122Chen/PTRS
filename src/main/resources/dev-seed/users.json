@@ -64,5 +64,60 @@
     "role": "ADMIN",
     "createTime": "2026-03-28T12:00:00",
     "updateTime": "2026-03-28T12:00:00"
+  },
+  {
+    "id": 107,
+    "username": "dev_frank",
+    "password": "dev123456",
+    "email": "dev_frank@example.com",
+    "nickname": "Frank",
+    "avatar": "",
+    "role": "USER",
+    "createTime": "2026-06-09T12:17:05",
+    "updateTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 108,
+    "username": "dev_grace",
+    "password": "dev123456",
+    "email": "dev_grace@example.com",
+    "nickname": "Grace",
+    "avatar": "",
+    "role": "USER",
+    "createTime": "2026-06-09T12:17:05",
+    "updateTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 109,
+    "username": "dev_henry",
+    "password": "dev123456",
+    "email": "dev_henry@example.com",
+    "nickname": "Henry",
+    "avatar": "",
+    "role": "USER",
+    "createTime": "2026-06-09T12:17:05",
+    "updateTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 110,
+    "username": "dev_ivy",
+    "password": "dev123456",
+    "email": "dev_ivy@example.com",
+    "nickname": "Ivy",
+    "avatar": "",
+    "role": "USER",
+    "createTime": "2026-06-09T12:17:05",
+    "updateTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 111,
+    "username": "dev_jack",
+    "password": "dev123456",
+    "email": "dev_jack@example.com",
+    "nickname": "Jack",
+    "avatar": "",
+    "role": "USER",
+    "createTime": "2026-06-09T12:17:05",
+    "updateTime": "2026-06-09T12:17:05"
   }
 ]

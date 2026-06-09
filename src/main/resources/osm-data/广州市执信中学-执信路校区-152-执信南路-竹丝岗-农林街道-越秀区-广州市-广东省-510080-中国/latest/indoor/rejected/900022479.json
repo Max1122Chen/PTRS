@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022479,
+  "name": "执信广场",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

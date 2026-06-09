@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900023151,
+  "name": "团城",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

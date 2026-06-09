@@ -2,16 +2,16 @@
   {
     "id": 252,
     "name": "北京邮电大学（沙河校区）",
-    "description": "Generated from OpenStreetMap (review required).",
+    "description": "北京邮电大学沙河校区，智慧校园示范区，教学楼与食堂分布紧凑，适合路线与设施演示。",
     "location": "北京邮电大学（沙河校区）, 鸿雁路, 沙河镇, 昌平区, 北京市, 102206, 中国",
     "longitude": 116.283563,
     "latitude": 40.156116,
     "type": "campus",
-    "rating": 0.0,
-    "heat": 0,
-    "openTime": "待核实",
-    "ticketPrice": "待核实",
+    "rating": 4.1,
+    "heat": 304,
+    "openTime": "全天开放（教学区按课表）",
+    "ticketPrice": "免费",
     "createTime": "2026-06-08T18:28:59",
-    "updateTime": "2026-06-08T18:28:59"
+    "updateTime": "2026-06-09T12:17:05"
   }
 ]

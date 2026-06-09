@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022541,
+  "name": "宿管中心",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

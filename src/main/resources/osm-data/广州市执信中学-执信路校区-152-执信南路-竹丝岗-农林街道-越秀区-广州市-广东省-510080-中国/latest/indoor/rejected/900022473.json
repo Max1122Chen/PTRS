@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022473,
+  "name": "执信女生宿舍",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1003,
+    "name": "星巴克",
+    "type": "cafe",
+    "description": "OSM source=node:6358132221, review required",
+    "location": "星巴克",
+    "longitude": 113.318534,
+    "latitude": 23.135404,
+    "areaId": 264,
+    "createTime": "2026-06-09T11:50:43",
+    "updateTime": "2026-06-09T11:50:43"
+  },
+  {
+    "id": 1004,
+    "name": "喜茶",
+    "type": "cafe",
+    "description": "OSM source=node:13255201300, review required",
+    "location": "喜茶",
+    "longitude": 113.318663,
+    "latitude": 23.134754,
+    "areaId": 264,
+    "createTime": "2026-06-09T11:50:43",
+    "updateTime": "2026-06-09T11:50:43"
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022535,
+  "name": "音乐厅",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

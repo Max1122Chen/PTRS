@@ -1,0 +1,50 @@
+[
+  {
+    "id": 857,
+    "name": "餐厅",
+    "type": "restaurant",
+    "description": "OSM source=node:6420561939, review required",
+    "location": "餐厅",
+    "longitude": 116.269074,
+    "latitude": 39.996884,
+    "areaId": 258,
+    "createTime": "2026-06-09T11:11:58",
+    "updateTime": "2026-06-09T11:11:58"
+  },
+  {
+    "id": 858,
+    "name": "自动导游讲解",
+    "type": "shop",
+    "description": "OSM source=node:6813634466, review required",
+    "location": "自动导游讲解",
+    "longitude": 116.27392,
+    "latitude": 39.996227,
+    "areaId": 258,
+    "createTime": "2026-06-09T11:11:58",
+    "updateTime": "2026-06-09T11:11:58"
+  },
+  {
+    "id": 859,
+    "name": "稻香村",
+    "type": "restaurant",
+    "description": "OSM source=node:11659670458, review required",
+    "location": "稻香村",
+    "longitude": 116.276764,
+    "latitude": 39.997371,
+    "areaId": 258,
+    "createTime": "2026-06-09T11:11:58",
+    "updateTime": "2026-06-09T11:11:58"
+  },
+  {
+    "id": 860,
+    "name": "听鹂馆",
+    "type": "restaurant",
+    "description": "OSM source=way:43977740, review required",
+    "location": "听鹂馆",
+    "longitude": 116.264946,
+    "latitude": 39.996814,
+    "areaId": 258,
+    "createTime": "2026-06-09T11:11:58",
+    "updateTime": "2026-06-09T11:11:58"
+  }
+]

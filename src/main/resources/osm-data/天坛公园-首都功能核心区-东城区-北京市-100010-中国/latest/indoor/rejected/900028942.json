@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900028942,
+  "name": "北京市文汇中学南校区",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

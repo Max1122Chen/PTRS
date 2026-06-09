@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900031865,
+  "name": "日晷",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

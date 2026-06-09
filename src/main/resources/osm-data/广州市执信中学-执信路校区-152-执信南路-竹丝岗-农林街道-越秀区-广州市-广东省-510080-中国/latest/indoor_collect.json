@@ -1,0 +1,177 @@
+{
+  "enabled": true,
+  "candidates": 12,
+  "ok": 0,
+  "reject": 12,
+  "error": 0,
+  "results": [
+    {
+      "buildingPoiId": 900022470,
+      "areaId": 253,
+      "name": "仁爱楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 427197180
+    },
+    {
+      "buildingPoiId": 900022482,
+      "areaId": 253,
+      "name": "以升楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 1052928045
+    },
+    {
+      "buildingPoiId": 900022472,
+      "areaId": 253,
+      "name": "元培楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 427197182
+    },
+    {
+      "buildingPoiId": 900022471,
+      "areaId": 253,
+      "name": "厚德楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 427197181
+    },
+    {
+      "buildingPoiId": 900022481,
+      "areaId": 253,
+      "name": "奉恩堂",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 1052928044
+    },
+    {
+      "buildingPoiId": 900022468,
+      "areaId": 253,
+      "name": "广州市执信中学(执信路校区)",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 408006153
+    },
+    {
+      "buildingPoiId": 900022469,
+      "areaId": 253,
+      "name": "执信楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 427197179
+    },
+    {
+      "buildingPoiId": 900022475,
+      "areaId": 253,
+      "name": "承志楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 766606277
+    },
+    {
+      "buildingPoiId": 900022473,
+      "areaId": 253,
+      "name": "执信女生宿舍",
+      "type": "dormitory",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 766606273
+    },
+    {
+      "buildingPoiId": 900022474,
+      "areaId": 253,
+      "name": "执信男生宿舍",
+      "type": "dormitory",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 766606276
+    },
+    {
+      "buildingPoiId": 900022480,
+      "areaId": 253,
+      "name": "厚望广场",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 1052928043
+    },
+    {
+      "buildingPoiId": 900022479,
+      "areaId": 253,
+      "name": "执信广场",
+      "type": "scenic_spot",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 1052928042
+    }
+  ]
+}

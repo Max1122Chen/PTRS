@@ -1,0 +1,177 @@
+{
+  "enabled": true,
+  "candidates": 12,
+  "ok": 0,
+  "reject": 12,
+  "error": 0,
+  "results": [
+    {
+      "buildingPoiId": 900030637,
+      "areaId": 258,
+      "name": "Guangrun Lingyu Ci",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977786
+    },
+    {
+      "buildingPoiId": 900030651,
+      "areaId": 258,
+      "name": "二宫门",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977844
+    },
+    {
+      "buildingPoiId": 900030649,
+      "areaId": 258,
+      "name": "五圣祠",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977822
+    },
+    {
+      "buildingPoiId": 900030629,
+      "areaId": 258,
+      "name": "善现寺",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977742
+    },
+    {
+      "buildingPoiId": 900030632,
+      "areaId": 258,
+      "name": "宝云阁",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977752
+    },
+    {
+      "buildingPoiId": 900030639,
+      "areaId": 258,
+      "name": "廓如亭",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977788
+    },
+    {
+      "buildingPoiId": 900030646,
+      "areaId": 258,
+      "name": "德兴殿",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977816
+    },
+    {
+      "buildingPoiId": 900030648,
+      "areaId": 258,
+      "name": "排云殿",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977820
+    },
+    {
+      "buildingPoiId": 900030652,
+      "areaId": 258,
+      "name": "排云门",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977845
+    },
+    {
+      "buildingPoiId": 900030645,
+      "areaId": 258,
+      "name": "水村居",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977810
+    },
+    {
+      "buildingPoiId": 900030644,
+      "areaId": 258,
+      "name": "澄怀阁",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977808
+    },
+    {
+      "buildingPoiId": 900030650,
+      "areaId": 258,
+      "name": "画中游",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 43977839
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "id": 807,
+    "name": "图书馆",
+    "type": "library",
+    "description": "OSM source=way:494149145, review required",
+    "location": "图书馆",
+    "longitude": 106.622489,
+    "latitude": 26.628079,
+    "areaId": 254,
+    "createTime": "2026-06-09T11:10:54",
+    "updateTime": "2026-06-09T11:10:54"
+  },
+  {
+    "id": 808,
+    "name": "华润万象汇",
+    "type": "shop",
+    "description": "OSM source=way:1265421104, review required",
+    "location": "华润万象汇",
+    "longitude": 106.618078,
+    "latitude": 26.624445,
+    "areaId": 254,
+    "createTime": "2026-06-09T11:10:54",
+    "updateTime": "2026-06-09T11:10:54"
+  }
+]

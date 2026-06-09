@@ -1,0 +1,9 @@
+{
+  "buildingPoiId": 900022468,
+  "name": "广州市执信中学(执信路校区)",
+  "failures": [
+    "EMPTY_SUBSET"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

@@ -1,0 +1,11 @@
+{
+  "buildingPoiId": 900038649,
+  "name": "地坛公园",
+  "failures": [
+    "LEVELS",
+    "ROOMS",
+    "CORRIDORS"
+  ],
+  "nodes": 0,
+  "edges": 0
+}

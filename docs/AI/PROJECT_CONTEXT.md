@@ -12,9 +12,10 @@
 - 后端：Spring Boot 3.2.x + MyBatis-Plus + MySQL + Redis(可选)
 - 鉴权：JWT + Spring Security
 
-## 3. 演示与「无数据库 / 内存为主」模式（团队约定）
-- **场景**：答辩或日常演示可能**不反复读写 MySQL**，以 **dev-seed + `InMemoryStore`** 为主承载业务数据。
-- **启动要求**：使用 **`spring.profiles.active=dev`**，并开启 `app.debug.ignore-db-connection-failure=true`（见 `application-dev.yml`），以便数据源不可用时仍能启动、预加载失败时回退种子数据。
+## 3. 演示与「无数据库 / 内存为主」模式（团队约定 — **JSON-only 已定稿**）
+- **场景**：答辩与日常演示 **不依赖 MySQL**；业务数据仅来自 **`dev-seed` + `osm-data` JSON**，经 `DevSeedDataLoader` 写入 `InMemoryStore`。
+- **启动要求**：使用 **`spring.profiles.active=dev`**，并开启 `app.debug.ignore-db-connection-failure=true`（见 `application-dev.yml`）。
+- **S2 执行细节**：[S2 Data Governance Execution Plan.md](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) §2（R10 配置固化待做）。
 - **一致性要求**：凡在「DB 可能不可用」下仍需成功的路径（含 **FR-009-5 日记动画**：写 `animation_url`、下载落盘、内存更新日记），**不得因 Mapper 写库失败而中断**；写库须包在 try/catch 中，识别连接类异常后跳过并仅保留内存态（与 `DiaryServiceImpl` 等既有模式一致）。
 - **其他功能**：新增若涉及「写库 + 内存双写」，须同样遵守上述回退策略，避免演示现场仅因未起 MySQL 而 500。
 

@@ -1,1 +1,317 @@
-[]
+[
+  {
+    "id": 5001,
+    "scenicAreaId": 252,
+    "tagId": 302,
+    "weight": 0.79,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5002,
+    "scenicAreaId": 252,
+    "tagId": 310,
+    "weight": 0.92,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5003,
+    "scenicAreaId": 252,
+    "tagId": 308,
+    "weight": 0.74,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5004,
+    "scenicAreaId": 252,
+    "tagId": 307,
+    "weight": 0.85,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5005,
+    "scenicAreaId": 253,
+    "tagId": 302,
+    "weight": 0.86,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5006,
+    "scenicAreaId": 253,
+    "tagId": 303,
+    "weight": 0.75,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5007,
+    "scenicAreaId": 253,
+    "tagId": 305,
+    "weight": 0.98,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5008,
+    "scenicAreaId": 254,
+    "tagId": 302,
+    "weight": 0.73,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5009,
+    "scenicAreaId": 254,
+    "tagId": 305,
+    "weight": 0.77,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5010,
+    "scenicAreaId": 254,
+    "tagId": 310,
+    "weight": 0.7,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5011,
+    "scenicAreaId": 256,
+    "tagId": 303,
+    "weight": 0.92,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5012,
+    "scenicAreaId": 256,
+    "tagId": 305,
+    "weight": 0.97,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5013,
+    "scenicAreaId": 256,
+    "tagId": 304,
+    "weight": 0.76,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5014,
+    "scenicAreaId": 256,
+    "tagId": 312,
+    "weight": 0.79,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5015,
+    "scenicAreaId": 257,
+    "tagId": 303,
+    "weight": 0.73,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5016,
+    "scenicAreaId": 257,
+    "tagId": 305,
+    "weight": 0.77,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5017,
+    "scenicAreaId": 257,
+    "tagId": 312,
+    "weight": 0.81,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5018,
+    "scenicAreaId": 257,
+    "tagId": 306,
+    "weight": 0.99,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5019,
+    "scenicAreaId": 258,
+    "tagId": 303,
+    "weight": 0.79,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5020,
+    "scenicAreaId": 258,
+    "tagId": 305,
+    "weight": 0.82,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5021,
+    "scenicAreaId": 258,
+    "tagId": 313,
+    "weight": 0.98,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5022,
+    "scenicAreaId": 258,
+    "tagId": 301,
+    "weight": 0.7,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5023,
+    "scenicAreaId": 258,
+    "tagId": 306,
+    "weight": 0.78,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5024,
+    "scenicAreaId": 259,
+    "tagId": 303,
+    "weight": 0.78,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5025,
+    "scenicAreaId": 259,
+    "tagId": 305,
+    "weight": 0.77,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5026,
+    "scenicAreaId": 259,
+    "tagId": 313,
+    "weight": 0.89,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5027,
+    "scenicAreaId": 259,
+    "tagId": 301,
+    "weight": 0.96,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5028,
+    "scenicAreaId": 260,
+    "tagId": 303,
+    "weight": 0.9,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5029,
+    "scenicAreaId": 260,
+    "tagId": 305,
+    "weight": 0.73,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5030,
+    "scenicAreaId": 260,
+    "tagId": 301,
+    "weight": 0.94,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5031,
+    "scenicAreaId": 260,
+    "tagId": 307,
+    "weight": 0.72,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5032,
+    "scenicAreaId": 261,
+    "tagId": 302,
+    "weight": 0.95,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5033,
+    "scenicAreaId": 261,
+    "tagId": 310,
+    "weight": 0.93,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5034,
+    "scenicAreaId": 261,
+    "tagId": 308,
+    "weight": 0.83,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5035,
+    "scenicAreaId": 261,
+    "tagId": 307,
+    "weight": 0.99,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5036,
+    "scenicAreaId": 262,
+    "tagId": 305,
+    "weight": 0.86,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5037,
+    "scenicAreaId": 262,
+    "tagId": 308,
+    "weight": 0.88,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5038,
+    "scenicAreaId": 262,
+    "tagId": 311,
+    "weight": 0.78,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5039,
+    "scenicAreaId": 262,
+    "tagId": 306,
+    "weight": 0.73,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5040,
+    "scenicAreaId": 263,
+    "tagId": 305,
+    "weight": 0.85,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5041,
+    "scenicAreaId": 263,
+    "tagId": 309,
+    "weight": 0.79,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5042,
+    "scenicAreaId": 263,
+    "tagId": 308,
+    "weight": 0.81,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5043,
+    "scenicAreaId": 264,
+    "tagId": 305,
+    "weight": 0.97,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5044,
+    "scenicAreaId": 264,
+    "tagId": 308,
+    "weight": 0.93,
+    "createTime": "2026-06-09T12:17:05"
+  },
+  {
+    "id": 5045,
+    "scenicAreaId": 264,
+    "tagId": 312,
+    "weight": 0.94,
+    "createTime": "2026-06-09T12:17:05"
+  }
+]

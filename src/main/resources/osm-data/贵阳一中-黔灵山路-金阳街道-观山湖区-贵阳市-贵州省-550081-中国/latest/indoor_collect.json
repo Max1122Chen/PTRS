@@ -1,0 +1,177 @@
+{
+  "enabled": true,
+  "candidates": 12,
+  "ok": 0,
+  "reject": 12,
+  "error": 0,
+  "results": [
+    {
+      "buildingPoiId": 900022528,
+      "areaId": 254,
+      "name": "图书馆",
+      "type": "library",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149145
+    },
+    {
+      "buildingPoiId": 900022540,
+      "areaId": 254,
+      "name": "国际部",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149176
+    },
+    {
+      "buildingPoiId": 900022537,
+      "areaId": 254,
+      "name": "国际部食堂",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149168
+    },
+    {
+      "buildingPoiId": 900022527,
+      "areaId": 254,
+      "name": "学生食堂",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149140
+    },
+    {
+      "buildingPoiId": 900022541,
+      "areaId": 254,
+      "name": "宿管中心",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149192
+    },
+    {
+      "buildingPoiId": 900022536,
+      "areaId": 254,
+      "name": "科技艺术馆",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149164
+    },
+    {
+      "buildingPoiId": 900022531,
+      "areaId": 254,
+      "name": "综合楼",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149155
+    },
+    {
+      "buildingPoiId": 900022535,
+      "areaId": 254,
+      "name": "音乐厅",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149162
+    },
+    {
+      "buildingPoiId": 900022534,
+      "areaId": 254,
+      "name": "高一组团",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149160
+    },
+    {
+      "buildingPoiId": 900022530,
+      "areaId": 254,
+      "name": "高三组团",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149152
+    },
+    {
+      "buildingPoiId": 900022532,
+      "areaId": 254,
+      "name": "高二组团",
+      "type": "teaching",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149156
+    },
+    {
+      "buildingPoiId": 900022538,
+      "areaId": 254,
+      "name": "国际部宿舍",
+      "type": "dormitory",
+      "status": "reject",
+      "failures": [
+        "EMPTY_SUBSET"
+      ],
+      "outputPath": null,
+      "strategy": "building_footprint",
+      "attributedRooms": 0,
+      "buildingOsmId": 494149171
+    }
+  ]
+}

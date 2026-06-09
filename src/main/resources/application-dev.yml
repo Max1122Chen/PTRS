@@ -16,6 +16,10 @@ app:
   debug:
     # 开发环境数据库不可用时允许启动，触发内存种子数据回填。
     ignore-db-connection-failure: true
+  storage:
+    # JSON-only 演示：dev 不预加载 MySQL，业务数据由 dev-seed + osm-data 注入内存。
+    preload:
+      enabled: false
   dev-seed:
     # 开发环境默认开启测试种子数据。
     enabled: true

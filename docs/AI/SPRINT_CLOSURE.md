@@ -1,7 +1,7 @@
 # 验收冲刺项登记
 
 > **用途**：记录收尾冲刺的五类工作及其**依赖顺序**。
-> **状态（2026-06-08）**：S2 R1–R6 完成；**S2 R7–R12** 按 [S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) 推进；S3 景区 Hub 主体已 commit。
+> **状态（2026-06-09）**：S2 **R7/R9/R10/R11/R12 完成**（R8 室内校正搁置）；S3 景区 Hub 主体已 commit；S3-ROUTE-01 待做。
 > **基线**：`main` @ `4f049e6`（2026-06-08）
 
 ---
@@ -10,7 +10,7 @@
 
 | 顺序 | ID | 主题 | 负责人理解（难易/先后） | 状态 |
 |------|-----|------|-------------------------|------|
-| **①** | **S2** | 展示数据治理 + **地图采集重构** | **最好做、最先做**；见 §2、[S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) | R1–R6 ✅；**R7–R12 进行中** |
+| **①** | **S2** | 展示数据治理 + **地图采集重构** | **最好做、最先做**；见 §2、[S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) | **R1–R12 主体完成**（R8 搁置） |
 | **②** | **S3** | 业务功能纠偏 | 景区工作台 + 锚点 API | **主体完成**；S3-ROUTE-01 待做 |
 | **③** | **S1** | 前端导航与视觉 | 在数据与业务口径稳定后再改 | 待需求 |
 | **④** | **S4** | 自制数据结构 | 课程硬约束，范围待指示 | 待需求 |
@@ -152,13 +152,13 @@ flowchart TB
 - [x] R6：dev-seed 地图 JSON 清空 + map-imports 单包（沙河）
 - [x] **JSON-only** 运行模式拍板（见 [S2 执行计划 §2](../Tech/S2%20Data%20Governance%20Execution%20Plan.md)）
 - [x] **规模口径**拍板：设施 type 枚举 ≥10；景区 ≥200 用 alias 复用 canonical 数据
-- [ ] **R7** 负责人提供名称 → 批量 osm_seed 拉包
-- [ ] **R8** 室内 bundle 人工校正（负责人走查 → Agent 改 JSON）
-- [ ] **R9** 衍生 seed：日记 + 美食（美食绑餐厅/食堂 POI）
-- [ ] **R10** JSON-only 配置/README 固化
-- [ ] **R11a** 设施 type 枚举 ≥10 落地 + 校验
-- [ ] **R11b** scenic-area-aliases ≥200
-- [ ] **R12** §9.7 规模表 + smoke 验收
+- [x] **R7** 12 canonical OSM 包（areaId 252–264）
+- [ ] **R8** 室内 bundle 人工校正（**负责人搁置**）
+- [x] **R9** 衍生 seed：日记 + 美食（`seed_derived.py`）
+- [x] **R10** JSON-only 配置（`preload.enabled=false`）
+- [x] **R11a** 设施 type 枚举 15 种 + `facility-types.json`
+- [x] **R11b** scenic-area-aliases 188 条（合计 200 景区）
+- [x] **R12** `validate_s2_closure.py` + `mvn test` + `npm run build`
 
 ### S3 需求与实现纠偏
 
@@ -225,3 +225,4 @@ flowchart TB
 | 2026-06-08 | 新增 [OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)：现状、目标、设施/室内重构方案、沙河迭代；**待审核后编码** |
 | 2026-06-08 | S3 景区 Hub commit（`4f049e6`）；S3 主体完成 |
 | 2026-06-08 | S2 v2 拍板：多包协作流、JSON-only、设施枚举≥10、景区 alias≥200、美食绑餐饮 POI；新增 [S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) |
+| 2026-06-09 | S2 R7/R9/R10/R11/R12 完成；R8 室内校正搁置；规模 200 景区 / 15 设施 type |

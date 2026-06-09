@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "types": [
+    { "code": "toilet", "label": "卫生间" },
+    { "code": "restaurant", "label": "饭店" },
+    { "code": "canteen", "label": "食堂" },
+    { "code": "cafe", "label": "咖啡馆" },
+    { "code": "fast_food", "label": "快餐" },
+    { "code": "supermarket", "label": "超市" },
+    { "code": "convenience", "label": "便利店" },
+    { "code": "library", "label": "图书馆" },
+    { "code": "hospital", "label": "医疗点" },
+    { "code": "medical", "label": "医务室" },
+    { "code": "atm", "label": "取款机" },
+    { "code": "parking", "label": "停车场" },
+    { "code": "info", "label": "游客中心" },
+    { "code": "shop", "label": "商店" },
+    { "code": "service", "label": "服务点" }
+  ]
+}

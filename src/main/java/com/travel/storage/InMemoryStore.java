@@ -68,7 +68,29 @@ public class InMemoryStore
 
     private final Map<String, List<Long>> scenicAreaIdsByType = new HashMap<>();
 
+    /** alias areaId -> canonical areaId（S2 R11b：景区记录扩表，地图数据复用 canonical 包） */
+    private final Map<Long, Long> scenicAreaAliasToCanonical = new HashMap<>();
+
     private long nextScenicAreaId = 1;
+
+    public synchronized void registerScenicAreaAlias(Long aliasAreaId, Long canonicalAreaId)
+    {
+        if (aliasAreaId == null || canonicalAreaId == null)
+        {
+            return;
+        }
+        scenicAreaAliasToCanonical.put(aliasAreaId, canonicalAreaId);
+    }
+
+    public Long resolveCanonicalAreaId(Long areaId)
+    {
+        if (areaId == null)
+        {
+            return null;
+        }
+        Long canonical = scenicAreaAliasToCanonical.get(areaId);
+        return canonical != null ? canonical : areaId;
+    }
 
     // ------------------- Buildings -------------------
 
@@ -333,6 +355,7 @@ public class InMemoryStore
         {
             return new ArrayList<>(poisById.values());
         }
+        areaId = resolveCanonicalAreaId(areaId);
         List<Long> ids = poiIdsByAreaId.get(areaId);
         if (ids == null)
         {
@@ -414,10 +437,11 @@ public class InMemoryStore
 
     public List<IndoorBuildingBundle> findIndoorBundlesByAreaId(long areaId)
     {
+        long resolved = resolveCanonicalAreaId(areaId);
         List<IndoorBuildingBundle> out = new ArrayList<>();
         for (IndoorBuildingBundle bundle : indoorBundleByBuildingPoiId.values())
         {
-            if (bundle.getAreaId() != null && bundle.getAreaId() == areaId)
+            if (bundle.getAreaId() != null && bundle.getAreaId() == resolved)
             {
                 out.add(bundle);
             }
@@ -530,12 +554,12 @@ public class InMemoryStore
 
     public Map<String, Double> getScenicAreaTagWeights(Long scenicAreaId)
     {
-        return scenicAreaTagWeightsByScenicAreaId.get(scenicAreaId);
+        return scenicAreaTagWeightsByScenicAreaId.get(resolveCanonicalAreaId(scenicAreaId));
     }
 
     public List<String> getScenicAreaTagNames(Long scenicAreaId)
     {
-        Map<String, Double> tagWeights = scenicAreaTagWeightsByScenicAreaId.get(scenicAreaId);
+        Map<String, Double> tagWeights = scenicAreaTagWeightsByScenicAreaId.get(resolveCanonicalAreaId(scenicAreaId));
         if (tagWeights == null || tagWeights.isEmpty())
         {
             return List.of();
@@ -576,6 +600,7 @@ public class InMemoryStore
         {
             return new ArrayList<>(roadsById.values());
         }
+        areaId = resolveCanonicalAreaId(areaId);
         List<Long> ids = roadIdsByAreaId.get(areaId);
         if (ids == null)
         {
@@ -623,6 +648,10 @@ public class InMemoryStore
     public List<Facility> findFacilitiesByAreaIdAndType(Long areaId, String type)
     {
         List<Facility> result = new ArrayList<>();
+        if (areaId != null)
+        {
+            areaId = resolveCanonicalAreaId(areaId);
+        }
         if (areaId == null)
         {
             for (Facility f : facilitiesById.values())
@@ -715,6 +744,7 @@ public class InMemoryStore
         {
             return List.of();
         }
+        areaId = resolveCanonicalAreaId(areaId);
         List<Long> ids = foodIdsByAreaId.get(areaId);
         if (ids == null)
         {
@@ -738,6 +768,7 @@ public class InMemoryStore
         {
             return new ArrayList<>(restaurantsById.values());
         }
+        areaId = resolveCanonicalAreaId(areaId);
         List<Long> ids = restaurantIdsByAreaId.get(areaId);
         if (ids == null)
         {
@@ -913,17 +944,10 @@ public class InMemoryStore
             {
                 return findAllFacilities();
             }
-            List<Facility> result = new ArrayList<>();
-            for (Facility f : facilitiesById.values())
-            {
-                if (areaId.equals(f.getAreaId()))
-                {
-                    result.add(f);
-                }
-            }
-            return result;
+            return findFacilitiesByAreaIdAndType(areaId, null);
         }
 
+        Long resolvedAreaId = areaId == null ? null : resolveCanonicalAreaId(areaId);
         List<Long> candidateIds = facilityNGramIndex.search(keyword, l * 5);
         List<Facility> result = new ArrayList<>(Math.min(l, candidateIds.size()));
         for (Long id : candidateIds)
@@ -933,7 +957,7 @@ public class InMemoryStore
             {
                 continue;
             }
-            if (areaId != null && !areaId.equals(f.getAreaId()))
+            if (resolvedAreaId != null && !resolvedAreaId.equals(f.getAreaId()))
             {
                 continue;
             }
@@ -972,6 +996,7 @@ public class InMemoryStore
             return areaId == null ? findAllFoods() : findFoodsByAreaId(areaId);
         }
 
+        Long resolvedAreaId = areaId == null ? null : resolveCanonicalAreaId(areaId);
         List<Long> candidateIds = foodNGramIndex.search(keyword, l * 5);
         List<Food> result = new ArrayList<>(Math.min(l, candidateIds.size()));
         for (Long id : candidateIds)
@@ -981,7 +1006,7 @@ public class InMemoryStore
             {
                 continue;
             }
-            if (areaId != null && !areaId.equals(f.getAreaId()))
+            if (resolvedAreaId != null && !resolvedAreaId.equals(f.getAreaId()))
             {
                 continue;
             }

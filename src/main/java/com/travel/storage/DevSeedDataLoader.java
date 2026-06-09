@@ -118,6 +118,11 @@ public class DevSeedDataLoader
         {
             store.insertScenicArea(s);
         }
+        for (ScenicAreaAliasRow alias : bundle.scenicAreaAliases)
+        {
+            store.registerScenicAreaAlias(alias.id(), alias.canonicalAreaId());
+            store.insertScenicArea(alias.toScenicArea());
+        }
         for (Tag t : bundle.tags)
         {
             store.insertTag(t);
@@ -175,10 +180,11 @@ public class DevSeedDataLoader
         // loadIndoorSeeds 内已 reconcile；registry 与 store 保持一致
 
         loaded = true;
-        log.info("Dev seed data loaded from JSON path {} successfully (users={}, scenicAreas={}, facilities={}, foods={}, diaries={}, comments={}, indoorBuildings={}), reason={}",
+        log.info("Dev seed data loaded from JSON path {} successfully (users={}, scenicAreas={}, aliases={}, facilities={}, foods={}, diaries={}, comments={}, indoorBuildings={}), reason={}",
                 devSeedPath,
                 bundle.users.size(),
                 bundle.scenicAreas.size(),
+                bundle.scenicAreaAliases.size(),
                 bundle.facilities.size(),
                 bundle.foods.size(),
                 bundle.diaries.size(),
@@ -281,11 +287,18 @@ public class DevSeedDataLoader
             List<Comment> comments = readList("comments.json", new TypeReference<List<Comment>>()
             {
             });
+            List<ScenicAreaAliasRow> scenicAreaAliases = readOptionalList(
+                "scenic-area-aliases.json",
+                new TypeReference<List<ScenicAreaAliasRow>>()
+                {
+                }
+            );
 
             return new SeedBundle(
                 users,
                 interests,
                 scenicAreas,
+                scenicAreaAliases,
                 tags,
                 scenicAreaTags,
                 pois,
@@ -314,6 +327,20 @@ public class DevSeedDataLoader
         try (InputStream inputStream = resource.getInputStream())
         {
             return objectMapper.readValue(inputStream, typeReference);
+        }
+    }
+
+    private <T> List<T> readOptionalList(String fileName, TypeReference<List<T>> typeReference) throws IOException
+    {
+        Resource resource = resourceLoader.getResource(resolveResourcePath(fileName));
+        if (!resource.exists())
+        {
+            return Collections.emptyList();
+        }
+        try (InputStream inputStream = resource.getInputStream())
+        {
+            List<T> list = objectMapper.readValue(inputStream, typeReference);
+            return list == null ? Collections.emptyList() : list;
         }
     }
 
@@ -421,6 +448,7 @@ public class DevSeedDataLoader
         List<User> users,
         List<UserInterest> userInterests,
         List<ScenicArea> scenicAreas,
+        List<ScenicAreaAliasRow> scenicAreaAliases,
         List<Tag> tags,
         List<ScenicAreaTag> scenicAreaTags,
         List<Poi> pois,
@@ -433,6 +461,70 @@ public class DevSeedDataLoader
         List<Comment> comments
     )
     {
+    }
+
+    /**
+     * 景区别名种子行（scenic-area-aliases.json），地图数据复用 canonicalAreaId。
+     */
+    private static class ScenicAreaAliasRow
+    {
+
+        private Long id;
+
+        private Long canonicalAreaId;
+
+        private String name;
+
+        private String description;
+
+        private String location;
+
+        private Double longitude;
+
+        private Double latitude;
+
+        private String type;
+
+        private Double rating;
+
+        private Integer heat;
+
+        private String openTime;
+
+        private String ticketPrice;
+
+        private java.time.LocalDateTime createTime;
+
+        private java.time.LocalDateTime updateTime;
+
+        public Long id()
+        {
+            return id;
+        }
+
+        public Long canonicalAreaId()
+        {
+            return canonicalAreaId;
+        }
+
+        ScenicArea toScenicArea()
+        {
+            ScenicArea sa = new ScenicArea();
+            sa.setId(id);
+            sa.setName(name);
+            sa.setDescription(description);
+            sa.setLocation(location);
+            sa.setLongitude(longitude);
+            sa.setLatitude(latitude);
+            sa.setType(type);
+            sa.setRating(rating);
+            sa.setHeat(heat);
+            sa.setOpenTime(openTime);
+            sa.setTicketPrice(ticketPrice);
+            sa.setCreateTime(createTime);
+            sa.setUpdateTime(updateTime);
+            return sa;
+        }
     }
 
 }

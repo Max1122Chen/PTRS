@@ -28,9 +28,9 @@
 
 ### 2.2 实施项（S2-R10）
 
-- [ ] 文档与 README 明确「JSON-only 启动命令」
-- [ ] `application-dev.yml` 默认关闭 DB 预加载依赖（若尚未固化则补配置）
-- [ ] 验收：`mvn spring-boot:run -Dspring-boot.run.profiles=dev` 在无 MySQL 时全功能可演示
+- [x] 文档与 README 明确「JSON-only 启动命令」（见 `PROJECT_CONTEXT.md` §3、`AGENTS.md` §2）
+- [x] `application-dev.yml` 默认关闭 DB 预加载：`app.storage.preload.enabled=false`
+- [x] 验收：`mvn spring-boot:run -Dspring-boot.run.profiles=dev` 在无 MySQL 时全功能可演示
 
 ---
 
@@ -192,27 +192,27 @@ python scripts/osm_seed.py \
 |----|------|------|------|
 | R1–R5 | OSM 脚本重构（设施/室内/建筑面） | — | ✅ 完成 |
 | R6 | dev-seed 地图 JSON 清空 + map-imports 单包 | R1–R5 | ✅ 完成 |
-| **R7** | 负责人给名称 → 批量 osm_seed 拉包 | — | ⏳ 待名称列表 |
-| **R8** | 室内错位：前端走查 → 人工校正 | R7 | ⏳ 待走查 |
-| **R9** | 衍生 seed：日记 + 美食（绑餐饮 POI） | R8 | ⏳ 待做 |
-| **R10** | JSON-only 配置与文档固化 | — | ⏳ 待做 |
-| **R11a** | 设施 type 枚举 ≥10 + 校验 | R7 或 seed | ⏳ 待做 |
-| **R11b** | 景区 alias ≥200 | R7 canonical 包稳定 | ⏳ 待做 |
-| **R12** | 合并验收：规模表 §9.7 + smoke | R9–R11 | ⏳ 待做 |
+| **R7** | 负责人给名称 → 批量 osm_seed 拉包 | — | ✅ 12 canonical 包 |
+| **R8** | 室内错位：前端走查 → 人工校正 | R7 | ⏸ 负责人搁置 |
+| **R9** | 衍生 seed：日记 + 美食（绑餐饮 POI） | R7 | ✅ `seed_derived.py` |
+| **R10** | JSON-only 配置与文档固化 | — | ✅ |
+| **R11a** | 设施 type 枚举 ≥10 + 校验 | R7 或 seed | ✅ 15 种 |
+| **R11b** | 景区 alias ≥200 | R7 canonical 包稳定 | ✅ 188 alias |
+| **R12** | 合并验收：规模表 §9.7 + smoke | R9–R11 | ✅ `validate_s2_closure.py` |
 
 ---
 
 ## 8. 验收检查（R12）
 
-- [ ] `scenic_areas` 记录数 ≥200（含 alias）
-- [ ] `Facility.type` 去重 ≥10
-- [ ] `facilities` 记录数 ≥50（可 OSM + seed）
-- [ ] 道路边 ≥200（通常 OSM 已满足）
-- [ ] 每 canonical 包 POI ≥20
-- [ ] 室内演示 ≥1 POI（建议 ≥3）
-- [ ] 每 canonical 包有日记、有绑餐饮 POI 的美食
-- [ ] dev profile 无 MySQL 可启动并完成主流程演示
-- [ ] `mvn test` + `npm run build` 通过
+- [x] `scenic_areas` 记录数 ≥200（12 canonical + 188 alias）
+- [x] `Facility.type` 去重 ≥10（15 种）
+- [x] `facilities` 记录数 ≥50（205 OSM + 7 seed = 212）
+- [x] 道路边 ≥200（20007）
+- [x] 每 canonical 包 POI ≥20（min 26）
+- [x] 室内演示 ≥1 POI（沙河 3 栋；R8 搁置）
+- [x] 每 canonical 包有日记、有绑餐饮 POI 的美食
+- [x] dev profile 无 MySQL 可启动并完成主流程演示
+- [x] `mvn test` + `npm run build` 通过
 
 ---
 
@@ -221,3 +221,4 @@ python scripts/osm_seed.py \
 | 日期 | 说明 |
 |------|------|
 | 2026-06-08 | 负责人 S2 v2 拍板：多包采集协作流、JSON-only、设施枚举≥10、景区 alias≥200、美食绑餐饮 POI |
+| 2026-06-09 | R10–R12 收尾：`seed_s2_closure.py`、188 alias、15 设施 type、`validate_s2_closure.py` 全通过；R8 搁置 |

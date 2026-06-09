@@ -1,5 +1,36 @@
 # HANDOFF LOG
 
+## 2026-06-09（S2 R10–R12 收尾：alias + 设施枚举 + 验收）
+### 本次目标
+- 完成 S2 剩余项：景区 alias≥200、设施 type≥10、JSON-only 配置、R12 规模验收。
+
+### 变更
+- **新建** `scripts/seed_s2_closure.py`、`scripts/validate_s2_closure.py`
+- **新建** `src/main/resources/config/facility-types.json`（15 种设施枚举）
+- **新建** `dev-seed/scenic-area-aliases.json`（188 条 alias，合计 200 景区）
+- **更新** `dev-seed/facilities.json`（7 条补充设施）、`scenic_area_tags.json`（+676 alias 标签）
+- `DevSeedDataLoader`：可选加载 `scenic-area-aliases.json` 并 `registerScenicAreaAlias`
+- `application-dev.yml`：`app.storage.preload.enabled=false`（JSON-only）
+
+### 验证
+- `python scripts/seed_s2_closure.py` → 200 景区、15 设施 type、212 设施
+- `python scripts/validate_s2_closure.py` → 8/8 OK
+- `mvn test` 通过
+
+### 风险 / 搁置
+- **R8 室内人工校正**：负责人搁置；室内仍仅沙河 3 栋可用
+
+### 演示
+```powershell
+mvn spring-boot:run "-Dspring-boot.run.profiles=dev"
+cd frontend; npm run dev
+```
+- 景区列表应显示 200 条；`/scenic?areaId=10001` 地图与 252 一致
+- 设施 Tab 可按 15 种 type 筛选
+
+### 下一步
+- S3-ROUTE-01 多点 TSP 失败提示；可选 push S2 收尾 commit
+
 ## 2026-06-09（S2 R9 衍生 seed 生成）
 ### 本次目标
 - 清空并重生成美食/餐厅、日记、评论；景区描述/标签/rating/heat；用户扩至 11 人。

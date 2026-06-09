@@ -1,1 +1,86 @@
-[]
+[
+  {
+    "id": 11001,
+    "name": "北京邮电大学（沙河校区）学生食堂",
+    "type": "canteen",
+    "description": "演示种子设施（canteen）",
+    "location": "学生食堂",
+    "longitude": 116.281597,
+    "latitude": 40.157651,
+    "areaId": 252,
+    "createTime": "2026-06-09T12:48:00",
+    "updateTime": "2026-06-09T12:48:00"
+  },
+  {
+    "id": 11002,
+    "name": "圆明园快餐窗口",
+    "type": "fast_food",
+    "description": "演示种子设施（fast_food）",
+    "location": "快餐窗口",
+    "longitude": 116.305581,
+    "latitude": 39.997153,
+    "areaId": 259,
+    "createTime": "2026-06-09T12:48:00",
+    "updateTime": "2026-06-09T12:48:00"
+  },
+  {
+    "id": 11003,
+    "name": "天坛公园校园超市",
+    "type": "supermarket",
+    "description": "演示种子设施（supermarket）",
+    "location": "校园超市",
+    "longitude": 116.40255,
+    "latitude": 39.879652,
+    "areaId": 257,
+    "createTime": "2026-06-09T12:48:00",
+    "updateTime": "2026-06-09T12:48:00"
+  },
+  {
+    "id": 11004,
+    "name": "天环广场便利店",
+    "type": "convenience",
+    "description": "演示种子设施（convenience）",
+    "location": "便利店",
+    "longitude": 113.318742,
+    "latitude": 23.135213,
+    "areaId": 264,
+    "createTime": "2026-06-09T12:48:00",
+    "updateTime": "2026-06-09T12:48:00"
+  },
+  {
+    "id": 11005,
+    "name": "正佳广场自助取款机",
+    "type": "atm",
+    "description": "演示种子设施（atm）",
+    "location": "自助取款机",
+    "longitude": 113.320737,
+    "latitude": 23.133594,
+    "areaId": 262,
+    "createTime": "2026-06-09T12:48:00",
+    "updateTime": "2026-06-09T12:48:00"
+  },
+  {
+    "id": 11006,
+    "name": "北京邮电大学访客停车场",
+    "type": "parking",
+    "description": "演示种子设施（parking）",
+    "location": "访客停车场",
+    "longitude": 116.350962,
+    "latitude": 39.960071,
+    "areaId": 261,
+    "createTime": "2026-06-09T12:48:00",
+    "updateTime": "2026-06-09T12:48:00"
+  },
+  {
+    "id": 11007,
+    "name": "地坛公园游客服务中心",
+    "type": "info",
+    "description": "演示种子设施（info）",
+    "location": "游客服务中心",
+    "longitude": 116.409026,
+    "latitude": 39.954224,
+    "areaId": 260,
+    "createTime": "2026-06-09T12:48:00",
+    "updateTime": "2026-06-09T12:48:00"
+  }
+]

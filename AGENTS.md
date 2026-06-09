@@ -9,7 +9,8 @@
 4. 完成编码后，更新 `docs/AI/HANDOFF.md`：变更文件、验证结果、风险、下一步。
 
 ## 2. 演示与无数据库（内存为主）
-- 答辩/演示可不依赖 MySQL：使用 **`dev` profile** + `app.debug.ignore-db-connection-failure=true`，以 **内存 + dev-seed** 为主。
+- 答辩/演示可不依赖 MySQL：使用 **`dev` profile** + `app.debug.ignore-db-connection-failure=true` + `app.storage.preload.enabled=false`，以 **内存 + dev-seed + osm-data** 为主。
+- 启动：`mvn spring-boot:run "-Dspring-boot.run.profiles=dev"`；前端 `cd frontend && npm run dev`。
 - **AIGC 日记动画**及所有「内存 + 可选写库」功能：数据库不可用时**不得**因 Mapper 失败导致整条链路失败；写库失败应跳过并保留内存态（见 `docs/AI/PROJECT_CONTEXT.md` §3）。
 - 即梦/LibTV 本地密钥：复制 `src/main/resources/config/jimeng-animation.example.yml` 为 **`jimeng-animation.yml`**（已 `.gitignore`），或使用环境变量。
 

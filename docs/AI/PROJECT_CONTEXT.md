@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT
 
-最后更新：2026-06-08
+最后更新：2026-06-09
 
 ## 1. 项目定位
 - 名称：个性化旅游推荐系统（数据结构课程设计）
@@ -14,8 +14,13 @@
 
 ## 3. 演示与「无数据库 / 内存为主」模式（团队约定 — **JSON-only 已定稿**）
 - **场景**：答辩与日常演示 **不依赖 MySQL**；业务数据仅来自 **`dev-seed` + `osm-data` JSON**，经 `DevSeedDataLoader` 写入 `InMemoryStore`。
-- **启动要求**：使用 **`spring.profiles.active=dev`**，并开启 `app.debug.ignore-db-connection-failure=true`（见 `application-dev.yml`）。
-- **S2 执行细节**：[S2 Data Governance Execution Plan.md](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) §2（R10 配置固化待做）。
+- **启动要求**：使用 **`spring.profiles.active=dev`**，并开启 `app.debug.ignore-db-connection-failure=true`；**`app.storage.preload.enabled=false`**（见 `application-dev.yml`）。
+- **启动命令**（无需 MySQL）：
+  ```powershell
+  mvn spring-boot:run "-Dspring-boot.run.profiles=dev"
+  cd frontend; npm run dev
+  ```
+- **S2 执行细节**：[S2 Data Governance Execution Plan.md](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) §2（R10 已固化）。
 - **一致性要求**：凡在「DB 可能不可用」下仍需成功的路径（含 **FR-009-5 日记动画**：写 `animation_url`、下载落盘、内存更新日记），**不得因 Mapper 写库失败而中断**；写库须包在 try/catch 中，识别连接类异常后跳过并仅保留内存态（与 `DiaryServiceImpl` 等既有模式一致）。
 - **其他功能**：新增若涉及「写库 + 内存双写」，须同样遵守上述回退策略，避免演示现场仅因未起 MySQL 而 500。
 
@@ -44,7 +49,7 @@
 ## 6. 需求-实现差距（收尾周优先）
 - **答辩必做**：FR-009-5 配置密钥并完成 1 次实机动画出片；室内导航演示脚本（areaId 248/201）。
 - **已知部分实现**（可书面说明）：FR-002 详情字段不全、FR-008-2 无管理端日记治理、FR-008-6/FR-013 无深度个性化。
-- **数据规模**：合并 seed 景区 25、POI 3290、道路 3520；景区总数/设施种类等仍低于 §5.3 书面指标（见需求 §9.7）。
+- **数据规模（2026-06-09）**：12 canonical + 188 alias = **200 景区**；212 设施（15 type）；20007 道路；452 美食；24 日记。验收见 `scripts/validate_s2_closure.py`。
 - **课程约束**：`com.travel.ds` 已就绪，算法层 `java.util` 替换与测试全覆盖仍为缺口。
 - **工程**：`application.yml` 明文 DB 密码；开发日志与 HANDOFF 已持续更新。
 

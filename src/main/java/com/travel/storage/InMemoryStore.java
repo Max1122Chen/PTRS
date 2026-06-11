@@ -18,10 +18,12 @@ import com.travel.indoor.IndoorBuildingBundle;
 import org.springframework.stereotype.Component;
 import com.travel.storage.search.NGramInvertedIndex;
 import com.travel.storage.search.PrefixTrieIdIndex;
+import com.travel.ds.DsConvert;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -912,6 +914,48 @@ public class InMemoryStore
         return agg.sum / agg.count;
     }
 
+    /**
+     * 按目标查询评论列表（targetType 大小写不敏感），按创建时间倒序。
+     */
+    public synchronized List<Comment> listCommentsByTarget(String targetType, Long targetId)
+    {
+        if (targetType == null || targetId == null)
+        {
+            return List.of();
+        }
+        String normalizedType = targetType.trim().toUpperCase(Locale.ROOT);
+        List<Comment> result = new ArrayList<>();
+        for (Comment comment : commentsById.values())
+        {
+            if (!targetId.equals(comment.getTargetId()) || comment.getTargetType() == null)
+            {
+                continue;
+            }
+            if (!normalizedType.equals(comment.getTargetType().trim().toUpperCase(Locale.ROOT)))
+            {
+                continue;
+            }
+            result.add(comment);
+        }
+        result.sort((a, b) ->
+        {
+            if (a.getCreateTime() == null && b.getCreateTime() == null)
+            {
+                return 0;
+            }
+            if (a.getCreateTime() == null)
+            {
+                return 1;
+            }
+            if (b.getCreateTime() == null)
+            {
+                return -1;
+            }
+            return b.getCreateTime().compareTo(a.getCreateTime());
+        });
+        return result;
+    }
+
     public List<Diary> findAllDiaries()
     {
         return new ArrayList<>(diariesById.values());
@@ -948,7 +992,7 @@ public class InMemoryStore
         }
 
         Long resolvedAreaId = areaId == null ? null : resolveCanonicalAreaId(areaId);
-        List<Long> candidateIds = facilityNGramIndex.search(keyword, l * 5);
+        List<Long> candidateIds = DsConvert.toJavaList(facilityNGramIndex.search(keyword, l * 5));
         List<Facility> result = new ArrayList<>(Math.min(l, candidateIds.size()));
         for (Long id : candidateIds)
         {
@@ -997,7 +1041,7 @@ public class InMemoryStore
         }
 
         Long resolvedAreaId = areaId == null ? null : resolveCanonicalAreaId(areaId);
-        List<Long> candidateIds = foodNGramIndex.search(keyword, l * 5);
+        List<Long> candidateIds = DsConvert.toJavaList(foodNGramIndex.search(keyword, l * 5));
         List<Food> result = new ArrayList<>(Math.min(l, candidateIds.size()));
         for (Long id : candidateIds)
         {
@@ -1091,7 +1135,7 @@ public class InMemoryStore
             return result;
         }
 
-        List<Long> candidateIds = diaryFullTextIndex.search(keyword, l * 10);
+        List<Long> candidateIds = DsConvert.toJavaList(diaryFullTextIndex.search(keyword, l * 10));
         List<Diary> result = new ArrayList<>(Math.min(l, candidateIds.size()));
         for (Long id : candidateIds)
         {

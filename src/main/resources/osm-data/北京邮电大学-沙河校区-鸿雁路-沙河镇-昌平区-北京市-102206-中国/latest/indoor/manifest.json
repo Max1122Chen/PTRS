@@ -1,13 +1,7 @@
 [
   {
-    "buildingPoiId": 900022224,
-    "name": "图书馆",
-    "areaId": 252,
-    "completenessScore": 1.0
-  },
-  {
-    "buildingPoiId": 900022239,
-    "name": "公共教学楼",
+    "buildingPoiId": 900022208,
+    "name": "S4区",
     "areaId": 252,
     "completenessScore": 1.0
   },

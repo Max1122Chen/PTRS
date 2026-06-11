@@ -56,8 +56,7 @@ async function plan() {
       strategy: form.strategy || undefined,
     })
     hub.setRoutePath(result.value.path)
-  } catch (e: any) {
-    ElMessage.error(e?.message || '规划失败')
+  } catch {
     hub.setRoutePath(null)
   } finally {
     loading.value = false
@@ -84,8 +83,7 @@ async function planMulti() {
       strategy: form.strategy || undefined,
     })
     hub.setRoutePath(result.value.path)
-  } catch (e: any) {
-    ElMessage.error(e?.message || '无法规划到达路径')
+  } catch {
     hub.setRoutePath(null)
   } finally {
     loading.value = false

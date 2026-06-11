@@ -33,4 +33,16 @@ public interface Map<K, V> {
         V value = get(key);
         return value != null || containsKey(key) ? value : defaultValue;
     }
+
+    default V computeIfAbsent(K key, java.util.function.Function<? super K, ? extends V> mappingFunction) {
+        V value = get(key);
+        if (value != null || containsKey(key)) {
+            return value;
+        }
+        V newValue = mappingFunction.apply(key);
+        if (newValue != null) {
+            put(key, newValue);
+        }
+        return newValue;
+    }
 }

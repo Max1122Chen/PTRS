@@ -1,6 +1,7 @@
 package com.travel.service.impl;
 
 import com.travel.algorithm.TopKSelector;
+import com.travel.ds.DsConvert;
 import com.travel.algorithm.graph.Dijkstra;
 import com.travel.algorithm.graph.Edge;
 import com.travel.algorithm.graph.Graph;
@@ -15,6 +16,7 @@ import com.travel.storage.InMemoryStore;
 import com.travel.model.vo.food.FoodDetailVO;
 import com.travel.model.vo.food.FoodRecommendVO;
 import com.travel.service.FoodService;
+import com.travel.service.support.CommentAssembler;
 import com.travel.util.GeoUtil;
 import com.travel.util.ModeProfileCodec;
 import org.springframework.stereotype.Service;
@@ -48,11 +50,14 @@ public class FoodServiceImpl implements FoodService
 
     private final Dijkstra dijkstra;
 
-    public FoodServiceImpl(InMemoryStore store)
+    private final CommentAssembler commentAssembler;
+
+    public FoodServiceImpl(InMemoryStore store, CommentAssembler commentAssembler)
     {
         this.store = store;
         this.topKSelector = new TopKSelector<>();
         this.dijkstra = new Dijkstra();
+        this.commentAssembler = commentAssembler;
     }
 
     @Override
@@ -195,7 +200,7 @@ public class FoodServiceImpl implements FoodService
         }
 
         Comparator<FoodRecommendVO> comparator = Comparator.comparingDouble(v -> v.getScore() == null ? 0.0 : v.getScore());
-        List<FoodRecommendVO> top = topKSelector.selectTopK(candidates, topN, comparator);
+        List<FoodRecommendVO> top = DsConvert.toJavaList(topKSelector.selectTopK(candidates, topN, comparator));
 
         int from = (p - 1) * s;
         if (from >= top.size())
@@ -273,6 +278,7 @@ public class FoodServiceImpl implements FoodService
             vo.setAreaName(scenicArea == null ? null : scenicArea.getName());
         }
 
+        vo.setComments(commentAssembler.listForTarget("FOOD", id));
         return vo;
     }
 
@@ -353,7 +359,8 @@ public class FoodServiceImpl implements FoodService
             double distance = road.getDistance() == null ? 0.0 : road.getDistance();
             double speed = road.getSpeed() == null ? 0.0 : road.getSpeed();
             var modeCongestion = ModeProfileCodec.decode(road.getModeProfile());
-            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed, modeCongestion);
+            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed,
+                    DsConvert.copyStringDoubleMap(modeCongestion));
         }
         return graph;
     }

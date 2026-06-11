@@ -4,6 +4,7 @@ import com.travel.algorithm.graph.Dijkstra;
 import com.travel.algorithm.graph.Edge;
 import com.travel.algorithm.graph.EdgeWeightFunc;
 import com.travel.algorithm.graph.PathResult;
+import com.travel.ds.DsConvert;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -45,11 +46,11 @@ public class IndoorPathPlanner
             return out;
         }
 
-        out.setPath(raw.getPath());
+        out.setPath(DsConvert.toJavaList(raw.getPath()));
         out.setDistanceMeters(raw.getTotalWeight());
         out.setTimeSec(raw.getTotalWeight() / WALK_SPEED_MPS);
-        out.setSegments(buildSegments(buildingGraph, raw.getPath()));
-        out.setInstructions(buildInstructions(buildingGraph, raw.getPath()));
+        out.setSegments(buildSegments(buildingGraph, DsConvert.toJavaList(raw.getPath())));
+        out.setInstructions(buildInstructions(buildingGraph, DsConvert.toJavaList(raw.getPath())));
         return out;
     }
 

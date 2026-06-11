@@ -1,6 +1,6 @@
 package com.travel.algorithm.graph;
 
-import java.util.List;
+import com.travel.ds.List;
 
 /**
  * 路径结果封装。
@@ -28,4 +28,3 @@ public class PathResult
         return totalWeight;
     }
 }
-

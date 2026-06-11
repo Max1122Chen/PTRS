@@ -1,12 +1,13 @@
 package com.travel.algorithm.graph;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import com.travel.ds.ArrayList;
+import com.travel.ds.Collections;
+import com.travel.ds.HashMap;
+import com.travel.ds.List;
+import com.travel.ds.Map;
+import com.travel.ds.PriorityQueue;
+
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
 
 /**
  * Dijkstra 最短路径算法实现。
@@ -117,4 +118,3 @@ public class Dijkstra
         }
     }
 }
-

@@ -1,6 +1,7 @@
 package com.travel.model.vo.diary;
 
 import com.travel.model.entity.Diary;
+import com.travel.model.vo.comment.CommentVO;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ public class DiaryDetailVO
      * 日记创建者昵称（用于列表展示）。
      */
     private String creatorNickname;
+
+    private List<CommentVO> comments;
 
     public Diary getDiary()
     {
@@ -47,6 +50,16 @@ public class DiaryDetailVO
     public void setCreatorNickname(String creatorNickname)
     {
         this.creatorNickname = creatorNickname;
+    }
+
+    public List<CommentVO> getComments()
+    {
+        return comments;
+    }
+
+    public void setComments(List<CommentVO> comments)
+    {
+        this.comments = comments;
     }
 }
 

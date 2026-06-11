@@ -1,8 +1,8 @@
 package com.travel.algorithm.graph;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import com.travel.ds.Collections;
+import com.travel.ds.HashMap;
+import com.travel.ds.Map;
 
 /**
  * 图边结构（邻接表边）。
@@ -23,9 +23,19 @@ public class Edge
         this.targetId = targetId;
         this.distance = distance;
         this.speed = speed;
-        this.modeCongestion = modeCongestion == null
-                ? Collections.emptyMap()
-                : Collections.unmodifiableMap(new LinkedHashMap<>(modeCongestion));
+        if (modeCongestion == null || modeCongestion.isEmpty())
+        {
+            this.modeCongestion = Collections.emptyMap();
+        }
+        else
+        {
+            HashMap<String, Double> copy = new HashMap<>();
+            for (Map.Entry<String, Double> entry : modeCongestion.entrySet())
+            {
+                copy.put(entry.getKey(), entry.getValue());
+            }
+            this.modeCongestion = Collections.unmodifiableMap(copy);
+        }
     }
 
     public long getTargetId()
@@ -48,4 +58,3 @@ public class Edge
         return modeCongestion;
     }
 }
-

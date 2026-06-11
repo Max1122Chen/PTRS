@@ -2,6 +2,7 @@ package com.travel.service.impl;
 
 import com.travel.model.entity.Food;
 import com.travel.model.entity.Restaurant;
+import com.travel.service.support.CommentAssembler;
 import com.travel.storage.InMemoryStore;
 import com.travel.model.vo.food.FoodRecommendVO;
 import org.junit.jupiter.api.Test;
@@ -22,10 +23,13 @@ class FoodServiceImplRecommendationTest
     @Mock
     private InMemoryStore store;
 
+    @Mock
+    private CommentAssembler commentAssembler;
+
     @Test
     void recommendShouldOrderByScoreAndPaginate()
     {
-        FoodServiceImpl service = new FoodServiceImpl(store);
+        FoodServiceImpl service = new FoodServiceImpl(store, commentAssembler);
 
         Food top = food(1L, 801L, 100, 5.0);
         Food middle = food(2L, 802L, 50, 4.0);
@@ -50,7 +54,7 @@ class FoodServiceImplRecommendationTest
     @Test
     void recommendShouldFilterByRadiusAndSortByDistanceWhenConfigured()
     {
-        FoodServiceImpl service = new FoodServiceImpl(store);
+        FoodServiceImpl service = new FoodServiceImpl(store, commentAssembler);
 
         Food nearFood = food(1L, 801L, 10, 1.0);
         Food farFood = food(2L, 802L, 10, 1.0);
@@ -69,7 +73,7 @@ class FoodServiceImplRecommendationTest
     @Test
     void recommendShouldFallbackToDefaultWeightsWhenAllWeightsAreNonPositive()
     {
-        FoodServiceImpl service = new FoodServiceImpl(store);
+        FoodServiceImpl service = new FoodServiceImpl(store, commentAssembler);
 
         Food top = food(1L, 801L, 100, 5.0);
         Food low = food(2L, 802L, 10, 1.0);

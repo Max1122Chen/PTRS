@@ -39,9 +39,11 @@
 | 状态 | 数量 | 代表条目 |
 |------|------|----------|
 | **已实现** | 38 | FR-001/003、FR-004-1~3/004-5、FR-005~006、FR-007~008（除 8-2/8-6）、FR-009-1~4、FR-010~012/014 |
-| **部分实现** | 8 | FR-002、FR-004（缺覆盖最多）、FR-008-2/8-6、FR-009、FR-013/13-3 |
+| **部分实现** | 7 | FR-002、FR-004（缺覆盖最多）、FR-008-2/8-6、FR-009、FR-013/13-3 |
 | **待验收** | 1 | FR-009-5（代码已落地，需实机出片） |
 | **本期不交付** | 3 | FR-004-4、FR-015、FR-016 |
+
+> NFR-007 自研 DS：算法层已替换，见 `docs/Tech/Custom Data Structures Scope.md`。
 
 - 基线提交：`main` @ `74a2e03`（室内导航 + UI/个人中心 PR 已合并）。
 - 完整对照表：`docs/Requirements/Requirements Documendation.md` **§9.2**。
@@ -50,7 +52,7 @@
 - **答辩必做**：FR-009-5 配置密钥并完成 1 次实机动画出片；室内导航演示脚本（areaId 248/201）。
 - **已知部分实现**（可书面说明）：FR-002 详情字段不全、FR-008-2 无管理端日记治理、FR-008-6/FR-013 无深度个性化。
 - **数据规模（2026-06-09）**：12 canonical + 188 alias = **200 景区**；212 设施（15 type）；20007 道路；452 美食；24 日记。验收见 `scripts/validate_s2_closure.py`。
-- **课程约束**：`com.travel.ds` 已就绪，算法层 `java.util` 替换与测试全覆盖仍为缺口。
+- **课程约束**：`com.travel.ds` 已在 **算法层**（Dijkstra/Graph/TopK/检索索引）落地；Service 边界见 `DsConvert` 与 [Custom Data Structures Scope.md](../Tech/Custom%20Data%20Structures%20Scope.md)。
 - **工程**：`application.yml` 明文 DB 密码；开发日志与 HANDOFF 已持续更新。
 
 ## 7. 重要工程风险
@@ -64,7 +66,14 @@
 - 重要技术决策必须记录在 `docs/Tech/Architecture Review v2.md` 或新建 ADR 文档。
 - 提交信息使用中文，格式：`[类型] 描述`。
 
-## 9. 快速定位命令（给任何 AI）
+## 9. 验收与答辩（S5）
+
+- 入口：[docs/验收/README.md](../验收/README.md)
+- 启动：[docs/验收/01-启动与运行.md](../验收/01-启动与运行.md)
+- 演示：[docs/验收/02-答辩演示脚本.md](../验收/02-答辩演示脚本.md)
+- 算法：[docs/验收/03-核心算法说明.md](../验收/03-核心算法说明.md)
+
+## 10. 快速定位命令（给任何 AI）
 - 查看后端入口：`src/main/java/com/travel/TravelSystemApplication.java`
 - 查看前端入口：`frontend/src/main.ts`
 - 查看路由：`frontend/src/router/index.ts`

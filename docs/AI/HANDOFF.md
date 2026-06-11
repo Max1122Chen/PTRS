@@ -1,5 +1,166 @@
 # HANDOFF LOG
 
+## 2026-06-09（S2-R8 闭环 — SPRINT_CLOSURE 全部完成）
+### 本次目标
+- 负责人确认 R8 完成；更新 `SPRINT_CLOSURE.md` §4 勾选与 §2.5 校正摘要。
+
+### 变更
+- `docs/AI/SPRINT_CLOSURE.md`：S1–S5 / R1–R12 均标完成；R8 沙河 indoor 归属写入 §2.5
+- `docs/验收/05-验收检查清单.md`：S2-R8 勾选
+
+### 冲刺外（本文件不阻塞 SPRINT_CLOSURE）
+- FR-009-5 AIGC 日记动画：需即梦/LibTV 密钥与实机出片
+
+## 2026-06-09（公共教学楼室内 POI 挂到 S4 区 900022208）
+### 本次目标
+- 公共教学楼室内节点归属 S4 区；S4 可双击进室内，公共教学楼不可。
+
+### 变更
+- 新建 `latest/indoor/900022208.json`（自 239 迁移，`buildingPoiId`/`parentId`=900022208，38 nodes / 40 edges）
+- `900022239.json` → `indoor/rejected/`
+- `manifest.json`：公共教学楼 → S4区
+
+### 验证
+- bundle 完整度（无重复 id、room 连通、entrance 有效）
+- `mvn -q "-Dtest=IndoorDevSeedBundleTest" test` SUCCESS
+
+### 使用
+- 重启后端：`/scenic?areaId=252` 双击「S4区」进室内；「公共教学楼」无室内入口
+
+## 2026-06-09（图书馆室内 POI 并入学术报告厅）
+### 本次目标
+- 图书馆全部室内节点迁入学术报告厅；图书馆不可再双击进室内。
+
+### 变更
+- `900022232.json`：并入图书馆 23 个节点（新 id 9050+）及有效边，补桥接 corridor 保证连通（共 55 nodes / 54 edges）
+- `900022224.json` → `indoor/rejected/`（加载器不再读取）
+- `manifest.json`：移除图书馆条目
+- `IndoorDevSeedBundleTest`：改测学术报告厅 bundle
+
+### 验证
+- `mvn -q "-Dtest=IndoorDevSeedBundleTest" test` SUCCESS
+
+### 使用
+- 重启后端：图书馆无 `indoorAvailable`；学术报告厅双击可见图书馆迁入的 POI
+
+## 2026-06-09（仅学术报告厅 900022232 可进室内）
+### 本次目标
+- 只改 `latest/indoor/900022232.json`，使学术报告厅可双击进入室内；**未动** 224/239 及其他文件。
+
+### 变更
+- 去重 nodeId（同 id 保留后者，与现有 edges 语义一致）
+- 为 13 个无边的 room 补最短 corridor 边接入主连通分量（共 32 nodes / 31 edges）
+
+### 验证
+- Python 模拟 `IndoorSeedCompleteness`：无重复 id、22 room、22 corridor、全 room 连通、`entranceNodeId=9008` 有效
+
+### 使用
+- 重启后端 → `/scenic?areaId=252` → 双击「学术报告厅」
+
+## 2026-06-09（撤销误恢复 indoor bundle — 还用户手工版）
+### 说明
+- 此前误用 `git checkout HEAD` 覆盖用户 R8 手工修改的三份 indoor JSON，已道歉并撤回。
+- 已从 **Cursor Local History** 恢复用户版本：`900022224.json`（5cvy）、`900022232.json`（jeDw）、`900022239.json`（xbGP）。
+
+### 注意
+- 用户版 bundle 若未通过 `IndoorSeedCompleteness`，对应 POI 仍可能无法双击进室内；**勿再擅自改 JSON**，需改后端加载规则或边数据时须先征得负责人同意。
+
+## 2026-06-09（沙河 indoor bundle 恢复 — 双击进室内）【已撤销】
+### 本次目标
+- ~~修复 R8 手工改坏的三份 indoor JSON~~ — **错误操作，已还原用户文件，见上条。**
+
+### 变更
+- ~~自 Git HEAD 恢复~~（已撤销）
+
+### 验证
+- ~~mvn indoor tests~~（不再适用用户版 bundle）
+
+### 下一步
+- R8 若再搬迁 room，须同步改 edges 并保证 nodeId 唯一；或切 Agent 按 `indoor_manual_assign.json` 规范拆分
+
+## 2026-06-09（S5 验收资料定稿）
+### 本次目标
+- 完成 SPRINT_CLOSURE S5：根 README + `docs/验收/` 全套答辩材料。
+
+### 变更
+- **新建** `README.md`（项目入口）
+- **新建** `docs/验收/README.md` 及 `01`–`05`（启动、演示脚本、算法、FR 口径、检查清单）
+- 更新 `SPRINT_CLOSURE.md`、`PROJECT_CONTEXT.md` §9
+
+### 验证
+- `python scripts/validate_s2_closure.py` 8/8 OK
+
+### 答辩前仍需现场
+- FR-009-5 AIGC 动画密钥配置与出片
+
+## 2026-06-09（S1 导航文案微调 — 负责人反馈）
+### 变更
+- `nav.ts`：探索 / 日记 / 游览；二级栏移除日记（仅推荐/景区/管理）
+- `HomePageView`：恢复英文主标题 travel
+- `AboutView`：移除 About ExploreScape 标题
+
+### 验证
+- `npm run build` 通过
+
+## 2026-06-09（S1 前端导航与视觉）
+### 本次目标
+- 完成 SPRINT_CLOSURE S1：一级/二级导航中文定稿，对齐 FR-017 景区工作台 IA。
+
+### 变更
+- **新建** `frontend/src/config/nav.ts`（主导航 + 游览分区二级导航）
+- `AppLayout.vue`：中文一级导航；二级 pill（推荐/景区/日记/管理）；移动端横滑二级栏 + 抽屉分组
+- `explorescape.css`：子导航 pill 样式；主导航适配中文宽度
+- `HomePageView.vue`：首页中文标题与 CTA「开始游览」
+- `HomeView.vue`：景区卡片「进入景区 →」提示
+
+### 验证
+- `npm run build` 通过
+
+### 演示
+- 顶栏：首页 | 关于 | 旅游日记 | 景点游览
+- 进入推荐/景区后二级：推荐 | 景区 | …
+- 手机宽度 ≤720px：顶栏显示「景点游览」+ 横滑二级导航
+
+### 下一步
+- S5 验收资料
+
+## 2026-06-09（S4 自制数据结构 — 算法层替换）
+### 本次目标
+- 完成 SPRINT_CLOSURE S4：`com.travel.algorithm` + `com.travel.storage.search` 使用 `com.travel.ds`，并固化答辩口径。
+
+### 变更
+- **替换** `Dijkstra`/`Graph`/`Edge`/`PathResult`、`TopKSelector`、`PrefixTrieIdIndex`、`NGramInvertedIndex` → `com.travel.ds`
+- **新建** `com.travel.ds.DsConvert`（Service 边界 JDK ↔ ds 转换）
+- **扩展** `com.travel.ds.Map.computeIfAbsent`、`Collections.emptyList/emptyMap/unmodifiableMap/copyRange`
+- **新建** `docs/Tech/Custom Data Structures Scope.md`
+- **新建** 测试 `DijkstraTest`、`TopKSelectorTest`、`SearchIndexTest`
+- Service 边界：`RouteServiceImpl`/`FoodServiceImpl`/`FacilityServiceImpl`/`InMemoryStore`/`IndoorPathPlanner`/`IndoorGraphRegistry` 适配
+
+### 验证
+- `mvn test` 全量通过
+
+### 下一步
+- S5 验收资料；或 S1 前端（待需求）
+
+## 2026-06-09（S3-ROUTE-01 多点路线不可达段提示）
+### 本次目标
+- 完成 SPRINT_CLOSURE S3-ROUTE-01：多点/两点规划失败时返回具体不可达段（POI 名称 + 路网/交通工具原因）。
+
+### 变更
+- `RouteServiceImpl`：`describeUnreachableSegment` / 多点预检批量收集不可达段后再抛错
+- **新建** `RouteServiceImplTest`（4 用例：未接入路网、交通工具过滤、多点批量提示、连通成功）
+- `RoutePanel.vue`：移除 catch 内重复 `ElMessage`（`http` 拦截器已展示后端 message）
+
+### 验证
+- `mvn -q "-Dtest=RouteServiceImplTest" test` 通过
+- `mvn test` 全量通过
+
+### 演示
+- `/scenic?areaId=252&tab=route` → 多点选含未连通 POI → 错误提示含「A→B 在步行下不可达」或「未接入路网」
+
+### 下一步
+- SPRINT 下一项：**R8 室内校正**（负责人搁置）或 **S1/S4/S5**（待需求）
+
 ## 2026-06-09（S2 R10–R12 收尾：alias + 设施枚举 + 验收）
 ### 本次目标
 - 完成 S2 剩余项：景区 alias≥200、设施 type≥10、JSON-only 配置、R12 规模验收。
@@ -2964,3 +3125,54 @@ pm.cmd run build �??�?�?�? chunk size warning�?�??
 
 ### ???
 - Cursor Agent
+
+## 2026-06-10 — 评论列表展示（日记/美食详情）
+
+### 本次目标
+- 在日记详情与美食详情页展示 dev-seed 评论列表（含昵称、评分、内容、时间）。
+
+### 变更文件
+- `src/main/java/com/travel/model/vo/comment/CommentVO.java`（新建）
+- `src/main/java/com/travel/service/support/CommentAssembler.java`（新建）
+- `src/main/java/com/travel/storage/InMemoryStore.java`（`listCommentsByTarget`）
+- `src/main/java/com/travel/model/vo/diary/DiaryDetailVO.java`
+- `src/main/java/com/travel/model/vo/food/FoodDetailVO.java`
+- `src/main/java/com/travel/service/impl/DiaryServiceImpl.java`
+- `src/main/java/com/travel/service/impl/FoodServiceImpl.java`
+- `frontend/src/components/CommentList.vue`（新建）
+- `frontend/src/lib/api.ts`
+- `frontend/src/views/diary/DiaryDetailView.vue`
+- `frontend/src/views/food/FoodDetailView.vue`
+- `src/test/java/com/travel/service/impl/FoodServiceImplRecommendationTest.java`
+
+### 验证结果
+- `mvn compile -DskipTests` 通过
+- `mvn test -Dtest=FoodServiceImplRecommendationTest` 通过
+- `npm run build`（frontend）通过
+
+### 说明
+- 详情接口 `/api/diary/{id}`、`/api/food/detail-view/{id}` 的 `data.comments` 返回评论列表；`targetType` 查询大小写不敏感（兼容 seed 的 `diary`/`food` 与运行时的 `DIARY`/`FOOD`）。
+- 前端复用 `CommentList` 组件，评分区上方展示评论。
+
+### 下一步
+- 可选：`getAverageRating` 与 seed `targetType` 大小写统一。
+
+## 2026-06-10 — 日记评分支持文字评价
+
+### 本次目标
+- 日记详情页提交评分时可附带可选文字评论，与美食评价体验一致。
+
+### 变更文件
+- `src/main/java/com/travel/model/dto/diary/DiaryRateRequest.java`
+- `src/main/java/com/travel/service/DiaryService.java`
+- `src/main/java/com/travel/service/impl/DiaryServiceImpl.java`
+- `src/main/java/com/travel/controller/DiaryController.java`
+- `frontend/src/lib/api.ts`
+- `frontend/src/views/diary/DiaryDetailView.vue`
+
+### 验证结果
+- `mvn compile -DskipTests` 通过
+
+### 说明
+- `POST /api/diary/rate` 新增可选字段 `comment`；写入内存评论与 DB（可用时）。
+- 前端评价区增加多行输入框，提交后刷新评论列表。

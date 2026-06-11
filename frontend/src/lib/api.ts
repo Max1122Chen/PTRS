@@ -64,6 +64,7 @@ export type FoodRecommendVO = Food & {
 export type FoodDetailVO = Food & {
   restaurantName?: string
   areaName?: string
+  comments?: CommentVO[]
 }
 
 export type InterestItemVO = {
@@ -93,10 +94,19 @@ export type Diary = {
   updateTime?: string
 }
 
+export type CommentVO = {
+  id: number
+  userId: number
+  userNickname?: string
+  content?: string
+  rating?: number
+  createTime?: string
+}
+
 export type DiaryDetailVO = Diary & {
   destinations?: number[]
   creatorNickname?: string
-  comments?: any[]
+  comments?: CommentVO[]
 }
 
 export type DiaryAttachmentUploadResult = {
@@ -465,12 +475,13 @@ export async function apiFoodDetail(id: number) {
 
 export async function apiFoodDetailView(id: number) {
   const res = (await http.get(`/api/food/detail-view/${id}`)) as ApiResponse<unknown>
-  const raw = res.data as FoodDetailVO & { food?: Food }
+  const raw = res.data as FoodDetailVO & { food?: Food; comments?: CommentVO[] }
   if (raw && typeof raw === 'object' && raw.food) {
     return {
       ...raw.food,
       restaurantName: raw.restaurantName,
       areaName: raw.areaName,
+      comments: raw.comments ?? [],
     } as FoodDetailVO
   }
   return raw as FoodDetailVO
@@ -499,12 +510,19 @@ export async function apiDiaryList(params: { page?: number; size?: number; sortB
 
 export async function apiDiaryDetail(id: number) {
   const res = (await http.get(`/api/diary/${id}`)) as ApiResponse<unknown>
-  const raw = res.data as { diary?: Diary; destinations?: number[] } & Diary
-  // 后端 DiaryDetailVO 为 { diary, destinations }，前端统一摊平为 Diary + destinations
+  const raw = res.data as {
+    diary?: Diary
+    destinations?: number[]
+    creatorNickname?: string
+    comments?: CommentVO[]
+  } & Diary
+  // 后端 DiaryDetailVO 为 { diary, destinations, comments }，前端统一摊平
   if (raw && typeof raw === 'object' && raw.diary) {
     return {
       ...raw.diary,
       destinations: raw.destinations ?? [],
+      creatorNickname: raw.creatorNickname,
+      comments: raw.comments ?? [],
     } as DiaryDetailVO
   }
   return raw as DiaryDetailVO
@@ -534,7 +552,7 @@ export async function apiDiarySearch(params: { keyword?: string; destination?: n
   return res.data
 }
 
-export async function apiDiaryRate(payload: { diaryId: number; rating: number }) {
+export async function apiDiaryRate(payload: { diaryId: number; rating: number; comment?: string }) {
   const res = (await http.post('/api/diary/rate', payload)) as ApiResponse<void>
   return res.data
 }

@@ -1,9 +1,10 @@
 package com.travel.storage.search;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.travel.ds.ArrayList;
+import com.travel.ds.Collections;
+import com.travel.ds.HashMap;
+import com.travel.ds.List;
+import com.travel.ds.Map;
 
 /**
  * N-Gram 倒排索引（简化版）。
@@ -61,12 +62,12 @@ public class NGramInvertedIndex
     {
         if (query == null)
         {
-            return List.of();
+            return Collections.emptyList();
         }
         String q = normalize(query);
         if (q.length() < minN)
         {
-            return List.of();
+            return Collections.emptyList();
         }
 
         Map<Long, Integer> score = new HashMap<>();
@@ -89,13 +90,17 @@ public class NGramInvertedIndex
 
         if (score.isEmpty())
         {
-            return List.of();
+            return Collections.emptyList();
         }
 
-        List<Long> all = new ArrayList<>(score.keySet());
-        all.sort((a, b) -> Integer.compare(score.getOrDefault(b, 0), score.getOrDefault(a, 0)));
+        List<Long> all = new ArrayList<>();
+        for (Long id : score.keySet())
+        {
+            all.add(id);
+        }
+        Collections.sort(all, (a, b) -> Integer.compare(score.getOrDefault(b, 0), score.getOrDefault(a, 0)));
         int to = Math.min(limit, all.size());
-        return all.subList(0, to);
+        return Collections.copyRange(all, 0, to);
     }
 
     private String normalize(String s)
@@ -103,4 +108,3 @@ public class NGramInvertedIndex
         return s.trim().toLowerCase();
     }
 }
-

@@ -1,7 +1,7 @@
 # 验收冲刺项登记
 
 > **用途**：记录收尾冲刺的五类工作及其**依赖顺序**。
-> **状态（2026-06-09）**：S2 **R7/R9/R10/R11/R12 完成**（R8 室内校正搁置）；S3 景区 Hub 主体已 commit；S3-ROUTE-01 待做。
+> **状态（2026-06-09）**：**S1–S5 全部完成**（含 S2 R1–R12 / **R8 沙河室内人工校正**）。
 > **基线**：`main` @ `4f049e6`（2026-06-08）
 
 ---
@@ -10,15 +10,15 @@
 
 | 顺序 | ID | 主题 | 负责人理解（难易/先后） | 状态 |
 |------|-----|------|-------------------------|------|
-| **①** | **S2** | 展示数据治理 + **地图采集重构** | **最好做、最先做**；见 §2、[S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) | **R1–R12 主体完成**（R8 搁置） |
-| **②** | **S3** | 业务功能纠偏 | 景区工作台 + 锚点 API | **主体完成**；S3-ROUTE-01 待做 |
-| **③** | **S1** | 前端导航与视觉 | 在数据与业务口径稳定后再改 | 待需求 |
-| **④** | **S4** | 自制数据结构 | 课程硬约束，范围待指示 | 待需求 |
-| **⑤** | **S5** | 验收参考资料 | **最后**定稿（依赖前几项结果） | 待需求 |
+| **①** | **S2** | 展示数据治理 + **地图采集重构** | **最好做、最先做**；见 §2、[S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) | **完成**（R1–R12 含 R8） |
+| **②** | **S3** | 业务功能纠偏 | 景区工作台 + 锚点 API | **完成** |
+| **③** | **S1** | 前端导航与视觉 | 在数据与业务口径稳定后再改 | **完成**（导航中文化 + 二级 pill） |
+| **④** | **S4** | 自制数据结构 | 课程硬约束 | **完成**（算法层 + 答辩口径文档） |
+| **⑤** | **S5** | 验收参考资料 | **最后**定稿（依赖前几项结果） | **完成** |
 
 ---
 
-## 2. S2 数据治理 — 已对齐的方向（待执行）
+## 2. S2 数据治理 — 已对齐的方向（**已完成**）
 
 ### 2.1 原则
 
@@ -55,7 +55,7 @@
 | 设施与 POI 分工 | 图书馆、餐厅、商店等多被 `classify_poi()` 写入 **POI/buildings**，而非 `facilities.append.json` | 前端「设施查询」数据源与需求语义不一致 |
 | 设施种类 ≥10 | 合并后仅 **6** 种 | 种类数不达标，根因在标签映射与分流逻辑 |
 
-**待办（登记）**：扩展 `classify_facility` / OSM tag 映射；明确「设施 vs 可路线 POI」分流规则；与 `poi-types.json`、后端 `FacilityService` 对齐。
+**历史登记（已闭环）**：R11a 已达成 15 种 `Facility.type`；§2.3 A 表为 R1–R5 前现状对照，非开放待办。
 
 #### B. 室内数据（`indoor`）过严丢弃
 
@@ -65,7 +65,7 @@
 | 负责人判断 raw Overpass **含丰富室内要素** | 房间 way 质心、MST 合成走廊、竖向边等启发式仍不足以让 bundle 过关 |
 | 仅少数 POI `indoorAvailable=true` | 与需求「OSM 有数据则应尽量利用」不符 |
 
-**待办（登记）**：审计 rejected 原因分布；放宽或分级完整度（演示级 vs 严格级）；改进从 `raw/overpass.json` 抽室内特征的逻辑。
+**历史登记（沙河 R8 已人工校正）**：演示包 areaId **252** 现仅 **S4区（900022208）**、**学术报告厅（900022232）** 可进室内；图书馆/公共教学楼 bundle 已迁入并自 `indoor/rejected/` 下线。其他 canonical 包 `rejected/` 仍为可选后续，不阻塞答辩。
 
 ### 2.4 OSM 包策略（负责人 2026-06-08 拍板，R7 扩展）
 
@@ -77,7 +77,7 @@
 | 衍生 seed | **R8 室内校正完成后** 再写日记/美食；美食绑餐饮 POI |
 | 规模 | 设施 type ≥10（枚举+seed）；景区 ≥200（**alias 复用** canonical 数据） |
 
-### 2.4 S2 执行顺序（阶段一 ✅，阶段二 ⏳）
+### 2.4 S2 执行顺序（阶段一 ✅，阶段二 ✅）
 
 **阶段一（已完成）**：脚本重构 → 沙河迭代 → dev-seed 瘦身 → map-imports 挂沙河包
 
@@ -99,12 +99,15 @@ flowchart LR
   R11 --> R12
 ```
 
-### 2.5 室内归属结论（2026-06-08 确认）
+### 2.5 室内归属结论（R8 完成，2026-06-09）
 
 - **脚本现状**：`building_footprint` + P0 缓冲已落地；节点写入 `parentId`。
-- **错位问题**：沙河 OSM room 与 building 面地理错位，自动归属不可靠（图书馆/报告厅装入 `N-*`，公共教学楼装入 `S4-*`）。
-- **决策（2026-06-08）**：**后期人工校正** `latest/indoor/*.json`；登记见 [OSM Indoor Manual Attribution.md](../Tech/OSM%20Indoor%20Manual%20Attribution.md)；预留 `indoor_manual_assign.json`（脚本未读）。
-- **采集重构详情**：[OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)。
+- **错位问题（原）**：沙河 OSM room 与 building 面地理错位（见 [OSM Indoor Manual Attribution.md](../Tech/OSM%20Indoor%20Manual%20Attribution.md)）。
+- **R8 校正结果（沙河 areaId 252）**：
+  - **学术报告厅** `900022232`：可进室内；含原图书馆室内 POI（`900022224` → `rejected/`）。
+  - **S4区** `900022208`：可进室内；含原公共教学楼室内 POI（`900022239` → `rejected/`）。
+  - **图书馆 / 公共教学楼**：室外 POI 保留，**无** `indoorAvailable`。
+- **采集重构详情**：[OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)（R1–R5 已实施，下文 §6 为历史摘要）。
 
 ---
 
@@ -142,9 +145,9 @@ flowchart TB
 ## 4. 各冲刺项待澄清项（占位，供后续填入）
 
 ### S1 前端导航与视觉
-- [ ] 一级导航最终中文文案
-- [ ] 二级导航是否调整
-- [ ] 视觉问题清单（由负责人逐条指出）
+- [x] 一级导航中文：首页 | 关于 | 旅游日记 | 景点游览（`frontend/src/config/nav.ts`）
+- [x] 二级导航：推荐 | 景区 | 旅游日记 | 管理（桌面 pill + 移动端横滑）
+- [x] 视觉：首页/推荐页中文文案；景区卡片「进入景区 →」；子导航 pill 高亮
 
 ### S2 展示数据治理 + 地图采集重构
 - [x] 方向：dev-seed 仅保留用户相关；osm-data 为业务真源；衍生数据后置
@@ -153,7 +156,7 @@ flowchart TB
 - [x] **JSON-only** 运行模式拍板（见 [S2 执行计划 §2](../Tech/S2%20Data%20Governance%20Execution%20Plan.md)）
 - [x] **规模口径**拍板：设施 type 枚举 ≥10；景区 ≥200 用 alias 复用 canonical 数据
 - [x] **R7** 12 canonical OSM 包（areaId 252–264）
-- [ ] **R8** 室内 bundle 人工校正（**负责人搁置**）
+- [x] **R8** 室内 bundle 人工校正（沙河：S4区 + 学术报告厅；见 §2.5）
 - [x] **R9** 衍生 seed：日记 + 美食（`seed_derived.py`）
 - [x] **R10** JSON-only 配置（`preload.enabled=false`）
 - [x] **R11a** 设施 type 枚举 15 种 + `facility-types.json`
@@ -173,21 +176,21 @@ flowchart TB
 | **S3-FAC-04** | FR-006-4 | 设施仅列表展示，地图无联动 | 查询后高亮设施节点 + 突出名称；列表悬停联动 |
 | **S3-FOOD-01** | FR-013 / FR-013-1 | 距离为 **直线**（`GeoUtil`），非路网 | 推荐/搜索改路径距离 + `anchorPoiId` |
 | **S3-FOOD-02** | FR-017 | 美食独立页，无景区地图上下文 | 迁入 `FoodPanel` |
-| **S3-ROUTE-01** | FR-004 | 多点 TSP **偶发**「无法规划到达路径」 | 失败返回不可达段提示；连通性/交通工具过滤排查 |
+| **S3-ROUTE-01** | FR-004 | 多点 TSP **偶发**「无法规划到达路径」 | 失败返回不可达段提示（POI 名 + 路网/交通工具原因） |
 | **S3-DOC-01** | — | 需求 §9 与实现错位 | **已完成** Requirements v1.7 + 本表 |
 
 - [x] 景区页前端实现（S3-UI-01）
 - [x] 设施/美食锚点 API（S3-FAC-* / S3-FOOD-*）
-- [ ] 多点路线失败提示（S3-ROUTE-01）
+- [x] 多点路线失败提示（S3-ROUTE-01）
 
 ### S4 自制数据结构替换
-- [ ] 替换范围（包/类列表，负责人指示）
-- [ ] 答辩口径：哪些层可用 JDK、哪些必须用自制结构
+- [x] 替换范围：`algorithm.graph`、`TopKSelector`、`storage.search`（见 [Custom Data Structures Scope.md](../Tech/Custom%20Data%20Structures%20Scope.md)）
+- [x] 答辩口径：算法层用 `com.travel.ds`；Controller/Service/持久化可用 JDK + `DsConvert` 边界
 
 ### S5 验收参考资料
-- [ ] 文档落点（根 README、`docs/验收/` 等）
-- [ ] 算法说明深度与示例
-- [ ] 与 S2/S3/S4 定稿后的同步时间点
+- [x] 文档落点：根 [README.md](../../README.md)、[docs/验收/](../验收/README.md)
+- [x] 算法说明：[03-核心算法说明.md](../验收/03-核心算法说明.md)
+- [x] 演示脚本 / FR 口径 / 检查清单（01–05 系列，2026-06-09 与 S2–S4 同步）
 
 ---
 
@@ -202,16 +205,14 @@ flowchart TB
 
 ## 6. 地图数据采集重构（摘要）
 
-> 完整版：[docs/Tech/OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)（**待审核**）
+> 完整版：[docs/Tech/OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)（**R1–R5 已实施**，本文为历史摘要）
 
-| 维度 | 现状 | 重构目标 |
-|------|------|----------|
-| **设施** | `classify_facility` 过窄；商店/饭店/咖啡馆等进 POI | 按 FR-006 进入 `facilities.append` |
-| **室内归属** | POI 单点 + 半径 80m | **建筑 `building` way 多边形** + `parentId` |
-| **室内数据源** | 共享 campus raw + 二次 Overpass | **单次 raw** + `building_registry` |
-| **迭代** | — | 北邮沙河沙箱重抓直至 §3.3 达标表满足 |
-
-**审核通过后**：按技术文档 §4 执行 R1→R5（脚本重构 + 自行迭代），R6 再做 dev-seed 瘦身。
+| 维度 | 重构前 | 重构后（已落地） |
+|------|--------|------------------|
+| **设施** | `classify_facility` 过窄 | R11a：15 种 `Facility.type` + `facility-types.json` |
+| **室内归属** | POI 单点 + 半径 | `building` 面 + `parentId`；沙河 **R8 人工校正** |
+| **室内数据源** | 二次 Overpass | 单次 raw + `building_registry` |
+| **迭代** | — | 沙河包已挂 `map-imports`；答辩演示 areaId **252** |
 
 ---
 
@@ -225,4 +226,9 @@ flowchart TB
 | 2026-06-08 | 新增 [OSM Map Data Collection Refactor.md](../Tech/OSM%20Map%20Data%20Collection%20Refactor.md)：现状、目标、设施/室内重构方案、沙河迭代；**待审核后编码** |
 | 2026-06-08 | S3 景区 Hub commit（`4f049e6`）；S3 主体完成 |
 | 2026-06-08 | S2 v2 拍板：多包协作流、JSON-only、设施枚举≥10、景区 alias≥200、美食绑餐饮 POI；新增 [S2 执行计划](../Tech/S2%20Data%20Governance%20Execution%20Plan.md) |
+| 2026-06-09 | S5：`README.md` + `docs/验收/01–05` 验收资料定稿 |
+| 2026-06-09 | S1：一级/二级导航中文化、`nav.ts` 配置、移动端二级横滑、首页中文 CTA |
+| 2026-06-09 | S4：`algorithm`/`storage.search` 全量替换为 `com.travel.ds` + `DsConvert` 边界 + 答辩文档 |
+| 2026-06-09 | S3-ROUTE-01：`RouteServiceImpl` 不可达段提示 + `RouteServiceImplTest` |
 | 2026-06-09 | S2 R7/R9/R10/R11/R12 完成；R8 室内校正搁置；规模 200 景区 / 15 设施 type |
+| 2026-06-09 | **S2 R8 完成**：沙河室内归属校正（S4区 900022208、学术报告厅 900022232）；**S1–S5 冲刺项全部勾选完成** |

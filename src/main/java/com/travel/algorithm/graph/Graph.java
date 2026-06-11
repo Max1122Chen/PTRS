@@ -1,11 +1,11 @@
 package com.travel.algorithm.graph;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.travel.ds.ArrayList;
+import com.travel.ds.Collections;
+import com.travel.ds.HashMap;
+import com.travel.ds.List;
+import com.travel.ds.Map;
+import com.travel.ds.Set;
 
 /**
  * 图结构（邻接表实现）。
@@ -40,7 +40,8 @@ public class Graph
 
     public List<Edge> getEdges(long nodeId)
     {
-        return adjList.getOrDefault(nodeId, Collections.emptyList());
+        List<Edge> edges = adjList.get(nodeId);
+        return edges == null ? Collections.emptyList() : edges;
     }
 
     public Set<Long> getNodes()
@@ -48,4 +49,3 @@ public class Graph
         return adjList.keySet();
     }
 }
-

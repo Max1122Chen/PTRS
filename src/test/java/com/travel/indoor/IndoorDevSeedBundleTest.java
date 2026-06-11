@@ -12,19 +12,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * 验收沙河 osm-data 图书馆室内 bundle 的完整度与路径规划。
+ * 验收沙河 osm-data 学术报告厅室内 bundle（含并入的图书馆节点）的完整度与路径规划。
  */
 class IndoorDevSeedBundleTest
 {
 
-    private static final String SHAHE_LIBRARY_INDOOR =
-        "osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/indoor/900022224.json";
+    private static final String SHAHE_AUDITORIUM_INDOOR =
+        "osm-data/北京邮电大学-沙河校区-鸿雁路-沙河镇-昌平区-北京市-102206-中国/latest/indoor/900022232.json";
 
     @Test
-    void shaheLibraryBundleShouldPassCompletenessAndPlanPath() throws Exception
+    void shaheAuditoriumBundleShouldPassCompletenessAndPlanPath() throws Exception
     {
         IndoorBuildingBundle bundle;
-        try (InputStream in = new ClassPathResource(SHAHE_LIBRARY_INDOOR).getInputStream())
+        try (InputStream in = new ClassPathResource(SHAHE_AUDITORIUM_INDOOR).getInputStream())
         {
             bundle = new ObjectMapper().readValue(in, IndoorBuildingBundle.class);
         }

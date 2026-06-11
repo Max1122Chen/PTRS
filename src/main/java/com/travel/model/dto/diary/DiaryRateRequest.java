@@ -18,6 +18,11 @@ public class DiaryRateRequest
     @Max(value = 5, message = "rating 最大为 5")
     private Double rating;
 
+    /**
+     * 可选评论内容。
+     */
+    private String comment;
+
     public Long getDiaryId()
     {
         return diaryId;
@@ -36,6 +41,16 @@ public class DiaryRateRequest
     public void setRating(Double rating)
     {
         this.rating = rating;
+    }
+
+    public String getComment()
+    {
+        return comment;
+    }
+
+    public void setComment(String comment)
+    {
+        this.comment = comment;
     }
 }
 

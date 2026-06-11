@@ -25,6 +25,6 @@ public interface DiaryService
 
     List<Diary> search(String keyword, Long destinationId, Integer page, Integer size);
 
-    void rate(Long userId, Long diaryId, double rating);
+    void rate(Long userId, Long diaryId, double rating, String comment);
 }
 

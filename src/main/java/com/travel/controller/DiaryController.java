@@ -132,7 +132,7 @@ public class DiaryController
         {
             return ApiResponse.failure(401, "未登录或令牌无效");
         }
-        diaryService.rate(userId, request.getDiaryId(), request.getRating());
+        diaryService.rate(userId, request.getDiaryId(), request.getRating(), request.getComment());
         return ApiResponse.successMessage("评分成功");
     }
 

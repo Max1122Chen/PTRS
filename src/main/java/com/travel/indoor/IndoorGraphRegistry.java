@@ -25,7 +25,7 @@ public class IndoorGraphRegistry
 
     private static final Logger log = LoggerFactory.getLogger(IndoorGraphRegistry.class);
 
-    private static final Map<String, Double> EMPTY_MODE = Collections.emptyMap();
+    private static final com.travel.ds.Map<String, Double> EMPTY_MODE = com.travel.ds.Collections.emptyMap();
 
     private final IndoorProperties properties;
 

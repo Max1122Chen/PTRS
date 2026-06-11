@@ -1,6 +1,9 @@
 package com.travel.model.vo.food;
 
 import com.travel.model.entity.Food;
+import com.travel.model.vo.comment.CommentVO;
+
+import java.util.List;
 
 /**
  * 美食详情视图，补充餐厅与景区名称，避免前端展示技术 ID。
@@ -13,6 +16,8 @@ public class FoodDetailVO
     private String restaurantName;
 
     private String areaName;
+
+    private List<CommentVO> comments;
 
     public Food getFood()
     {
@@ -42,5 +47,15 @@ public class FoodDetailVO
     public void setAreaName(String areaName)
     {
         this.areaName = areaName;
+    }
+
+    public List<CommentVO> getComments()
+    {
+        return comments;
+    }
+
+    public void setComments(List<CommentVO> comments)
+    {
+        this.comments = comments;
     }
 }

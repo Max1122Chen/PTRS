@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { apiFoodDetailView, apiFoodRate, apiTrackEngagement, type FoodDetailVO } from '../../lib/api'
 import { useAuthStore } from '../../stores/auth'
+import CommentList from '../../components/CommentList.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,8 +29,13 @@ async function load() {
 
 async function submitRate() {
   if (!food.value) return
-  await apiFoodRate({ foodId: food.value.id, rating: rate.rating, comment: rate.comment || undefined })
-  ElMessage.success('评分成功')
+  await apiFoodRate({
+    foodId: food.value.id,
+    rating: rate.rating,
+    comment: rate.comment.trim() || undefined,
+  })
+  ElMessage.success('评价成功')
+  rate.comment = ''
   await load()
 }
 
@@ -102,21 +108,22 @@ function goFoodList() {
 
       <el-divider />
 
+      <CommentList :comments="food?.comments" />
+
+      <el-divider />
+
       <div class="glass block">
-        <div style="font-weight: 900">评分</div>
-        <div class="muted" style="font-size: 12px; margin-top: 4px">
-          后端接口：<code>/api/food/rate</code>（需要登录，携带 <code>Authorization: Bearer token</code>）
-        </div>
+        <div style="font-weight: 900">评价</div>
 
         <div v-if="auth.isAuthed" class="rateBox">
           <el-rate v-model="rate.rating" />
           <el-input v-model="rate.comment" type="textarea" :rows="3" placeholder="写点评价（可选）" />
-          <el-button type="primary" @click="submitRate">提交</el-button>
+          <el-button type="primary" @click="submitRate">提交评价</el-button>
         </div>
         <div v-else class="muted" style="margin-top: 12px">
           请先
           <a style="cursor: pointer; color: var(--accent-main)" @click="$router.push('/login')">登录</a>
-          后评分
+          后评价
         </div>
       </div>
     </el-card>

@@ -27,19 +27,18 @@ function exploreMore() {
       <img :src="layers.b1" alt="" class="es-parallax-img back-1" />
 
       <div class="es-title">
-        <h3>The Land of Serene Beauty</h3>
         <h1>travel</h1>
       </div>
 
       <div class="es-info-wrap">
         <p>
-          Discover a smarter way to travel with our Personalized Travel Recommendation System. From scenic spots and local food to route planning and nearby facilities, every feature is designed to help you explore more easily and enjoy every journey. Start your next adventure, find places that match your interests, and let every trip become a memorable story.
+          智能推荐景区与路线，一站式查询周边设施与美食，支持室外—室内一体导航。发现与你兴趣匹配的旅程，让每一次出行都成为值得记录的故事。
         </p>
       </div>
 
       <div class="es-cta">
         <button type="button" @click="exploreMore">
-          Explore More
+          开始游览
           <i class="fa-solid fa-arrow-right" aria-hidden="true" />
         </button>
       </div>

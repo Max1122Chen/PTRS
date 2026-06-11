@@ -1,9 +1,10 @@
 package com.travel.storage.search;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.travel.ds.ArrayList;
+import com.travel.ds.Collections;
+import com.travel.ds.HashMap;
+import com.travel.ds.List;
+import com.travel.ds.Map;
 
 /**
  * 前缀 Trie 索引：把 word 的前缀查询映射到候选 id 列表。
@@ -46,12 +47,12 @@ public class PrefixTrieIdIndex
     {
         if (prefix == null)
         {
-            return List.of();
+            return Collections.emptyList();
         }
         String p = normalize(prefix);
         if (p.isEmpty())
         {
-            return List.of();
+            return Collections.emptyList();
         }
 
         Node cur = root;
@@ -61,11 +62,21 @@ public class PrefixTrieIdIndex
             Node next = cur.children.get(c);
             if (next == null)
             {
-                return List.of();
+                return Collections.emptyList();
             }
             cur = next;
         }
-        return new ArrayList<>(cur.candidateIds);
+        return copyIds(cur.candidateIds);
+    }
+
+    private List<Long> copyIds(List<Long> source)
+    {
+        List<Long> copy = new ArrayList<>(source.size());
+        for (Long id : source)
+        {
+            copy.add(id);
+        }
+        return copy;
     }
 
     private String normalize(String s)
@@ -79,4 +90,3 @@ public class PrefixTrieIdIndex
         private final List<Long> candidateIds = new ArrayList<>();
     }
 }
-

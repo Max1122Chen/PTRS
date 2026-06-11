@@ -17,6 +17,7 @@
   ],
   "entranceNodeId": 9003,
   "nodes": [
+   
     {
       "id": 9001,
       "level": "0",
@@ -270,17 +271,7 @@
       "y": 0.0,
       "parentId": 900022239
     },
-    {
-      "id": 9024,
-      "level": "0",
-      "name": "S-102, S-104",
-      "nodeKind": "room",
-      "longitude": 116.2858663,
-      "latitude": 40.1566643,
-      "x": 0.0,
-      "y": 0.0,
-      "parentId": 900022239
-    },
+    
     {
       "id": 9025,
       "level": "0",
@@ -413,28 +404,7 @@
       "y": 0.0,
       "parentId": 900022239
     },
-    {
-      "id": 9037,
-      "level": "1",
-      "name": "S-202, S-204",
-      "nodeKind": "room",
-      "longitude": 116.2860853,
-      "latitude": 40.1567418,
-      "x": 0.0,
-      "y": 0.0,
-      "parentId": 900022239
-    },
-    {
-      "id": 9038,
-      "level": "0",
-      "name": "S-106, S-108",
-      "nodeKind": "room",
-      "longitude": 116.2860886,
-      "latitude": 40.1567406,
-      "x": 0.0,
-      "y": 0.0,
-      "parentId": 900022239
-    },
+    
     {
       "id": 9039,
       "level": "0",

@@ -121,8 +121,7 @@ onMounted(() => {
 
 <template>
   <div class="page about">
-    <h1 class="h1 animate-fade-in-up">About ExploreScape</h1>
-    <div class="chat-card animate-fade-in-up delay-100">
+    <div class="chat-card animate-fade-in-up">
       <div class="chat-toolbar">
         <span class="muted chat-toolbar-hint">API 配置请在个人中心录入并保存</span>
         <button class="ghost-btn" type="button" @click="clearChat">清空会话</button>

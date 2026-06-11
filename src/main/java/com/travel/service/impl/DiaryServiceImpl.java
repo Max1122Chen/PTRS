@@ -13,6 +13,7 @@ import com.travel.model.entity.DiaryDestination;
 import com.travel.model.entity.User;
 import com.travel.model.vo.diary.DiaryDetailVO;
 import com.travel.service.DiaryService;
+import com.travel.service.support.CommentAssembler;
 import com.travel.util.DiaryContentCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -54,13 +55,16 @@ public class DiaryServiceImpl implements DiaryService
 
     private final DiaryContentCodec diaryContentCodec;
 
+    private final CommentAssembler commentAssembler;
+
     public DiaryServiceImpl(
         InMemoryStore store,
         ObjectMapper objectMapper,
         DiaryMapper diaryMapper,
         DiaryDestinationMapper diaryDestinationMapper,
         CommentMapper commentMapper,
-        DiaryContentCodec diaryContentCodec)
+        DiaryContentCodec diaryContentCodec,
+        CommentAssembler commentAssembler)
     {
         this.store = store;
         this.objectMapper = objectMapper;
@@ -68,6 +72,7 @@ public class DiaryServiceImpl implements DiaryService
         this.diaryDestinationMapper = diaryDestinationMapper;
         this.commentMapper = commentMapper;
         this.diaryContentCodec = diaryContentCodec;
+        this.commentAssembler = commentAssembler;
     }
 
     @Override
@@ -232,6 +237,7 @@ public class DiaryServiceImpl implements DiaryService
 
         User creator = store.findUserById(diary.getUserId());
         vo.setCreatorNickname(creator == null ? null : creator.getNickname());
+        vo.setComments(commentAssembler.listForTarget("DIARY", diaryId));
         return vo;
     }
 
@@ -325,7 +331,7 @@ public class DiaryServiceImpl implements DiaryService
     }
 
     @Override
-    public void rate(Long userId, Long diaryId, double rating)
+    public void rate(Long userId, Long diaryId, double rating, String comment)
     {
         Diary diary = store.findDiaryById(diaryId);
         if (diary == null)
@@ -337,7 +343,7 @@ public class DiaryServiceImpl implements DiaryService
         c.setUserId(userId);
         c.setTargetId(diaryId);
         c.setTargetType("DIARY");
-        c.setContent("");
+        c.setContent(comment == null ? "" : comment.trim());
         c.setRating(rating);
         LocalDateTime now = LocalDateTime.now();
         c.setCreateTime(now);

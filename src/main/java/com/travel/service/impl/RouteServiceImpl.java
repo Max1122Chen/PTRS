@@ -17,6 +17,8 @@ import com.travel.service.RouteService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import com.travel.util.ModeProfileCodec;
+import com.travel.ds.Collections;
+import com.travel.ds.DsConvert;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -70,21 +72,21 @@ public class RouteServiceImpl implements RouteService
         PathResult result = dijkstra.shortestPath(graph, request.getStartId(), request.getEndId(), weightFunc, edgeFilter);
         if (result.getPath().isEmpty())
         {
-            throw new IllegalArgumentException("无法规划到达路径");
+            throw unreachableRouteException(graph, request.getStartId(), request.getEndId(), mode);
         }
 
         RoutePlanVO vo = new RoutePlanVO();
-        vo.setPath(result.getPath());
+        vo.setPath(DsConvert.toJavaList(result.getPath()));
 
         if ("time".equalsIgnoreCase(strategy))
         {
             vo.setTime(result.getTotalWeight());
-            vo.setDistance(calcDistanceByPath(graph, result.getPath(), edgeFilter));
+            vo.setDistance(calcDistanceByPath(graph, DsConvert.toJavaList(result.getPath()), edgeFilter));
         }
         else
         {
             vo.setDistance(result.getTotalWeight());
-            vo.setTime(calcTimeByPath(graph, result.getPath(), mode, edgeFilter));
+            vo.setTime(calcTimeByPath(graph, DsConvert.toJavaList(result.getPath()), mode, edgeFilter));
         }
 
         return vo;
@@ -109,9 +111,9 @@ public class RouteServiceImpl implements RouteService
         long fixedEnd = returnToStart ? start : points.get(points.size() - 1);
         List<Long> middle = extractMiddle(points, returnToStart);
 
-        List<Long> waypointOrder = buildBestWaypointOrder(graph, start, fixedEnd, middle, weightFunc, edgeFilter);
+        List<Long> waypointOrder = buildBestWaypointOrder(graph, start, fixedEnd, middle, weightFunc, edgeFilter, mode);
         List<Long> fullPath = new ArrayList<>();
-        double totalPrimary = stitchPathByWaypoints(graph, waypointOrder, weightFunc, edgeFilter, fullPath);
+        double totalPrimary = stitchPathByWaypoints(graph, waypointOrder, weightFunc, edgeFilter, mode, fullPath);
 
         RoutePlanVO vo = new RoutePlanVO();
         vo.setPath(fullPath);
@@ -140,9 +142,9 @@ public class RouteServiceImpl implements RouteService
     }
 
     private List<Long> buildBestWaypointOrder(Graph graph, long start, long end, List<Long> middle,
-                                              EdgeWeightFunc weightFunc, EdgeFilter edgeFilter)
+                                              EdgeWeightFunc weightFunc, EdgeFilter edgeFilter, TransportMode mode)
     {
-        List<Long> ordered = solveOptimalMiddleOrder(graph, start, end, middle, weightFunc, edgeFilter);
+        List<Long> ordered = solveOptimalMiddleOrder(graph, start, end, middle, weightFunc, edgeFilter, mode);
         List<Long> waypoints = new ArrayList<>();
         waypoints.add(start);
         waypoints.addAll(ordered);
@@ -151,7 +153,7 @@ public class RouteServiceImpl implements RouteService
     }
 
     private List<Long> solveOptimalMiddleOrder(Graph graph, long start, long end, List<Long> middle,
-                                               EdgeWeightFunc weightFunc, EdgeFilter edgeFilter)
+                                               EdgeWeightFunc weightFunc, EdgeFilter edgeFilter, TransportMode mode)
     {
         int m = middle.size();
         if (m == 0)
@@ -163,14 +165,15 @@ public class RouteServiceImpl implements RouteService
             throw new IllegalArgumentException("中间点数量过多，请控制在20个以内");
         }
 
+        List<String> unreachableSegments = new ArrayList<>();
         PathResult[] startTo = new PathResult[m];
         PathResult[] toEnd = new PathResult[m];
         PathResult[][] between = new PathResult[m][m];
 
         for (int i = 0; i < m; i++)
         {
-            startTo[i] = shortestOrFail(graph, start, middle.get(i), weightFunc, edgeFilter);
-            toEnd[i] = shortestOrFail(graph, middle.get(i), end, weightFunc, edgeFilter);
+            startTo[i] = shortestOrCollectFailure(graph, start, middle.get(i), weightFunc, edgeFilter, mode, unreachableSegments);
+            toEnd[i] = shortestOrCollectFailure(graph, middle.get(i), end, weightFunc, edgeFilter, mode, unreachableSegments);
         }
         for (int i = 0; i < m; i++)
         {
@@ -180,8 +183,13 @@ public class RouteServiceImpl implements RouteService
                 {
                     continue;
                 }
-                between[i][j] = shortestOrFail(graph, middle.get(i), middle.get(j), weightFunc, edgeFilter);
+                between[i][j] = shortestOrCollectFailure(graph, middle.get(i), middle.get(j), weightFunc, edgeFilter, mode,
+                        unreachableSegments);
             }
+        }
+        if (!unreachableSegments.isEmpty())
+        {
+            throw buildUnreachableRouteException(unreachableSegments);
         }
 
         int fullMask = (1 << m) - 1;
@@ -239,7 +247,8 @@ public class RouteServiceImpl implements RouteService
         }
         if (bestLast < 0)
         {
-            throw new IllegalArgumentException("无法规划到达路径");
+            throw new IllegalArgumentException(
+                    "无法规划到达路径：无法找到经过全部中间点的访问顺序，请检查选点是否在当前交通工具下两两连通");
         }
 
         int[] orderIndex = new int[m];
@@ -262,36 +271,107 @@ public class RouteServiceImpl implements RouteService
     }
 
     private double stitchPathByWaypoints(Graph graph, List<Long> waypoints, EdgeWeightFunc weightFunc,
-                                         EdgeFilter edgeFilter, List<Long> fullPath)
+                                         EdgeFilter edgeFilter, TransportMode mode, List<Long> fullPath)
     {
         double total = 0.0;
         for (int i = 0; i < waypoints.size() - 1; i++)
         {
-            PathResult segment = shortestOrFail(graph, waypoints.get(i), waypoints.get(i + 1), weightFunc, edgeFilter);
+            PathResult segment = shortestOrFail(graph, waypoints.get(i), waypoints.get(i + 1), weightFunc, edgeFilter, mode);
             appendSegmentPath(fullPath, segment.getPath());
             total += segment.getTotalWeight();
         }
         return total;
     }
 
-    private void appendSegmentPath(List<Long> fullPath, List<Long> segmentPath)
+    private void appendSegmentPath(List<Long> fullPath, com.travel.ds.List<Long> segmentPath)
     {
         if (fullPath.isEmpty())
         {
-            fullPath.addAll(segmentPath);
+            fullPath.addAll(DsConvert.toJavaList(segmentPath));
             return;
         }
-        fullPath.addAll(segmentPath.subList(1, segmentPath.size()));
+        for (int i = 1; i < segmentPath.size(); i++)
+        {
+            fullPath.add(segmentPath.get(i));
+        }
     }
 
-    private PathResult shortestOrFail(Graph graph, long start, long end, EdgeWeightFunc weightFunc, EdgeFilter edgeFilter)
+    private PathResult shortestOrFail(Graph graph, long start, long end, EdgeWeightFunc weightFunc, EdgeFilter edgeFilter,
+                                      TransportMode mode)
     {
         PathResult result = dijkstra.shortestPath(graph, start, end, weightFunc, edgeFilter);
         if (result.getPath().isEmpty())
         {
-            throw new IllegalArgumentException("无法规划到达路径");
+            throw unreachableRouteException(graph, start, end, mode);
         }
         return result;
+    }
+
+    private PathResult shortestOrCollectFailure(Graph graph, long start, long end, EdgeWeightFunc weightFunc,
+                                                EdgeFilter edgeFilter, TransportMode mode, List<String> failures)
+    {
+        PathResult result = dijkstra.shortestPath(graph, start, end, weightFunc, edgeFilter);
+        if (result.getPath().isEmpty())
+        {
+            failures.add(describeUnreachableSegment(graph, start, end, mode));
+            return new PathResult(Collections.emptyList(), Double.MAX_VALUE);
+        }
+        return result;
+    }
+
+    private IllegalArgumentException unreachableRouteException(Graph graph, long start, long end, TransportMode mode)
+    {
+        return buildUnreachableRouteException(List.of(describeUnreachableSegment(graph, start, end, mode)));
+    }
+
+    private IllegalArgumentException buildUnreachableRouteException(List<String> segments)
+    {
+        return new IllegalArgumentException("无法规划到达路径：" + String.join("；", segments));
+    }
+
+    private String describeUnreachableSegment(Graph graph, long start, long end, TransportMode mode)
+    {
+        String fromLabel = nodeLabel(start);
+        String toLabel = nodeLabel(end);
+        if (start == end)
+        {
+            return String.format("「%s」未接入路网", fromLabel);
+        }
+        boolean fromOnGraph = graph.getNodes().contains(start);
+        boolean toOnGraph = graph.getNodes().contains(end);
+        if (!fromOnGraph && !toOnGraph)
+        {
+            return String.format("「%s」与「%s」均未接入路网", fromLabel, toLabel);
+        }
+        if (!fromOnGraph)
+        {
+            return String.format("「%s」未接入路网（目标：%s）", fromLabel, toLabel);
+        }
+        if (!toOnGraph)
+        {
+            return String.format("「%s」未接入路网（起点：%s）", toLabel, fromLabel);
+        }
+        return String.format("「%s」→「%s」在当前交通工具（%s）下不可达", fromLabel, toLabel, vehicleLabel(mode));
+    }
+
+    private String nodeLabel(long nodeId)
+    {
+        Poi poi = store.findPoiById(nodeId);
+        if (poi != null && StringUtils.isNotBlank(poi.getName()))
+        {
+            return poi.getName().trim() + "(" + nodeId + ")";
+        }
+        return "节点" + nodeId;
+    }
+
+    private static String vehicleLabel(TransportMode mode)
+    {
+        return switch (mode)
+        {
+            case BIKE -> "自行车";
+            case SHUTTLE -> "电瓶车";
+            case WALK -> "步行";
+        };
     }
 
     @Override
@@ -336,13 +416,18 @@ public class RouteServiceImpl implements RouteService
                 e.put("distance", edge.getDistance());
                 e.put("speed", edge.getSpeed());
                 e.put("modeCongestion", edge.getModeCongestion());
-                e.put("allowedModes", new ArrayList<>(edge.getModeCongestion().keySet()));
+                e.put("allowedModes", DsConvert.modeKeysToJavaList(edge.getModeCongestion()));
                 edges.add(e);
             }
         }
 
+        java.util.ArrayList<Long> nodeIds = new java.util.ArrayList<>();
+        for (Long nodeId : graph.getNodes())
+        {
+            nodeIds.add(nodeId);
+        }
         Map<String, Object> result = new HashMap<>();
-        result.put("nodes", new ArrayList<>(graph.getNodes()));
+        result.put("nodes", nodeIds);
         result.put("nodeDetails", nodeDetails);
         result.put("nodeGeo", nodeGeo);
         result.put("edges", edges);
@@ -393,7 +478,8 @@ public class RouteServiceImpl implements RouteService
             {
                 continue;
             }
-            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed, modeCongestion);
+            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed,
+                    DsConvert.copyStringDoubleMap(modeCongestion));
         }
         return graph;
     }

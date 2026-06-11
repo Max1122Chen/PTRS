@@ -12,6 +12,7 @@ import com.travel.service.FacilityService;
 import com.travel.storage.InMemoryStore;
 import com.travel.util.GeoUtil;
 import com.travel.util.ModeProfileCodec;
+import com.travel.ds.DsConvert;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -204,7 +205,8 @@ public class FacilityServiceImpl implements FacilityService
             double distance = road.getDistance() == null ? 0.0 : road.getDistance();
             double speed = road.getSpeed() == null ? 0.0 : road.getSpeed();
             var modeCongestion = ModeProfileCodec.decode(road.getModeProfile());
-            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed, modeCongestion);
+            graph.addUndirectedEdge(road.getStartId(), road.getEndId(), distance, speed,
+                    DsConvert.copyStringDoubleMap(modeCongestion));
         }
         return graph;
     }

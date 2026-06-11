@@ -34,6 +34,7 @@
 - 先验证再交付：说明运行命令和结果。
 
 ## 6. 参考文件
+- 验收与答辩：`docs/验收/README.md`、根目录 `README.md`
 - 项目上下文：`docs/AI/PROJECT_CONTEXT.md`
 - 协作流程：`docs/AI/WORKFLOW.md`
 - 会话交接：`docs/AI/HANDOFF.md`

@@ -231,6 +231,7 @@ function onRecommendTabChange() {
             <div class="tags">
               <el-tag v-for="tag in displayTags(s)" :key="`${s.id}-${tag}`" effect="plain" size="small">{{ tag }}</el-tag>
             </div>
+            <span class="enter-hint">进入景区 →</span>
           </div>
         </el-card>
       </template>
@@ -247,6 +248,7 @@ function onRecommendTabChange() {
             <div class="tags">
               <el-tag v-for="tag in displayTags(s)" :key="`${s.id}-${tag}`" effect="plain" size="small">{{ tag }}</el-tag>
             </div>
+            <span class="enter-hint">进入景区 →</span>
           </div>
         </el-card>
       </template>
@@ -340,6 +342,13 @@ function onRecommendTabChange() {
   gap: 6px;
   flex-wrap: nowrap;
   overflow: hidden;
+}
+.enter-hint {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  opacity: 0.85;
 }
 .pager {
   margin-top: 12px;

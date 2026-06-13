@@ -14,7 +14,9 @@ import {
   type IndoorNodeDto,
   type IndoorPlanResult,
   type PoiTypeDictItem,
-  type RoadEdge,
+  type PoiDetailMap,
+  type RouteMapData,
+  type RouteNodeDetail,
   type RoutePoiCandidate,
 } from '../../../lib/api'
 import type { FacilityHighlight } from '../../../stores/scenicHub'
@@ -51,21 +53,11 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:focusPoiId': [id: number | null]
   'focus-select': [payload: { nodeId: number; name: string }]
-  'map-loaded': [candidates: RoutePoiCandidate[], details: Record<number, any>]
+  'map-loaded': [candidates: RoutePoiCandidate[], details: PoiDetailMap]
 }>()
 
-type RouteNodeDetail = {
-  nodeId: number
-  name: string
-  type?: string
-  location?: string
-  longitude?: number
-  latitude?: number
-  indoorAvailable?: boolean
-}
-
 const loading = ref(false)
-const map = ref<{ nodes: number[]; nodeDetails?: RouteNodeDetail[]; nodeGeo?: RouteNodeDetail[]; edges: RoadEdge[] } | null>(null)
+const map = ref<RouteMapData | null>(null)
 const poiCandidates = ref<RoutePoiCandidate[]>([])
 const poiTypeOptions = ref<PoiTypeDictItem[]>([])
 const chartEl = ref<HTMLDivElement | null>(null)
@@ -788,10 +780,10 @@ async function loadMap() {
       apiMapData({ areaId: props.areaId }),
       apiRoutePoiCandidates({ areaId: props.areaId }),
     ])
-    map.value = mapData as any
+    map.value = mapData
     poiCandidates.value = candidates
-    const details: Record<number, any> = {}
-    ;(mapData.nodeDetails ?? []).forEach((n: any) => {
+    const details: PoiDetailMap = {}
+    ;(mapData.nodeDetails ?? []).forEach((n) => {
       details[n.nodeId] = n
     })
     candidates.forEach((c) => {

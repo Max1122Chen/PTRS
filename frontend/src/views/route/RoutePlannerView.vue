@@ -16,13 +16,13 @@ import {
   type IndoorLevelMeta,
   type IndoorNodeDto,
   type IndoorPlanResult,
-  type RoadEdge,
   type PoiTypeDictItem,
+  type RoadEdge,
+  type RouteMapData,
+  type RouteNodeDetail,
   type RoutePoiCandidate,
   type ScenicArea,
 } from '../../lib/api'
-
-type Edge = RoadEdge
 
 const MODE_LABEL_MAP: Record<string, string> = {
   walk: '步行',
@@ -31,25 +31,7 @@ const MODE_LABEL_MAP: Record<string, string> = {
 }
 
 const loading = ref(false)
-type RouteNodeDetail = {
-  nodeId: number
-  name: string
-  type?: string
-  location?: string
-  longitude?: number
-  latitude?: number
-  areaId?: number
-  indoorAvailable?: boolean
-}
-
-type RouteNodeGeo = {
-  nodeId: number
-  type?: string
-  longitude?: number
-  latitude?: number
-}
-
-const map = ref<{ nodes: number[]; nodeDetails?: RouteNodeDetail[]; nodeGeo?: RouteNodeGeo[]; edges: Edge[] } | null>(null)
+const map = ref<RouteMapData | null>(null)
 const poiCandidates = ref<RoutePoiCandidate[]>([])
 const chartEl = ref<HTMLDivElement | null>(null)
 let chart: echarts.ECharts | null = null
@@ -137,7 +119,7 @@ const pathSegments = computed(() => {
     return []
   }
 
-  const edgeIndex = new Map<string, Edge[]>()
+  const edgeIndex = new Map<string, RoadEdge[]>()
   edges.forEach((edge) => {
     const key = `${edge.startId}-${edge.endId}`
     const list = edgeIndex.get(key)

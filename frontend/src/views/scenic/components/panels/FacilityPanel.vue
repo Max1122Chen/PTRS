@@ -165,13 +165,24 @@ function selectFacilityRow(row: FacilityNearbyVO) {
   flex-direction: column;
   gap: 10px;
 }
+.panel :deep(.el-tabs__header) {
+  margin-bottom: 2px;
+}
+.panel :deep(.el-form-item) {
+  margin-bottom: 12px;
+}
+.panel :deep(.el-segmented) {
+  width: 100%;
+}
 .anchor {
   font-size: 13px;
-  padding: 8px 10px;
+  line-height: 1.5;
+  padding: 9px 10px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(57, 127, 150, 0.1);
+  border: 1px solid rgba(57, 127, 150, 0.14);
 }
 .result-table {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 </style>

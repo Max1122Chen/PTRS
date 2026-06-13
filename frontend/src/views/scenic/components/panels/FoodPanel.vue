@@ -141,10 +141,21 @@ function formatDist(row: FoodRecommendVO) {
   flex-direction: column;
   gap: 10px;
 }
+.panel :deep(.el-tabs__header) {
+  margin-bottom: 2px;
+}
+.panel :deep(.el-form-item) {
+  margin-bottom: 12px;
+}
+.panel :deep(.el-slider__runway) {
+  margin-right: 4px;
+}
 .anchor {
   font-size: 13px;
-  padding: 8px 10px;
+  line-height: 1.5;
+  padding: 9px 10px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(182, 120, 45, 0.1);
+  border: 1px solid rgba(182, 120, 45, 0.16);
 }
 </style>

@@ -27,11 +27,25 @@ const detail = computed(() => {
 </template>
 
 <style scoped>
+.panel {
+  padding: 4px 2px;
+}
+.panel h3 {
+  font-size: 18px;
+  line-height: 1.35;
+}
+.panel p {
+  margin: 8px 0;
+  line-height: 1.55;
+}
 .indoor-tag {
   margin-top: 12px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: 8px;
-  background: rgba(255, 200, 80, 0.15);
+  color: #6f4a16;
+  background: rgba(182, 120, 45, 0.13);
+  border: 1px solid rgba(182, 120, 45, 0.18);
   font-size: 13px;
+  font-weight: 700;
 }
 </style>

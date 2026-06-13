@@ -175,6 +175,22 @@ defineExpose({ form, result })
 .panel {
   max-height: calc(100vh - 220px);
   overflow-y: auto;
+  padding-right: 2px;
+}
+.panel :deep(.el-form-item) {
+  margin-bottom: 13px;
+}
+.panel :deep(.el-segmented) {
+  width: 100%;
+}
+.panel :deep(.el-radio-group) {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.panel :deep(.el-radio-button__inner) {
+  width: 100%;
+  text-align: center;
 }
 .row {
   display: grid;
@@ -183,13 +199,24 @@ defineExpose({ form, result })
 }
 .result {
   margin-top: 12px;
-  padding: 10px;
+  padding: 12px;
   font-size: 12px;
+  border-radius: 8px;
+  background: rgba(22, 66, 60, 0.08) !important;
+  border-color: rgba(22, 66, 60, 0.12) !important;
 }
 .order-row {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  padding: 4px 0;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.34);
+}
+@media (max-width: 520px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

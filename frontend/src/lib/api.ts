@@ -131,6 +131,33 @@ export type RoadEdge = {
   allowedModes?: string[]
 }
 
+export type RouteNodeDetail = {
+  nodeId: number
+  name: string
+  type?: string
+  location?: string
+  longitude?: number
+  latitude?: number
+  areaId?: number
+  indoorAvailable?: boolean
+}
+
+export type RouteNodeGeo = {
+  nodeId: number
+  type?: string
+  longitude?: number
+  latitude?: number
+}
+
+export type RouteMapData = {
+  nodes: number[]
+  nodeDetails?: RouteNodeDetail[]
+  nodeGeo?: RouteNodeGeo[]
+  edges: RoadEdge[]
+}
+
+export type PoiDetailMap = Record<number, RouteNodeDetail>
+
 export type RoutePoiCandidate = {
   nodeId: number
   name: string
@@ -321,26 +348,7 @@ export async function apiScenicSearchByKeyword(params: { keyword: string; limit?
 }
 
 export async function apiMapData(params: { areaId?: number }) {
-  const res = (await http.get('/api/route/map-data', { params })) as ApiResponse<{
-    nodes: number[]
-    nodeDetails?: {
-      nodeId: number
-      name: string
-      type?: string
-      location?: string
-      longitude?: number
-      latitude?: number
-      areaId?: number
-      indoorAvailable?: boolean
-    }[]
-    nodeGeo?: {
-      nodeId: number
-      type?: string
-      longitude?: number
-      latitude?: number
-    }[]
-    edges: RoadEdge[]
-  }>
+  const res = (await http.get('/api/route/map-data', { params })) as ApiResponse<RouteMapData>
   return res.data
 }
 

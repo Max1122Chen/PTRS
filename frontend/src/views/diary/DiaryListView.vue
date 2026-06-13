@@ -663,7 +663,7 @@ watch(searchInput, (value) => {
 .diary-list-page {
   max-width: none !important;
   margin: 0 !important;
-  padding: 0 18px 18px;
+  padding: 0 10px 18px;
 }
 
 .hdr {
@@ -678,7 +678,7 @@ watch(searchInput, (value) => {
   padding: 12px 8px;
   background: var(--glass-sticky);
   border: 1px solid var(--glass-border-faint);
-  border-radius: 14px;
+  border-radius: 8px;
   backdrop-filter: blur(var(--glass-sticky-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-sticky-blur)) saturate(var(--glass-saturate));
 }
@@ -849,11 +849,17 @@ watch(searchInput, (value) => {
 
 .feed.lookbook-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
   max-width: none;
   margin: 0;
   min-height: 120px;
+}
+
+@media (max-width: 1120px) {
+  .feed.lookbook-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 560px) {
@@ -864,7 +870,7 @@ watch(searchInput, (value) => {
 
 .lookbook-card.diary-card {
   cursor: pointer;
-  border-radius: 16px;
+  border-radius: 8px;
   overflow: hidden;
   background: var(--glass-card);
   border: 1px solid var(--glass-border-soft);
@@ -875,7 +881,7 @@ watch(searchInput, (value) => {
 .lookbook-media {
   position: relative;
   width: 100%;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 3;
   background: rgba(0, 0, 0, 0.18);
   overflow: hidden;
 }
@@ -946,7 +952,7 @@ watch(searchInput, (value) => {
 }
 
 .lookbook-body {
-  padding: 14px 16px 12px;
+  padding: 12px 14px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;

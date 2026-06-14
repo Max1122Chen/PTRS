@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { FacilityNearbyVO, Food, FoodRecommendVO, RoutePoiCandidate } from '../lib/api'
+import type { FacilityNearbyVO, Food, FoodRecommendVO, PoiDetailMap, RoutePoiCandidate } from '../lib/api'
 
 export type PanelTab = 'route' | 'facility' | 'food' | 'poi'
 
@@ -19,7 +19,7 @@ export const useScenicHubStore = defineStore('scenicHub', {
     panelTab: 'route' as PanelTab,
     poiCandidates: [] as RoutePoiCandidate[],
     poiLabelMap: {} as Record<number, string>,
-    poiDetailMap: {} as Record<number, { name?: string; type?: string; location?: string; longitude?: number; latitude?: number; indoorAvailable?: boolean }>,
+    poiDetailMap: {} as PoiDetailMap,
 
     routePath: null as number[] | null,
     facilityRadius: 500 as 200 | 500 | 1000,
@@ -85,7 +85,7 @@ export const useScenicHubStore = defineStore('scenicHub', {
     setPanelTab(tab: PanelTab) {
       this.panelTab = tab
     },
-    onMapLoaded(candidates: RoutePoiCandidate[], details: Record<number, { name?: string; type?: string; location?: string; longitude?: number; latitude?: number; indoorAvailable?: boolean }>) {
+    onMapLoaded(candidates: RoutePoiCandidate[], details: PoiDetailMap) {
       this.poiCandidates = candidates
       this.poiDetailMap = details
       const labels: Record<number, string> = {}

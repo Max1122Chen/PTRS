@@ -2,19 +2,19 @@
 
 :root {
   /* —— 毛玻璃层级：数字越大越「实」，模糊可略小以保留层次 —— */
-  --glass-page: rgba(255, 255, 255, 0.5);
+  --glass-page: rgba(248, 251, 249, 0.56);
   --glass-page-blur: 22px;
 
-  --glass-card: rgba(255, 255, 255, 0.62);
+  --glass-card: rgba(248, 251, 249, 0.68);
   --glass-card-blur: 14px;
 
-  --glass-card-dense: rgba(255, 255, 255, 0.72);
+  --glass-card-dense: rgba(252, 253, 250, 0.82);
   --glass-card-dense-blur: 12px;
 
-  --glass-input: rgba(255, 255, 255, 0.48);
+  --glass-input: rgba(255, 255, 255, 0.64);
   --glass-input-blur: 10px;
 
-  --glass-subtle: rgba(255, 255, 255, 0.36);
+  --glass-subtle: rgba(246, 250, 247, 0.52);
   --glass-subtle-blur: 8px;
 
   --glass-muted: rgba(255, 255, 255, 0.24);
@@ -26,28 +26,32 @@
   --glass-border-soft: rgba(255, 255, 255, 0.26);
   --glass-border-faint: rgba(255, 255, 255, 0.14);
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 21, 0.06), 0 8px 22px rgba(15, 23, 21, 0.06);
+  --shadow-md: 0 16px 42px rgba(10, 21, 19, 0.13);
+  --shadow-lg: 0 24px 70px rgba(10, 21, 19, 0.18);
 
   --bg-base: var(--glass-sticky);
   --bg-surface: var(--glass-card);
   --bg-subtle: var(--glass-subtle);
   --bg-sidebar: rgba(255, 255, 255, 0.32);
 
-  --text-primary: #1a1a18;
-  --text-secondary: #6b6860;
-  --text-muted: #9b9890;
+  --text-primary: #18211f;
+  --text-secondary: #66706b;
+  --text-muted: #909b95;
 
   --accent: #16423c;
   --accent-hover: #12372f;
+  --accent-soft: rgba(22, 66, 60, 0.1);
+  --accent-warm: #b6782d;
+  --accent-sky: #397f96;
 
   --border: var(--glass-border-soft);
   --border-subtle: var(--glass-border-faint);
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 
   --el-color-primary: #16423c;
   --el-color-primary-light-3: #3d6b62;
@@ -112,6 +116,16 @@ body {
   box-shadow: var(--shadow-md) !important;
 }
 
+.el-card__header {
+  padding: 14px 16px !important;
+  border-bottom: 1px solid rgba(22, 66, 60, 0.1) !important;
+  color: var(--text-primary) !important;
+}
+
+.el-card__body {
+  padding: 16px !important;
+}
+
 .el-form-item__label {
   color: var(--text-secondary) !important;
 }
@@ -120,7 +134,7 @@ body {
 .el-textarea__inner {
   background: var(--glass-input) !important;
   border: 1.5px solid var(--glass-border-soft) !important;
-  border-radius: var(--radius-xl) !important;
+  border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-sm) !important;
   color: var(--text-primary) !important;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -141,6 +155,8 @@ body {
 
 .el-button {
   border-radius: var(--radius-md) !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
@@ -167,9 +183,10 @@ body {
 }
 
 .el-tag {
-  background: var(--glass-subtle) !important;
-  border: 1px solid var(--glass-border-faint) !important;
-  color: var(--text-secondary) !important;
+  background: rgba(22, 66, 60, 0.08) !important;
+  border: 1px solid rgba(22, 66, 60, 0.12) !important;
+  color: var(--accent) !important;
+  border-radius: 999px !important;
   backdrop-filter: blur(var(--glass-subtle-blur)) saturate(1.1) !important;
   -webkit-backdrop-filter: blur(var(--glass-subtle-blur)) saturate(1.1) !important;
 }
@@ -225,6 +242,40 @@ body {
   -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate)) !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: 0 16px 48px rgba(10, 21, 19, 0.18) !important;
+}
+
+.el-table {
+  --el-table-header-bg-color: rgba(22, 66, 60, 0.08);
+  --el-table-row-hover-bg-color: rgba(22, 66, 60, 0.08);
+  --el-table-border-color: rgba(22, 66, 60, 0.1);
+  --el-table-text-color: var(--text-primary);
+  --el-table-header-text-color: var(--text-secondary);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.38) !important;
+  box-shadow: inset 0 0 0 1px rgba(22, 66, 60, 0.08);
+}
+
+.el-table th.el-table__cell {
+  font-weight: 800;
+}
+
+.el-table .el-table__row {
+  cursor: pointer;
+}
+
+.el-tabs__nav-wrap::after {
+  height: 1px !important;
+  background-color: rgba(22, 66, 60, 0.12) !important;
+}
+
+.el-tabs__item {
+  font-weight: 700 !important;
+}
+
+.el-select-dropdown__item.is-selected {
+  color: var(--accent) !important;
+  font-weight: 800 !important;
 }
 
 /* Modal overlay feel (code1 modal-overlay pattern) */

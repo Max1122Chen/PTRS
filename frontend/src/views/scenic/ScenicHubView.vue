@@ -2,7 +2,7 @@
 import { useMediaQuery } from '@vueuse/core'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { apiScenicSearchByKeyword, type ScenicArea } from '../../lib/api'
+import { apiScenicSearchByKeyword, type PoiDetailMap, type RoutePoiCandidate, type ScenicArea } from '../../lib/api'
 import { useScenicHubStore, type PanelTab } from '../../stores/scenicHub'
 import ScenicMapCanvas from './components/ScenicMapCanvas.vue'
 import FacilityPanel from './components/panels/FacilityPanel.vue'
@@ -46,7 +46,7 @@ function onTabChange(tab: PanelTab) {
   router.replace({ query: { ...route.query, tab } })
 }
 
-function onMapLoaded(candidates: any[], details: Record<number, any>) {
+function onMapLoaded(candidates: RoutePoiCandidate[], details: PoiDetailMap) {
   hub.onMapLoaded(candidates, details)
 }
 
@@ -145,25 +145,29 @@ watch(() => route.query, syncFromRoute)
 .hub-page {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   min-height: calc(100vh - 120px);
 }
 .hub-top {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 14px 16px;
   flex-wrap: wrap;
+  border-radius: 8px;
 }
 .focus-chip {
   font-size: 13px;
-  padding: 4px 10px;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(80, 200, 255, 0.15);
+  background: rgba(57, 127, 150, 0.12);
+  border: 1px solid rgba(57, 127, 150, 0.18);
 }
 .hub-body {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);
   gap: 14px;
   flex: 1;
   min-height: 0;
@@ -173,19 +177,37 @@ watch(() => route.query, syncFromRoute)
   grid-template-rows: 1fr auto;
 }
 .map-stage {
-  padding: 12px;
-  min-height: 480px;
+  position: relative;
+  overflow: hidden;
+  padding: 10px;
+  min-height: min(640px, calc(100vh - 220px));
+  border-radius: 8px;
 }
 .side-panel {
-  padding: 12px 14px;
+  padding: 12px 14px 14px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  border-radius: 8px;
+  min-height: 0;
+}
+.side-panel :deep(.el-tabs__header) {
+  margin-bottom: 12px;
+}
+.side-panel :deep(.el-tabs__nav) {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.side-panel :deep(.el-tabs__item) {
+  justify-content: center;
+  padding: 0 8px;
 }
 .mobile-sheet {
   padding: 8px 12px 12px;
   max-height: 45vh;
   overflow: auto;
+  border-radius: 8px;
 }
 .mobile-sheet.collapsed {
   max-height: 48px;
@@ -194,11 +216,28 @@ watch(() => route.query, syncFromRoute)
 .sheet-handle {
   width: 100%;
   border: none;
-  background: rgba(255, 255, 255, 0.08);
-  color: inherit;
+  background: rgba(22, 66, 60, 0.08);
+  color: var(--accent);
+  font-weight: 800;
   padding: 8px;
   border-radius: 8px;
   cursor: pointer;
   margin-bottom: 8px;
+}
+
+@media (max-width: 1120px) {
+  .hub-body {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+}
+
+@media (max-width: 900px) {
+  .hub-page {
+    min-height: calc(100vh - 96px);
+  }
+
+  .map-stage {
+    min-height: 52vh;
+  }
 }
 </style>

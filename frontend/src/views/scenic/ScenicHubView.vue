@@ -2,7 +2,13 @@
 import { useMediaQuery } from '@vueuse/core'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { apiScenicSearchByKeyword, type PoiDetailMap, type RoutePoiCandidate, type ScenicArea } from '../../lib/api'
+import {
+  apiScenicDetail,
+  apiScenicSearchByKeyword,
+  type PoiDetailMap,
+  type RoutePoiCandidate,
+  type ScenicArea,
+} from '../../lib/api'
 import { useScenicHubStore, type PanelTab } from '../../stores/scenicHub'
 import ScenicMapCanvas from './components/ScenicMapCanvas.vue'
 import FacilityPanel from './components/panels/FacilityPanel.vue'
@@ -50,12 +56,30 @@ function onMapLoaded(candidates: RoutePoiCandidate[], details: PoiDetailMap) {
   hub.onMapLoaded(candidates, details)
 }
 
+async function ensureAreaMeta(id: number) {
+  try {
+    const scenic = await apiScenicDetail(id)
+    if (scenic?.name) {
+      hub.setArea(id, scenic.name)
+      const idx = areaOpts.value.findIndex((a) => a.id === id)
+      if (idx >= 0) {
+        areaOpts.value[idx] = { ...areaOpts.value[idx], ...scenic }
+      } else {
+        areaOpts.value = [scenic]
+      }
+    }
+  } catch {
+    // 保留 areaId，名称由下拉占位符兜底
+  }
+}
+
 function syncFromRoute() {
   const q = route.query
   if (typeof q.areaId === 'string' && q.areaId) {
     const id = Number(q.areaId)
     if (Number.isFinite(id) && hub.areaId !== id) {
       hub.setArea(id)
+      void ensureAreaMeta(id)
     }
   }
   const tab = q.tab as string
@@ -68,6 +92,9 @@ onMounted(() => {
   syncFromRoute()
   if (hub.areaId != null) {
     areaOpts.value = [{ id: hub.areaId, name: hub.areaName || `景区 ${hub.areaId}` } as ScenicArea]
+    if (!hub.areaName) {
+      void ensureAreaMeta(hub.areaId)
+    }
   }
 })
 

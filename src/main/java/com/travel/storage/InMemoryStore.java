@@ -556,12 +556,17 @@ public class InMemoryStore
 
     public Map<String, Double> getScenicAreaTagWeights(Long scenicAreaId)
     {
+        Map<String, Double> own = scenicAreaTagWeightsByScenicAreaId.get(scenicAreaId);
+        if (own != null && !own.isEmpty())
+        {
+            return own;
+        }
         return scenicAreaTagWeightsByScenicAreaId.get(resolveCanonicalAreaId(scenicAreaId));
     }
 
     public List<String> getScenicAreaTagNames(Long scenicAreaId)
     {
-        Map<String, Double> tagWeights = scenicAreaTagWeightsByScenicAreaId.get(resolveCanonicalAreaId(scenicAreaId));
+        Map<String, Double> tagWeights = getScenicAreaTagWeights(scenicAreaId);
         if (tagWeights == null || tagWeights.isEmpty())
         {
             return List.of();
@@ -872,8 +877,37 @@ public class InMemoryStore
 
     public List<Long> getDiaryIdsByDestinationId(Long destinationId)
     {
-        List<Long> ids = diaryIdsByDestinationId.get(destinationId);
-        return ids == null ? List.of() : new ArrayList<>(ids);
+        if (destinationId == null)
+        {
+            return List.of();
+        }
+        Long resolved = resolveCanonicalAreaId(destinationId);
+        List<Long> result = new ArrayList<>();
+        for (Map.Entry<Long, List<Long>> entry : diaryIdsByDestinationId.entrySet())
+        {
+            if (resolveCanonicalAreaId(entry.getKey()).equals(resolved))
+            {
+                result.addAll(entry.getValue());
+            }
+        }
+        return result;
+    }
+
+    private boolean diaryMatchesDestination(List<Long> destIds, Long destinationId)
+    {
+        if (destIds == null || destIds.isEmpty() || destinationId == null)
+        {
+            return false;
+        }
+        Long resolvedQuery = resolveCanonicalAreaId(destinationId);
+        for (Long destId : destIds)
+        {
+            if (resolveCanonicalAreaId(destId).equals(resolvedQuery))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public synchronized Comment insertComment(Comment comment)
@@ -1089,7 +1123,7 @@ public class InMemoryStore
                 if (destinationId != null)
                 {
                     List<Long> destIds = diaryDestinationIdsByDiaryId.get(d.getId());
-                    if (destIds == null || !destIds.contains(destinationId))
+                    if (!diaryMatchesDestination(destIds, destinationId))
                     {
                         continue;
                     }
@@ -1116,7 +1150,7 @@ public class InMemoryStore
                 if (destinationId != null)
                 {
                     List<Long> destIds = diaryDestinationIdsByDiaryId.get(d.getId());
-                    if (destIds == null || !destIds.contains(destinationId))
+                    if (!diaryMatchesDestination(destIds, destinationId))
                     {
                         continue;
                     }
@@ -1151,7 +1185,7 @@ public class InMemoryStore
             if (destinationId != null)
             {
                 List<Long> destIds = diaryDestinationIdsByDiaryId.get(d.getId());
-                if (destIds == null || !destIds.contains(destinationId))
+                if (!diaryMatchesDestination(destIds, destinationId))
                 {
                     continue;
                 }

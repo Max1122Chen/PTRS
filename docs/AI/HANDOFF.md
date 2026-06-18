@@ -52,9 +52,46 @@
 
 # HANDOFF LOG
 
-## 2026-06-09锛圫2-R8 闂幆 鈥?SPRINT_CLOSURE 鍏ㄩ儴瀹屾垚锛?
-### 鏈鐩爣
-- 璐熻矗浜虹‘璁?R8 瀹屾垚锛涙洿鏂?`SPRINT_CLOSURE.md` 搂4 鍕鹃€変笌 搂2.5 鏍℃鎽樿銆?
+## 2026-06-18（日记 alias 扩表至 120 + 列表展示修复）
+### 本次目标
+- 用与景区 alias 相同策略将日记扩至 100+；保证前端列表关联景区名称/标签正确。
+
+### 变更
+- **新建** `scripts/seed_diary_aliases.py`（24 canonical + 96 alias 日记，destinationId 指向 alias 景区）
+- `diaries.json`(120)、`diary_destinations.json`(120)、`comments.json`(130)
+- `InMemoryStore`：日记按目的地检索支持 canonical 解析（alias/canonical 互通）
+- `DiaryListView`：分页拉全量景区 name/tags；缺省 id 补 `apiScenicDetail`
+
+### 验证
+- `python scripts/seed_diary_aliases.py`；`mvn test` 通过；后端日志 `diaries=120`
+
+### 验收
+- http://localhost:5173/diary — 卡片应显示别名景区名与标签
+
+## 2026-06-13（R11b 景区 alias 扩至 220）
+### 本次目标
+- 将景区记录从 200 扩至 **220**（严格 >200），重跑种子并拉起服务供验收。
+
+### 变更
+- `scripts/seed_s2_closure.py`：`TARGET_TOTAL_SCENIC = 220`
+- `dev-seed/scenic-area-aliases.json`（208 条，id 10001–10208）、`scenic_area_tags.json`
+- `README.md`、`docs/验收/*` 规模表述同步为 220
+
+### 验证
+- `python scripts/validate_s2_closure.py` → scenic_areas **220**，8/8 OK
+
+### 修复（2026-06-18）
+- `ScenicAreaAliasRow` 增加 `@JsonAutoDetect`，修复 alias 的 name/location/description 等未反序列化
+- `getScenicAreaTagNames` 优先返回 alias 自身标签，再回退 canonical
+- `ScenicHubView` 进入工作台时补拉景区详情以显示名称
+
+- 后端：`mvn spring-boot:run "-Dspring-boot.run.profiles=dev"`
+- 前端：`cd frontend; npm run dev`
+- 推荐/景区列表应 ≥220 条；`/scenic?areaId=10001` 地图与 252 一致
+
+## 2026-06-09（S2-R8 闭环 — SPRINT_CLOSURE 全部完成）
+### 本次目标
+- 负责人确认 R8 完成；更新 `SPRINT_CLOSURE.md` §4 勾选与 §2.5 校正摘要。
 
 ### 鍙樻洿
 - `docs/AI/SPRINT_CLOSURE.md`锛歋1鈥揝5 / R1鈥揜12 鍧囨爣瀹屾垚锛汻8 娌欐渤 indoor 褰掑睘鍐欏叆 搂2.5
@@ -217,13 +254,13 @@
 ### 鏈鐩爣
 - 瀹屾垚 S2 鍓╀綑椤癸細鏅尯 alias鈮?00銆佽鏂?type鈮?0銆丣SON-only 閰嶇疆銆丷12 瑙勬ā楠屾敹銆?
 
-### 鍙樻洿
-- **鏂板缓** `scripts/seed_s2_closure.py`銆乣scripts/validate_s2_closure.py`
-- **鏂板缓** `src/main/resources/config/facility-types.json`锛?5 绉嶈鏂芥灇涓撅級
-- **鏂板缓** `dev-seed/scenic-area-aliases.json`锛?88 鏉?alias锛屽悎璁?200 鏅尯锛?
-- **鏇存柊** `dev-seed/facilities.json`锛? 鏉¤ˉ鍏呰鏂斤級銆乣scenic_area_tags.json`锛?676 alias 鏍囩锛?
-- `DevSeedDataLoader`锛氬彲閫夊姞杞?`scenic-area-aliases.json` 骞?`registerScenicAreaAlias`
-- `application-dev.yml`锛歚app.storage.preload.enabled=false`锛圝SON-only锛?
+### 变更
+- **新建** `scripts/seed_s2_closure.py`、`scripts/validate_s2_closure.py`
+- **新建** `src/main/resources/config/facility-types.json`（15 种设施枚举）
+- **新建** `dev-seed/scenic-area-aliases.json`（188 条 alias，合计 200 景区）
+- **更新** `dev-seed/facilities.json`（7 条补充设施）、`scenic_area_tags.json`（+676 alias 标签）
+- `DevSeedDataLoader`：修复 alias JSON 反序列化（`getId`/`getCanonicalAreaId`），确保 id 10001+ 与 canonical 映射生效
+- `application-dev.yml`：`app.storage.preload.enabled=false`（JSON-only）
 
 ### 楠岃瘉
 - `python scripts/seed_s2_closure.py` 鈫?200 鏅尯銆?5 璁炬柦 type銆?12 璁炬柦

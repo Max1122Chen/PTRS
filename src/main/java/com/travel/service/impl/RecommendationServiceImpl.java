@@ -392,6 +392,7 @@ public class RecommendationServiceImpl implements RecommendationService
         {
             throw new IllegalArgumentException("景区不存在");
         }
+        scenicArea.setTags(store.getScenicAreaTagNames(id));
         return scenicArea;
     }
 

@@ -1,5 +1,7 @@
 package com.travel.storage;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.travel.model.entity.Comment;
@@ -120,7 +122,7 @@ public class DevSeedDataLoader
         }
         for (ScenicAreaAliasRow alias : bundle.scenicAreaAliases)
         {
-            store.registerScenicAreaAlias(alias.id(), alias.canonicalAreaId());
+            store.registerScenicAreaAlias(alias.getId(), alias.getCanonicalAreaId());
             store.insertScenicArea(alias.toScenicArea());
         }
         for (Tag t : bundle.tags)
@@ -466,6 +468,7 @@ public class DevSeedDataLoader
     /**
      * 景区别名种子行（scenic-area-aliases.json），地图数据复用 canonicalAreaId。
      */
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     private static class ScenicAreaAliasRow
     {
 
@@ -497,14 +500,26 @@ public class DevSeedDataLoader
 
         private java.time.LocalDateTime updateTime;
 
-        public Long id()
+        @JsonProperty("id")
+        public Long getId()
         {
             return id;
         }
 
-        public Long canonicalAreaId()
+        public void setId(Long id)
+        {
+            this.id = id;
+        }
+
+        @JsonProperty("canonicalAreaId")
+        public Long getCanonicalAreaId()
         {
             return canonicalAreaId;
+        }
+
+        public void setCanonicalAreaId(Long canonicalAreaId)
+        {
+            this.canonicalAreaId = canonicalAreaId;
         }
 
         ScenicArea toScenicArea()

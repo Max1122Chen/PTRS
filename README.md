@@ -35,7 +35,7 @@ npm run dev
 
 ## 数据与规模（2026-06-09）
 
-演示数据来自 `dev-seed/` + `osm-data/`（12 个 canonical OSM 包 + 188 条景区 alias）。校验：
+演示数据来自 `dev-seed/` + `osm-data/`（12 个 canonical OSM 包 + **208** 条景区 alias，合计 **220** 条记录）。校验：
 
 ```powershell
 python scripts/validate_s2_closure.py

@@ -7,6 +7,7 @@ import {
   apiDiarySearch,
   apiGetInterest,
   apiRecommendationList,
+  apiScenicDetail,
   apiScenicSearchByKeyword,
   type Diary,
 } from '../../lib/api'
@@ -401,16 +402,39 @@ async function showAll() {
 }
 
 async function ensureScenicTagMap() {
-  if (Object.keys(scenicTagMap.value).length > 0) return
-  const res = await apiRecommendationList({ page: 1, size: 300, sortBy: 'heat' })
-  const tagMap: Record<number, string[]> = {}
-  const nameMap: Record<number, string> = {}
-  for (const item of res.list || []) {
-    tagMap[item.id] = Array.isArray(item.tags) ? item.tags : []
-    if (item.name) nameMap[item.id] = item.name
-  }
+  if (Object.keys(scenicNameMap.value).length >= 200) return
+  const tagMap: Record<number, string[]> = { ...scenicTagMap.value }
+  const nameMap: Record<number, string> = { ...scenicNameMap.value }
+  let page = 1
+  let total = 0
+  do {
+    const res = await apiRecommendationList({ page, size: 50, sortBy: 'heat' })
+    total = res.total
+    for (const item of res.list || []) {
+      tagMap[item.id] = Array.isArray(item.tags) ? item.tags : []
+      if (item.name) nameMap[item.id] = item.name
+    }
+    page += 1
+  } while ((page - 1) * 50 < total)
   scenicTagMap.value = tagMap
   scenicNameMap.value = nameMap
+}
+
+async function resolveScenicMetaForDestinations(destIds: number[]) {
+  await ensureScenicTagMap()
+  const missing = [...new Set(destIds.filter((id) => !scenicNameMap.value[id]))]
+  if (!missing.length) return
+  await Promise.all(
+    missing.map(async (id) => {
+      try {
+        const scenic = await apiScenicDetail(id)
+        if (scenic?.name) scenicNameMap.value[id] = scenic.name
+        if (scenic?.tags?.length) scenicTagMap.value[id] = scenic.tags
+      } catch {
+        // ignore
+      }
+    }),
+  )
 }
 
 async function hydrateDiaryDestinations(diaries: Diary[]) {
@@ -442,6 +466,8 @@ async function hydrateDiaryDestinations(diaries: Diary[]) {
     ...diaryCreatorNicknameMap.value,
     ...Object.fromEntries(entries.map((x) => [x.id, x.nickname])),
   }
+  const allDestIds = entries.flatMap((x) => x.destinations)
+  await resolveScenicMetaForDestinations(allDestIds)
 }
 
 async function selectChip(chipId: string) {

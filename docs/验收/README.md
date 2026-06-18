@@ -27,7 +27,7 @@
 | **主入口** | 游览 → 推荐选景区 → **景区工作台** `/scenic?areaId=252`（路线/设施/美食/室内） |
 | **核心算法** | 自实现 Dijkstra、多点 TSP（状态压缩 DP）、Top-K 堆、前缀 Trie + N-Gram；存储用 `com.travel.ds` |
 | **检索约束** | 模糊/全文/关联匹配在**内存索引**完成，不用 SQL LIKE/JOIN 做检索计算 |
-| **数据规模** | `python scripts/validate_s2_closure.py` 8/8 OK（200 景区、15 设施 type、20007 道路等） |
+| **数据规模** | `python scripts/validate_s2_closure.py` 8/8 OK（**220** 景区、15 设施 type、20007 道路等） |
 | **待答辩现场** | FR-009-5 AIGC 动画需配置火山密钥后实机出片 1 条 |
 
 ---

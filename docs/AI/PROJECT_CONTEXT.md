@@ -51,7 +51,7 @@
 ## 6. 需求-实现差距（收尾周优先）
 - **答辩必做**：FR-009-5 配置密钥并完成 1 次实机动画出片；室内导航演示脚本（areaId 248/201）。
 - **已知部分实现**（可书面说明）：FR-002 详情字段不全、FR-008-2 无管理端日记治理、FR-008-6/FR-013 无深度个性化。
-- **数据规模（2026-06-09）**：12 canonical + 188 alias = **200 景区**；212 设施（15 type）；20007 道路；452 美食；24 日记。验收见 `scripts/validate_s2_closure.py`。
+- **数据规模（2026-06-13）**：12 canonical + 208 alias = **220 景区**；212 设施（15 type）；20003 道路；452 美食；24 日记。验收见 `scripts/validate_s2_closure.py`。
 - **课程约束**：`com.travel.ds` 已在 **算法层**（Dijkstra/Graph/TopK/检索索引）落地；Service 边界见 `DsConvert` 与 [Custom Data Structures Scope.md](../Tech/Custom%20Data%20Structures%20Scope.md)。
 - **工程**：`application.yml` 明文 DB 密码；开发日志与 HANDOFF 已持续更新。
 

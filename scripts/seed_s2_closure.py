@@ -13,7 +13,7 @@ MAP_IMPORTS = SEED / "map-imports.json"
 NOW = datetime.now().replace(microsecond=0).isoformat()
 
 ALIAS_ID_START = 10001
-TARGET_TOTAL_SCENIC = 200
+TARGET_TOTAL_SCENIC = 220
 
 NAME_SUFFIXES = [
     "东门视角", "西门视角", "南门入口", "北门广场", "核心区", "步行导览", "周末打卡",
